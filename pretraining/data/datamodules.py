@@ -81,14 +81,14 @@ class ImagenetEvalDataModule(FlavaAblationDataModule):
         return self.val_dataloader()
 
     def _build_collator(self, inputs: List[Dict[str, Any]]):
-        for i in range(len(inputs)):
-            inputs[i]['image'] = inputs[i]['image'].convert('RGB')
+        # for imagenet eval we don't need to use the processor
         return inputs
 
 
 class ImageDataModule(FlavaAblationDataModule):
     def setup(self, stage=None):
         super().setup(stage)
+
         self.train_dataset = self.train_dataset.remove_columns(utils.WIT_ALT_TEXT_COLUMNS + ['text'])
         self.val_dataset = self.val_dataset.remove_columns(utils.WIT_ALT_TEXT_COLUMNS + ['text'])
 
@@ -100,7 +100,6 @@ class MLMDataModule(FlavaAblationDataModule):
             train_infos: List[HFDatasetInfo],
             val_infos: Optional[List[HFDatasetInfo]] = None,
             mlm_probability: float = 0.15,
-            max_length: int = TEXT_MAX_LENGTH_DEFAULT,
             batch_size: int = 32,
             num_workers: int = 4,
             **kwargs: Any,
@@ -113,10 +112,10 @@ class MLMDataModule(FlavaAblationDataModule):
             return_tensors="pt"
         )
         self.text_columns = text_columns
-        self.max_length = max_length
 
     def setup(self, stage=None):
-        self.train_dataset = build_datasets_from_info(self.train_dataset_infos, split="train")
+        super().setup(stage)
+
         self.train_dataset = self.train_dataset.remove_columns('image')
         self.train_dataset = self.train_dataset.map(
             utils.collapse_wit_text,
@@ -125,7 +124,6 @@ class MLMDataModule(FlavaAblationDataModule):
             batch_size=100,
             remove_columns=utils.WIT_ALT_TEXT_COLUMNS
         )
-        self.val_dataset = build_datasets_from_info(self.val_dataset_infos, split="validation")
         self.val_dataset = self.val_dataset.remove_columns('image')
         self.val_dataset = self.val_dataset.map(
             utils.collapse_wit_text,
@@ -153,7 +151,8 @@ class MLMDataModule(FlavaAblationDataModule):
         )
         # https://github.com/huggingface/transformers/issues/22103
         batch["input_ids_masked"], batch["mlm_labels"] = self.collator.torch_mask_tokens(
-            batch["input_ids"].detach().clone(), special_tokens_mask=batch.pop("special_tokens_mask", None)
+            inputs=batch["input_ids"].detach().clone(),
+            special_tokens_mask=batch.pop("special_tokens_mask", None)
         )
         return batch
 
@@ -167,7 +166,7 @@ class VLDataModule(FlavaAblationDataModule):
             batch_size: int = 32,
             num_workers: int = 4,
             itm_probability: float = 0.1,
-            # text_columns implicitly just 'text' here!
+            # text_columns implicitly only 'text' here!
             **kwargs,
     ):
         super().__init__(train_infos, val_infos, batch_size, num_workers, **kwargs)
@@ -180,6 +179,8 @@ class VLDataModule(FlavaAblationDataModule):
         self.itm_probability = itm_probability
 
     def setup(self, stage=None):
+        super().setup(stage)
+
         vl_transform = lambda dataset: partial(
             ITMTransform(),
             dataset=dataset.filter(
@@ -187,11 +188,10 @@ class VLDataModule(FlavaAblationDataModule):
                 batched=True,
                 num_proc=32,
                 batch_size=100,
-            ),  # Pass a copy to transform
+            ),  # Pass a copy (to transform), this is the purpose of this filtering action
             itm_probability=self.itm_probability,
         )
 
-        self.train_dataset = build_datasets_from_info(self.train_dataset_infos, split="train")
         self.train_dataset = self.train_dataset.cast_column("image", Image(decode=False))  # MUCH faster processing
         self.train_dataset = self.train_dataset.map(
             utils.collapse_wit_text,
@@ -204,7 +204,6 @@ class VLDataModule(FlavaAblationDataModule):
         self.train_dataset.set_transform(vl_transform(self.train_dataset))
         self.train_dataset = self.train_dataset.cast_column("image", Image(decode=True))  # MUCH faster processing
 
-        self.val_dataset = build_datasets_from_info(self.val_dataset_infos, split="validation")
         self.val_dataset = self.val_dataset.cast_column("image", Image(decode=False))  # MUCH faster processing
         self.val_dataset = self.val_dataset.map(
             utils.collapse_wit_text,
@@ -223,6 +222,7 @@ class VLDataModule(FlavaAblationDataModule):
         batch = super()._build_collator(inputs)
         # https://github.com/huggingface/transformers/issues/22103
         batch["input_ids_masked"], batch["mlm_labels"] = self.collator.torch_mask_tokens(
-            batch["input_ids"].detach().clone(), special_tokens_mask=batch.pop("special_tokens_mask", None)
+            inputs=batch["input_ids"].detach().clone(),
+            special_tokens_mask=batch.pop("special_tokens_mask", None)
         )
         return batch

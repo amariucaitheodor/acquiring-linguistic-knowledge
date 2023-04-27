@@ -9,6 +9,7 @@ import logging
 from transformers import FlavaForPreTraining, FlavaProcessor
 
 from callbacks.imagenet_zeroshot_data import imagenet_classnames, openai_imagenet_template
+from definitions import TEXT_MAX_LENGTH_DEFAULT
 
 logging.basicConfig(level=logging.INFO)
 
@@ -23,18 +24,19 @@ logger = logging.getLogger(__name__)
 
 def _zero_shot_classifier(model: FlavaForPreTraining, device, processor: FlavaProcessor):
     zeroshot_weights = []
-    max_length = max(
-        [len(template(classname)) for template in openai_imagenet_template for classname in imagenet_classnames])
 
-    for classname in tqdm(imagenet_classnames[:16]):
-        texts = [template(classname) for template in openai_imagenet_template]
+    for classname in tqdm(imagenet_classnames):
         input_ids = processor(
-            text=texts,
+            text=[template(classname) for template in openai_imagenet_template],
             return_tensors="pt",
             padding="max_length",
-            max_length=max_length,
+            max_length=TEXT_MAX_LENGTH_DEFAULT,
+            truncation=True,
+            add_special_tokens=False,
+            verbose=False,
         )["input_ids"]
-        class_embeddings = model(input_ids=input_ids.to(device)).text_embeddings
+        input_ids = input_ids.to(device)
+        class_embeddings = model(input_ids=input_ids, return_loss=False).text_output.pooler_output
         class_embeddings /= class_embeddings.norm(dim=-1, keepdim=True)
         class_embedding = class_embeddings.mean(dim=0)
         class_embedding /= class_embedding.norm()
@@ -60,27 +62,24 @@ def run_imagenet_zero_shot(model: FlavaForPreTraining, dataloader, device, proce
     classifier = _zero_shot_classifier(model, device, processor)
     logger.info("Classifier built")
     top1, top5, n = 0.0, 0.0, 0.0
-    for sample in tqdm(dataloader):
-        sample = sample[0]
-        images = sample["image"]
-        target = sample["label"]
-
+    for batch in tqdm(dataloader):
         outputs = processor(
-            images=images,
+            images=[i['image'].convert('RGB') for i in batch],
             return_tensors="pt",
             return_image_mask=True,
             return_codebook_pixels=True,
             return_dict=True,
         ).to(device)
-        image_features = model(**outputs).image_embeddings
+        image_features = model(pixel_values=outputs['pixel_values'], return_loss=False).image_output.pooler_output
         image_features /= image_features.norm(dim=-1, keepdim=True)
         logits = 100.0 * image_features @ classifier
 
         # measure accuracy
+        target = torch.tensor([i["label"] for i in batch], device=device)
         acc1, acc5 = _accuracy(logits, target, topk=(1, 5))
         top1 += acc1
         top5 += acc5
-        n += images.size(0)
+        n += len(batch)
 
     top1 = top1 / n
     top5 = top5 / n

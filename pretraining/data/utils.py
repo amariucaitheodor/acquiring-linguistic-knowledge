@@ -21,9 +21,8 @@ def build_datasets_from_info(dataset_infos: List[HFDatasetInfo], split: str = "t
         )
 
         if dataset_info.remove_columns is not None:
-            current_dataset = current_dataset.remove_columns(
-                dataset_info.remove_columns
-            )
+            current_dataset = current_dataset.remove_columns(dataset_info.remove_columns)
+
         if dataset_info.rename_columns is not None:
             for rename in dataset_info.rename_columns:
                 current_dataset = current_dataset.rename_column(rename[0], rename[1])

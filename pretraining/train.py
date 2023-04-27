@@ -5,10 +5,12 @@ from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 
 from callbacks.blimp_eval import BlimpEvalCallback
+from callbacks.imagenet_zeroshot_eval import MultimodalEvalCallback
+from data.datamodules import ImagenetEvalDataModule
 from definitions import FLAVAArguments
 from model import BERTPreTrainingLightningModule, FlavaPreTrainingLightningModule
 from utils import build_config, update_ckt_dir_and_batch_size, assign_huggingface_ram, \
-    initialize_multidatamodule, overwrite_config
+    initialize_multidatamodule, overwrite_config, build_datamodule_kwargs
 
 
 def main():
@@ -55,14 +57,13 @@ def main():
     print("Registering callbacks")
     callbacks = [LearningRateMonitor(logging_interval="step"), BlimpEvalCallback()]
 
-    # TODO: fix this for FLAVA HF based on FLAVA multimodal
-    # if config.datasets.imagenet is not None and config.model.name == 'flava':
-    #     imagenet_validation_module = ImagenetEvalDataModule(
-    #         **build_datamodule_kwargs(config.datasets.imagenet, config.training),
-    #         name="ImageNetEvalDataModule"
-    #     )
-    #     imagenet_validation_module.setup(stage="validate")
-    #     callbacks.append(MultimodalEvalCallback(imagenet_datamodule=imagenet_validation_module))
+    if config.datasets.imagenet is not None and config.model.name == 'flava':
+        imagenet_validation_module = ImagenetEvalDataModule(
+            **build_datamodule_kwargs(config.datasets.imagenet, config.training),
+            name="ImageNetEvalDataModule"
+        )
+        imagenet_validation_module.setup(stage="validate")
+        callbacks.append(MultimodalEvalCallback(imagenet_datamodule=imagenet_validation_module))
 
     if config.training.lightning_checkpoint is not None:
         callbacks.append(
