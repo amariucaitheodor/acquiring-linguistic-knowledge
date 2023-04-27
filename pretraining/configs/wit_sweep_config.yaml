@@ -1,0 +1,21 @@
+program: train.py
+name: flava-textvision-wit
+description: FLAVA text-vision sweep run on the WiT dataset.
+project: flava-textvision-multimodal-wit
+run_cap: 16
+entity: rycolab
+method: grid
+metric:
+  name: validation/losses/mlm_loss
+  goal: minimize
+command:
+  - ${env}
+  - python3.10 # makes sure the right interpreter is used on Euler (3.10 req. for BLiMP)
+  - -m
+  - train
+  - config=configs/wit.yaml
+parameters:
+  text_perc:
+    values: [ 0, 1, 10, 100 ]
+  vision_perc:
+    values: [ 0, 1, 10, 100 ]

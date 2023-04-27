@@ -1,0 +1,83 @@
+_target_: pretraining.definitions.FLAVAArguments
+
+text_perc: 100
+vision_perc: 100
+
+training:
+  _target_: pretraining.definitions.TrainingArguments
+  lightning:
+    max_steps: 450000
+    accelerator: 'gpu'
+    devices: 1
+    val_check_interval: 200
+    limit_val_batches: 200 # REQUIRED, otherwise the validation loop doesn't terminate
+    precision: 16-mixed # 'bf16' not supported on either local or Euler GPU
+    accumulate_grad_batches: 1
+    num_sanity_val_steps: 0
+    strategy: ddp_find_unused_parameters_true # ddp for BERT
+    enable_progress_bar: true
+  lightning_checkpoint:
+    dirpath: "./pretraining-debug"
+    filename: pretraining-{epoch:02d}-{step}
+    save_last: true
+    every_n_train_steps: 40000 # otherwise it occupies too much disk space
+    save_on_train_epoch_end: true
+    verbose: true
+  lightning_load_from_checkpoint: null
+  seed: -1
+  batch_size: 1
+  num_workers: 1
+  learning_rate: 2e-4
+  adam_eps: 1e-8
+  adam_weight_decay: 1e-2
+  adam_betas: [ 0.9, 0.999 ]
+  warmup_steps: 2000
+  use_wandb: false
+
+datasets:
+  _target_: pretraining.definitions.TrainingDatasetsInfo
+  imagenet: # used for validation 'every_n_train_steps', must be a version of ImageNet-1k
+    _target_: pretraining.definitions.TrainingSingleDatasetInfo
+    train:
+      - _target_: pretraining.definitions.HFDatasetInfo
+        key: theodor1289/imagenet-1k_tiny # has 2 columns: ['image', 'label']
+        split_key_mapping:
+          train: train
+          validation: train # 'validation' split does not exist for this 'mini' version, but it makes no difference
+  ablation:
+    # For VLDataModule, column "image" either needs to have an image (not the case for "facebook/pmd", "wit"), or be missing
+    _target_: pretraining.definitions.TrainingSingleDatasetInfo
+    train:
+      - _target_: pretraining.definitions.HFDatasetInfo
+        key: theodor1289/wit_mini
+        split_key_mapping:
+          validation: test # 'validation' split does not exist for wit
+    val:
+      - _target_: pretraining.definitions.HFDatasetInfo
+        key: theodor1289/wit_mini
+        split_key_mapping:
+          validation: test # 'validation' split does not exist for wit
+    datamodule_extra_kwargs:
+      text_columns: [ "text" ]
+
+model:
+  pretrained: false
+  name: flava
+
+  image_config_dict:
+    num_hidden_layers: 1
+    hidden_size: 16
+    intermediate_size: 64
+    num_attention_heads: 1
+
+  text_config_dict:
+    text_num_hidden_layers: 1
+    text_hidden_size: 16
+    text_intermediate_size: 64
+    text_num_attention_heads: 1
+
+  multimodal_config_dict:
+    num_hidden_layers: 1
+    hidden_size: 16
+    intermediate_size: 64
+    num_attention_heads: 1

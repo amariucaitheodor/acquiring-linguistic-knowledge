@@ -1,0 +1,33 @@
+program: train.py
+name: flava-textvision-wit-hyperparameters
+description: Hyperparameter sweep search for FLAVA text-vision run on the WiT dataset.
+project: flava-textvision-multimodal-wit
+run_cap: 100
+entity: rycolab
+method: bayes # uses probability of improvement (PI) to select the next hyperparameter configuration
+metric:
+  name: validation/losses/mlm_loss
+  goal: minimize
+command:
+  - ${env}
+  - python3.10 # makes sure the right interpreter is used on Euler (3.10 req. for BLiMP)
+  - -m
+  - train
+  - config=configs/wit.yaml
+early_terminate:
+  type: hyperband
+  max_iter: 27
+  s: 2
+parameters:
+  accumulate_grad_batches:
+    distribution: categorical
+    values: [ 1, 8, 16, 32 ]
+  warmup_steps:
+    distribution: categorical
+    values: [ 2000, 10000 ]
+  learning_rate:
+    distribution: categorical
+    values: [ 0.00001, 0.0001, 0.0002, 0.0004, 0.001, 0.01 ]
+  seed:
+    distribution: categorical
+    values: [ 1472111, 2550093, 5501650, 1930309, 7865220, 5974287, 7203693, 887373, 814622, 100000 ]
