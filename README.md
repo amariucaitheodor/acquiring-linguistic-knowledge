@@ -17,9 +17,19 @@ pip install -r requirements.txt
 cd lm-evaluation-harness
 pip install -e ".[dev]"
 
-# Until issue is fixed (https://github.com/huggingface/transformers/issues/23047), manually change FLAVA source code:
+# Manually change FLAVA source code:
 nano /cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/.venv/acquiring-linguistic-knowledge/lib64/python3.10/site-packages/transformers/models/flava/modeling_flava.py
-# Rename all_gather_with_backprop to all_gather
+# Rename all_gather_with_backprop to all_gather (https://github.com/huggingface/transformers/issues/23047)
+
+# For model.compile, also add the below changes to avoid RuntimeError: a leaf Variable that requires grad is being used in an in-place operation.:
+#    with torch.no_grad():
+#        mlm_labels_filtered = mlm_labels[masked_tokens]
+#    with torch.no_grad():
+#        sequence_for_image = sequence_for_image[:, -mim_labels.size(1) :, :]
+#        mim_labels_filtered = mim_labels[masked_tokens]
+#        sequence_for_image = sequence_for_image[masked_tokens, :]
+
+
 ```
 
 2. [Text-audio development](./audio/README.md) for the novel text-audio fusion model.
@@ -57,7 +67,7 @@ srun --time=4:00:00 \
     --tmp=400G \
     --mem-per-cpu=77000 \
     --gpus=1 \
-    --gres=gpumem:20g \
+    --gres=gpumem:40g \
     --pty \
     --preserve-env \
     $SHELL

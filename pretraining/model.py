@@ -24,10 +24,6 @@ class FlavaPreTrainingLightningModule(LightningModule):
         else:
             self.model = FlavaForPreTraining(FlavaConfig(**kwargs))
 
-        if get_local_ram() > 100:  # definitely on the cluster
-            print(f"Compiling FlavaForPreTraining to accelerate it...")
-            self.model = torch.compile(self.model.to(device="cuda:0"))  # Since PyTorch 2.0
-
         self.learning_rate = learning_rate
         self.adam_eps = adam_eps
         self.adam_betas = adam_betas
@@ -75,10 +71,6 @@ class BERTPreTrainingLightningModule(LightningModule):
             self.model = BertForMaskedLM.from_pretrained("bert-base-uncased")
         else:
             self.model = BertForMaskedLM(BertConfig(**kwargs))
-
-        if get_local_ram() > 100:  # definitely on the cluster
-            print(f"Compiling BertForMaskedLM to accelerate it...")
-            self.model = torch.compile(self.model.to(device="cuda:0"))  # Since PyTorch 2.0
 
         self.learning_rate = learning_rate
         self.adam_eps = adam_eps

@@ -8,13 +8,13 @@ training:
   lightning:
     max_steps: 450000
     accelerator: 'gpu'
-    devices: -1
+    devices: 1 # -1 for all GPUs (if using more GPUs)
     val_check_interval: 8000
     limit_val_batches: 1000 # REQUIRED, otherwise the validation loop doesn't terminate
     precision: 16-mixed # 'bf16' not supported on either local or Euler GPU
     accumulate_grad_batches: 1
     num_sanity_val_steps: 0
-    strategy: ddp_find_unused_parameters_true # ddp for BERT
+#    strategy: ddp_find_unused_parameters_true # ddp for BERT
     enable_progress_bar: false
   lightning_checkpoint:
     dirpath: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/flava-textvision/"
@@ -25,7 +25,7 @@ training:
     verbose: true
   lightning_load_from_checkpoint: null
   seed: -1
-  # batch_size automatically set by precision (assuming one 24GB VRAM GPU)
+  # batch_size automatically set by precision
   num_workers: 2
   learning_rate: 2e-4
   adam_eps: 1e-8

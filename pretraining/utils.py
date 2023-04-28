@@ -142,12 +142,12 @@ def update_ckt_dir_and_batch_size(config):
             config.training.__setattr__("batch_size", 24)
         elif "flava" in config.model.name:
             if config.training.lightning['precision'] in ["bf16", "16-mixed", "16", 16]:
-                config.training.__setattr__("batch_size", 32)
+                config.training.__setattr__("batch_size", 40) # 15 for 24GB VRAM GPU
             else:
-                config.training.__setattr__("batch_size", 28)
+                raise ValueError(f"Unknown batch_size calibration for precision: {config.training.lightning['precision']}.")
         else:
             raise ValueError(f"Unknown model name {config.model.name}.")
-        print(f"Precision is {config.training.lightning['precision']} and batch size is missing, setting batch "
+        print(f"Precision is {config.training.lightning['precision']}, setting batch "
               f"size to {config.training['batch_size']}.")
 
 
