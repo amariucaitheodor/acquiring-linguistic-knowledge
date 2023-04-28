@@ -1,4 +1,8 @@
 _target_: pretraining.definitions.FLAVAArguments
+
+text_perc: 100
+vision_perc: 100
+
 training:
   _target_: pretraining.definitions.TrainingArguments
   lightning:
@@ -30,15 +34,15 @@ training:
   warmup_steps: 2000
   use_wandb: true
 
-datasets: # N.B. this configuration doesn't work with the 'native' or 'fine-tuning' versions of FLAVA ('selected' is missing)
+datasets:
   _target_: pretraining.definitions.TrainingDatasetsInfo
-  image: # used for validation 'every_n_train_steps', must be a version of ImageNet-1k
+  imagenet: # used for validation 'every_n_train_steps', must be a version of ImageNet-1k
     _target_: pretraining.definitions.TrainingSingleDatasetInfo
     train:
       - _target_: pretraining.definitions.HFDatasetInfo
         key: imagenet-1k # has 2 columns: ['image', 'label']
         subset: default
-  vl:
+  ablation:
     # For VLDataModule, column "image" either needs to have an image (not the case for "facebook/pmd", "wit"), or be missing
     _target_: pretraining.definitions.TrainingSingleDatasetInfo
     train:

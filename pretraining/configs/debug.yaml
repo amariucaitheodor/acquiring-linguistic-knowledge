@@ -57,7 +57,7 @@ datasets:
         key: theodor1289/wit_mini
         split_key_mapping:
           validation: test # 'validation' split does not exist for wit
-    datamodule_extra_kwargs:
+    datamodule_extra_kwargs: # This key is used in the MLMDataModule
       text_columns: [ "text" ]
 
 model:

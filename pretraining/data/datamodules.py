@@ -122,7 +122,8 @@ class MLMDataModule(FlavaAblationDataModule):
             batched=True,
             num_proc=32,
             batch_size=100,
-            remove_columns=utils.WIT_ALT_TEXT_COLUMNS
+            remove_columns=utils.WIT_ALT_TEXT_COLUMNS,
+            desc="Collapsing WiT text for MLM training",
         )
         self.val_dataset = self.val_dataset.remove_columns('image')
         self.val_dataset = self.val_dataset.map(
@@ -130,7 +131,8 @@ class MLMDataModule(FlavaAblationDataModule):
             batched=True,
             num_proc=32,
             batch_size=100,
-            remove_columns=utils.WIT_ALT_TEXT_COLUMNS
+            remove_columns=utils.WIT_ALT_TEXT_COLUMNS,
+            desc="Collapsing WiT text for MLM validation",
         )
 
     def _build_collator(self, inputs: List[Dict[str, Any]]):
@@ -188,7 +190,8 @@ class VLDataModule(FlavaAblationDataModule):
                 batched=True,
                 num_proc=32,
                 batch_size=100,
-            ),  # Pass a copy (to transform), this is the purpose of this filtering action
+                desc="Creating a copy of the dataset (to be ITM-transformed)..."
+            ),
             itm_probability=self.itm_probability,
         )
 
@@ -199,7 +202,8 @@ class VLDataModule(FlavaAblationDataModule):
             num_proc=32,
             batch_size=100,
             remove_columns=utils.WIT_ALT_TEXT_COLUMNS,
-            load_from_cache_file=True  # MUCH faster processing
+            load_from_cache_file=True,  # MUCH faster processing
+            desc="Collapsing WiT text for VL training",
         )
         self.train_dataset.set_transform(vl_transform(self.train_dataset))
         self.train_dataset = self.train_dataset.cast_column("image", Image(decode=True))  # MUCH faster processing
@@ -211,7 +215,8 @@ class VLDataModule(FlavaAblationDataModule):
             num_proc=32,
             batch_size=100,
             remove_columns=utils.WIT_ALT_TEXT_COLUMNS,
-            load_from_cache_file=True  # MUCH faster processing
+            load_from_cache_file=True,  # MUCH faster processing
+            desc="Collapsing WiT text for VL validation",
         )
         self.val_dataset.set_transform(vl_transform(self.val_dataset))
         self.val_dataset = self.val_dataset.cast_column("image", Image(decode=True))  # MUCH faster processing

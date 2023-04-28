@@ -7,8 +7,7 @@ Master's thesis of Theodor Amariucai, supervised by Alexander Warstadt and Prof.
 ### Project sections
 
 1. [Text-vision pre-training](./pretraining/README.md) works directly through [HuggingFace](https://huggingface.co/)
-   and [WaB](https://wandb.ai/) for a smooth experience:
-- Set up the virtual environment and install the requirements:
+   and [WaB](https://wandb.ai/) for a smooth experience.
 
 ```shell
 python -m venv .venv/acquiring-linguistic-knowledge
@@ -17,6 +16,10 @@ pip install -r requirements.txt
 
 cd lm-evaluation-harness
 pip install -e ".[dev]"
+
+# Until issue is fixed (https://github.com/huggingface/transformers/issues/23047), manually change FLAVA source code:
+nano /cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/.venv/acquiring-linguistic-knowledge/lib64/python3.10/site-packages/transformers/models/flava/modeling_flava.py
+# Rename all_gather_with_backprop to all_gather
 ```
 
 2. [Text-audio development](./audio/README.md) for the novel text-audio fusion model.
@@ -47,7 +50,7 @@ wandb sweep flava/configs/pretraining/debug_sweep_config.yaml
 # An already-running job
 srun --interactive --jobid JOBID --pty bash
 # Interactive GPU node (N.B. don't 'source init.sh' again!)
-srun --time=1:00:00 \
+srun --time=4:00:00 \
     --nodes=1 \
     --ntasks-per-node=1 \
     --cpus-per-task=2 \
@@ -79,9 +82,8 @@ source /cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/.venv/a
 export HF_DATASETS_CACHE="/cluster/scratch/tamariucai/HuggingfaceDatasets"
 export HF_HOME="/cluster/work/cotterell/tamariucai/HuggingfaceHome"
 export WANDB_CACHE_DIR="/cluster/scratch/tamariucai/WandbCache"
-export WANDB_DIR="/cluster/work/cotterell/tamariucai/WandbDir"
-export PYTHONPATH=/cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/lm-evaluation-harness
-cd /cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/pretraining/
+export PYTHONPATH=/cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/:/cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/lm-evaluation-harness
+cd /cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/scripts/
 ```
 
 ### Submodules

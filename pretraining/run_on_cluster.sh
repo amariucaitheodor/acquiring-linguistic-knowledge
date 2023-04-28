@@ -21,4 +21,4 @@ sbatch --mail-type=END,FAIL \
   --gpus=$NUM_GPUS \
   --gres=gpumem:20g \
   -o "wit_run_$(date "+%F-%T").results" \
-  --wrap="WANDB__SERVICE_WAIT=300 NUMEXPR_MAX_THREADS=64 PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512 python3.10 -m pretraining.train config=pretraining/configs/wit.yaml"
+  --wrap="WANDB__SERVICE_WAIT=300 NUMEXPR_MAX_THREADS=64 PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512 python3.10 -m train config=configs/wit.yaml"

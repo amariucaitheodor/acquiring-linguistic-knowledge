@@ -27,7 +27,7 @@ parameters:
     values: [ 2000, 10000 ]
   learning_rate:
     distribution: categorical
-    values: [ 0.00001, 0.0001, 0.0002, 0.0004, 0.001, 0.01 ]
+    values: [ 0.0001, 0.0002, 0.0004 ]
   seed:
     distribution: categorical
     values: [ 1472111, 2550093, 5501650, 1930309, 7865220, 5974287, 7203693, 887373, 814622, 100000 ]

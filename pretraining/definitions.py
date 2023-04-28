@@ -49,7 +49,7 @@ class TrainingSingleDatasetInfo:
 
 @dataclass
 class TrainingDatasetsInfo:
-    selected: List[str] = field(default_factory=lambda: ["image", "text", "vl"])
+    selected: List[str] = field(default_factory=lambda: ["ablation"])
     imagenet: Optional[TrainingSingleDatasetInfo] = None
     ablation: Optional[TrainingSingleDatasetInfo] = None
     num_classes: int = MISSING

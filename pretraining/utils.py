@@ -3,6 +3,7 @@ import random
 from typing import List
 
 import datasets
+import torch
 import wandb
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
@@ -80,7 +81,8 @@ def initialize_multidatamodule(config: FLAVAArguments) -> MultiDataModule:
         modules.append(vl_datamodule)
 
     if config.vision_perc > 0:
-        vision_config = copy_dataset_config_with_training_subset(config.datasets.ablation, percentage=config.vision_perc)
+        vision_config = copy_dataset_config_with_training_subset(config.datasets.ablation,
+                                                                 percentage=config.vision_perc)
         vision_datamodule = ImageDataModule(
             **build_datamodule_kwargs(vision_config, config.training),
             name="ImageDataModule"
@@ -136,26 +138,26 @@ def update_ckt_dir_and_batch_size(config):
         config.training.lightning_checkpoint.__setattr__("dirpath", ckt_dir)
 
         # This is a hack to make sure we use the memory on the compute node to the fullest.
-        if 'batch_size' not in config.training:
-            if config.model.name == "bert":
-                config.training.__setattr__("batch_size", 24)
-            elif "flava" in config.model.name:
-                if config.training.lightning['precision'] in ["bf16", "16-mixed", "16", 16]:
-                    config.training.__setattr__("batch_size", 32)
-                else:
-                    config.training.__setattr__("batch_size", 28)
+        if config.model.name == "bert":
+            config.training.__setattr__("batch_size", 24)
+        elif "flava" in config.model.name:
+            if config.training.lightning['precision'] in ["bf16", "16-mixed", "16", 16]:
+                config.training.__setattr__("batch_size", 32)
             else:
-                raise ValueError(f"Unknown model name {config.model.name}.")
-            print(f"Precision is {config.training.lightning['precision']} and batch size is missing, setting batch "
-                  f"size to {config.training['batch_size']}.")
+                config.training.__setattr__("batch_size", 28)
         else:
-            print(f"Batch size was manually set in the config to {config.training['batch_size']}.")
+            raise ValueError(f"Unknown model name {config.model.name}.")
+        print(f"Precision is {config.training.lightning['precision']} and batch size is missing, setting batch "
+              f"size to {config.training['batch_size']}.")
 
 
 def assign_huggingface_ram():
     available_memory_gb = get_local_ram()
     huggingface_threshold_gib = 100
     if available_memory_gb > huggingface_threshold_gib:
+        torch.set_float32_matmul_precision('medium')
+        print(f"Setting float32_matmul_precision to 'medium' to benefit from the Tensor Cores.")
+
         datasets.config.IN_MEMORY_MAX_SIZE = huggingface_threshold_gib * 1_000_000_000
         print(
             f"Found {available_memory_gb}GBs of RAM available, "
