@@ -36,7 +36,7 @@ training:
 
 datasets:
   _target_: pretraining.definitions.TrainingDatasetsInfo
-  imagenet: # used for validation 'every_n_train_steps', must be a version of ImageNet-1k
+  imagenet: # not used anymore, had to be a version of ImageNet-1k
     _target_: pretraining.definitions.TrainingSingleDatasetInfo
     train:
       - _target_: pretraining.definitions.HFDatasetInfo
@@ -61,23 +61,5 @@ datasets:
       text_columns: [ "text" ]
 
 model:
-  pretrained: false
+  pretrained: "hf-tiny-model-private/tiny-random-FlavaForPreTraining"
   name: flava
-
-  image_config_dict:
-    num_hidden_layers: 1
-    hidden_size: 16
-    intermediate_size: 64
-    num_attention_heads: 1
-
-  text_config_dict:
-    text_num_hidden_layers: 1
-    text_hidden_size: 16
-    text_intermediate_size: 64
-    text_num_attention_heads: 1
-
-  multimodal_config_dict:
-    num_hidden_layers: 1
-    hidden_size: 16
-    intermediate_size: 64
-    num_attention_heads: 1

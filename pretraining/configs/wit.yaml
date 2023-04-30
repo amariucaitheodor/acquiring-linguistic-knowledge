@@ -36,7 +36,7 @@ training:
 
 datasets:
   _target_: pretraining.definitions.TrainingDatasetsInfo
-  imagenet: # used for validation 'every_n_train_steps', must be a version of ImageNet-1k
+  imagenet: # not used anymore, had to be a version of ImageNet-1k
     _target_: pretraining.definitions.TrainingSingleDatasetInfo
     train:
       - _target_: pretraining.definitions.HFDatasetInfo
@@ -60,5 +60,4 @@ datasets:
 
 model:
   _target_: pretraining.definitions.ModelArguments
-  pretrained: false
   name: flava

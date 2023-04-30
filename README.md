@@ -46,11 +46,11 @@ Note: [BLiMP evaluation](./lm-evaluation-harness/README.md) requires >=`python3.
 PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512 python train.py config=configs/debug.yaml
 ```
 
-- For sweeps with WandB on the debug configuration, run:
+- For sweeps with WandB on the WiT configuration, run e.g.:
 
 ```bash
 cd examples
-wandb sweep flava/configs/pretraining/debug_sweep_config.yaml
+wandb sweep configs/wit_sweep_config.yaml
 # now run sweep agent according to instructions
 ```
 
@@ -93,7 +93,7 @@ export HF_DATASETS_CACHE="/cluster/scratch/tamariucai/HuggingfaceDatasets"
 export HF_HOME="/cluster/work/cotterell/tamariucai/HuggingfaceHome"
 export WANDB_CACHE_DIR="/cluster/scratch/tamariucai/WandbCache"
 export PYTHONPATH=/cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/:/cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/lm-evaluation-harness
-cd /cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/scripts/
+cd /cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/pretraining/
 ```
 
 ### Submodules

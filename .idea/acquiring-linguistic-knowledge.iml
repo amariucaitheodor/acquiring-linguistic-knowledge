@@ -4,8 +4,9 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/lm-evaluation-harness" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/pretraining" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/venv" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.9.13 WSL (Ubuntu): (/home/theodor/.virtualenvs/acquiring-linguistic-knowledge/bin/python)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.10 (acquiring-linguistic-knowledge)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PyDocumentationSettings">

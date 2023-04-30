@@ -5,12 +5,10 @@ from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 
 from callbacks.blimp_eval import BlimpEvalCallback
-from callbacks.imagenet_zeroshot_eval import MultimodalEvalCallback
-from data.datamodules import ImagenetEvalDataModule
 from definitions import FLAVAArguments
 from model import BERTPreTrainingLightningModule, FlavaPreTrainingLightningModule
 from utils import build_config, update_ckt_dir_and_batch_size, assign_huggingface_ram, \
-    initialize_multidatamodule, overwrite_config, build_datamodule_kwargs
+    initialize_multidatamodule, overwrite_config
 
 
 def main():
@@ -20,7 +18,7 @@ def main():
         wandb_logger = WandbLogger(
             project=f'flava-textvision-multimodal-{config.datasets.ablation.train[0].key.split("/")[-1]}',
             log_model="all",  # checkpoints are logged during training
-            tags=["pretrained" if config.model.pretrained else "scratch"],
+            tags=[config.model.pretrained if config.model.pretrained else "scratch"],
             magic=True,
             force=True,
             save_code=True,
@@ -43,9 +41,6 @@ def main():
     print("Assigning HuggingFace RAM")
     assign_huggingface_ram()
 
-    print("Initializing multidatamodule")
-    datamodule = initialize_multidatamodule(config)
-
     print("Building model")
     if config.model.name == 'bert':
         model = BERTPreTrainingLightningModule(**config.model)
@@ -56,14 +51,6 @@ def main():
 
     print("Registering callbacks")
     callbacks = [LearningRateMonitor(logging_interval="step"), BlimpEvalCallback()]
-
-    if config.datasets.imagenet is not None and config.model.name == 'flava':
-        imagenet_validation_module = ImagenetEvalDataModule(
-            **build_datamodule_kwargs(config.datasets.imagenet, config.training),
-            name="ImageNetEvalDataModule"
-        )
-        imagenet_validation_module.setup(stage="validate")
-        callbacks.append(MultimodalEvalCallback(imagenet_datamodule=imagenet_validation_module))
 
     if config.training.lightning_checkpoint is not None:
         callbacks.append(
@@ -83,11 +70,15 @@ def main():
         logger=wandb_logger if config.training.use_wandb else True,
     )
 
-    print("Starting training")
-    trainer.fit(model, datamodule=datamodule, ckpt_path=config.training.lightning_load_from_checkpoint)
+    if config.text_perc + config.vision_perc > 0:
+        print("Initializing multidatamodule")
+        datamodule = initialize_multidatamodule(config)
+
+        print("Starting training")
+        trainer.fit(model, datamodule=datamodule, ckpt_path=config.training.lightning_load_from_checkpoint)
 
     print("Starting validation")
-    trainer.validate(model, datamodule=datamodule)
+    trainer.validate(model)
 
     if config.training.use_wandb:
         wandb.finish()  # [optional] finish the wandb run, necessary in notebooks

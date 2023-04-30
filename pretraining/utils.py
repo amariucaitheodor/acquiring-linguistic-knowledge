@@ -3,7 +3,6 @@ import random
 from typing import List
 
 import datasets
-import torch
 import wandb
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
@@ -142,7 +141,7 @@ def update_ckt_dir_and_batch_size(config):
             config.training.__setattr__("batch_size", 24)
         elif "flava" in config.model.name:
             if config.training.lightning['precision'] in ["bf16", "16-mixed", "16", 16]:
-                config.training.__setattr__("batch_size", 40) # 15 for 24GB VRAM GPU
+                config.training.__setattr__("batch_size", 36) # 15 for 24GB VRAM GPU
             else:
                 raise ValueError(f"Unknown batch_size calibration for precision: {config.training.lightning['precision']}.")
         else:
@@ -155,9 +154,6 @@ def assign_huggingface_ram():
     available_memory_gb = get_local_ram()
     huggingface_threshold_gib = 100
     if available_memory_gb > huggingface_threshold_gib:
-        torch.set_float32_matmul_precision('medium')
-        print(f"Setting float32_matmul_precision to 'medium' to benefit from the Tensor Cores.")
-
         datasets.config.IN_MEMORY_MAX_SIZE = huggingface_threshold_gib * 1_000_000_000
         print(
             f"Found {available_memory_gb}GBs of RAM available, "

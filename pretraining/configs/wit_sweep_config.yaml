@@ -6,16 +6,23 @@ run_cap: 16
 entity: rycolab
 method: grid
 metric:
-  name: validation/losses/mlm_loss
-  goal: minimize
+  name: evaluation/blimp/average
+  goal: maximize
 command:
   - ${env}
   - python3.10 # makes sure the right interpreter is used on Euler (3.10 req. for BLiMP)
   - -m
   - train
   - config=configs/wit.yaml
+early_terminate:
+  type: hyperband
+  max_iter: 27
+  s: 2
 parameters:
   text_perc:
     values: [ 0, 1, 10, 100 ]
   vision_perc:
     values: [ 0, 1, 10, 100 ]
+  seed: # Repeat each run three times with different seeds (then take average)
+    distribution: categorical
+    values: [ 5501650, 1930309, 7865220 ]

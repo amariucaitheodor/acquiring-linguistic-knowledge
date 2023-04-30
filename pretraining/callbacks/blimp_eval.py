@@ -40,7 +40,10 @@ class BlimpEvalCallback(Callback):
             eval_class = BertLM
         elif type(pl_module.model) == FlavaForPreTraining:
             eval_class = FlavaLM
-        else: raise ValueError(f"Model {type(pl_module.model)} not supported for BLiMP eval")
+        else:
+            raise ValueError(f"Model {type(pl_module.model)} not supported for BLiMP eval")
+
+        accuracies = []
 
         for task in tasks:
             task_accuracy = accuracy_on_task(
@@ -48,12 +51,21 @@ class BlimpEvalCallback(Callback):
                 eval_model=eval_class(model=pl_module.model, batch_size=trainer.val_dataloaders.loaders[0].batch_size),
                 template_name="null_prompt",
                 num_fewshot=0)
-
+            accuracies.append(round(task_accuracy * 100, 2))
             self.log(
                 f"evaluation/blimp/{task.split('.json')[0]}",
-                round(task_accuracy * 100, 2),
+                accuracies[-1],
                 prog_bar=True,
                 logger=True,
                 rank_zero_only=True,
                 sync_dist=True,
             )
+
+        self.log(
+            f"evaluation/blimp/average",
+            sum(accuracies) / len(accuracies),
+            prog_bar=True,
+            logger=True,
+            rank_zero_only=True,
+            sync_dist=True,
+        )

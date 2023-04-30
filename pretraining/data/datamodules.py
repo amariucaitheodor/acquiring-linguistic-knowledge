@@ -26,6 +26,12 @@ class FlavaAblationDataModule(LightningDataModule):
         self.name = kwargs['name']
         self.processor = FlavaProcessor.from_pretrained("facebook/flava-full")
 
+        # TODO: debug this tiny model for local training
+        if 'pretrained' in kwargs and kwargs['pretrained'] == "hf-tiny-model-private/tiny-random-FlavaForPreTraining":
+            self.processor.image_processor.size = {"height": 30, "width": 30}
+            self.processor.image_processor.crop_size = {"height": 30, "width": 30}
+            self.processor.image_processor.input_size_patches = 15
+
         self.train_dataset_infos = train_infos
         self.val_dataset_infos = val_infos
         if self.val_dataset_infos is None:

@@ -6,8 +6,6 @@ from transformers import FlavaForPreTraining, FlavaConfig, BertForMaskedLM, Bert
 from transformers.modeling_outputs import MaskedLMOutput
 from transformers.models.flava.modeling_flava import FlavaForPreTrainingOutput
 
-from utils import get_local_ram
-
 
 class FlavaPreTrainingLightningModule(LightningModule):
     def __init__(self,
@@ -20,7 +18,7 @@ class FlavaPreTrainingLightningModule(LightningModule):
                  **kwargs: Any):
         super().__init__()
         if 'pretrained' in kwargs and kwargs['pretrained']:
-            self.model = FlavaForPreTraining.from_pretrained("facebook/flava-full")
+            self.model = FlavaForPreTraining.from_pretrained(kwargs['pretrained'])
         else:
             self.model = FlavaForPreTraining(FlavaConfig(**kwargs))
 
@@ -68,7 +66,7 @@ class BERTPreTrainingLightningModule(LightningModule):
                  **kwargs: Any):
         super().__init__()
         if 'pretrained' in kwargs and kwargs['pretrained']:
-            self.model = BertForMaskedLM.from_pretrained("bert-base-uncased")
+            self.model = BertForMaskedLM.from_pretrained(kwargs['pretrained'])
         else:
             self.model = BertForMaskedLM(BertConfig(**kwargs))
 
@@ -100,8 +98,14 @@ class BERTPreTrainingLightningModule(LightningModule):
                                             self.adam_betas, self.warmup_steps, self.max_steps)
 
 
-def configure_default_optimizers(model: Any, learning_rate, adam_eps, adam_weight_decay,
-                                 adam_betas, warmup_steps, max_steps):
+def configure_default_optimizers(
+        model: torch.nn.Module,
+        learning_rate: float,
+        adam_eps: float,
+        adam_weight_decay: float,
+        adam_betas: Tuple[float, float],
+        warmup_steps: int,
+        max_steps: int):
     optimizer = torch.optim.AdamW(
         model.parameters(),
         lr=learning_rate,

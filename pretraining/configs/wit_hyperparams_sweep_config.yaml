@@ -6,8 +6,8 @@ run_cap: 100
 entity: rycolab
 method: bayes # uses probability of improvement (PI) to select the next hyperparameter configuration
 metric:
-  name: validation/losses/mlm_loss
-  goal: minimize
+  name: evaluation/blimp/average
+  goal: maximize
 command:
   - ${env}
   - python3.10 # makes sure the right interpreter is used on Euler (3.10 req. for BLiMP)

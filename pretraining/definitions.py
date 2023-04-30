@@ -74,7 +74,7 @@ class TrainingArguments:
 
 @dataclass
 class ModelArguments:
-    pretrained: bool = False
+    pretrained: str = None
     name: str = 'flava'
 
 
