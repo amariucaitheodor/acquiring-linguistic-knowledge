@@ -91,7 +91,9 @@ class BERTPreTrainingLightningModule(LightningModule):
         """
         Reuses the same processor as Flava, which shouldn't be a problem...
         """
-        return self.model(input_ids=batch.get("input_ids"), labels=batch.get("mlm_labels"), return_dict=True)
+        return self.model(input_ids=batch.get("input_ids"),
+                          labels=batch.get("mlm_labels"),
+                          return_dict=True)
 
     def configure_optimizers(self):
         return configure_default_optimizers(self.model, self.learning_rate, self.adam_eps, self.adam_weight_decay,

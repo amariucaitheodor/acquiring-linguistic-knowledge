@@ -1,5 +1,4 @@
 import os
-import random
 from typing import List
 
 import datasets
@@ -99,15 +98,19 @@ def initialize_multidatamodule(config: FLAVAArguments) -> MultiDataModule:
         modules.append(mlm_datamodule)
 
     if len(modules) == 3:
-        sampling_weights = [0.75, 0.15, 0.15]
+        sampling_weights = [multimodal_perc, config.vision_perc, config.text_perc]
+        print(f"Dataset sizes (un-normalized): {sampling_weights}")
+        sampling_weights = [float(w) / sum(sampling_weights) for w in sampling_weights]
+        print(f"Dataset sizes (normalized): {sampling_weights}")
+        sampling_weights = [w ** config.datasets.sampling_temperature for w in sampling_weights]
+        print(f"Sampling weights after temperature ({config.datasets.sampling_temperature}): {sampling_weights}")
     else:
         assert len(modules) == 1
         sampling_weights = [1.]
+        print(f"Only one modality, sampling weight will be {sampling_weights}")
 
-    datamodule = MultiDataModule(datamodules=modules,
-                                 # Table A.2 in https://arxiv.org/pdf/2112.04482.pdf
-                                 sampling_func=lambda: random.choices(population=range(len(modules)),
-                                                                      weights=sampling_weights, k=1)[0])
+    # Table A.2 in https://arxiv.org/pdf/2112.04482.pdf
+    datamodule = MultiDataModule(datamodules=modules, sampling_weights=sampling_weights)
     datamodule.setup("fit")
     return datamodule
 
@@ -128,7 +131,7 @@ def update_ckt_dir_and_batch_size(config):
     if "debug" not in ckt_dir:
         if "accumulate_grad_batches" in wandb.config:
             hyperparam_string = f"seed{wandb.config['seed']}-accumulate{wandb.config['accumulate_grad_batches']}-" \
-                                f"lr{wandb.config['learning_rate']}-warmup{wandb.config['warmup_steps']}-name{wandb.config['name']}"
+                                f"lr{wandb.config['learning_rate']}-warmup{wandb.config['warmup_steps']}"
             ckt_dir = ckt_dir.replace('flava-textvision', f'flava-hyperparams-{hyperparam_string}')
             print(f"Hyperparameter sweep detected, changing checkpoint dirpath to {ckt_dir}.")
         else:
@@ -141,9 +144,10 @@ def update_ckt_dir_and_batch_size(config):
             config.training.__setattr__("batch_size", 24)
         elif "flava" in config.model.name:
             if config.training.lightning['precision'] in ["bf16", "16-mixed", "16", 16]:
-                config.training.__setattr__("batch_size", 36) # 15 for 24GB VRAM GPU
+                config.training.__setattr__("batch_size", 15)  # 36 for 40GB VRAM GPU
             else:
-                raise ValueError(f"Unknown batch_size calibration for precision: {config.training.lightning['precision']}.")
+                raise ValueError(
+                    f"Unknown batch_size calibration for precision: {config.training.lightning['precision']}.")
         else:
             raise ValueError(f"Unknown model name {config.model.name}.")
         print(f"Precision is {config.training.lightning['precision']}, setting batch "
@@ -152,7 +156,7 @@ def update_ckt_dir_and_batch_size(config):
 
 def assign_huggingface_ram():
     available_memory_gb = get_local_ram()
-    huggingface_threshold_gib = 100
+    huggingface_threshold_gib = 25
     if available_memory_gb > huggingface_threshold_gib:
         datasets.config.IN_MEMORY_MAX_SIZE = huggingface_threshold_gib * 1_000_000_000
         print(

@@ -11,7 +11,7 @@ lm_eval = importlib.import_module(name="lm_eval", package="lm-evaluation-harness
 from lm_eval.api import utils
 from lm_eval.models.huggingface import AutoMaskedLM
 from tqdm import tqdm
-from transformers import BertTokenizer, BertForMaskedLM
+from transformers import BertForMaskedLM, BertTokenizerFast
 from typing import List, Optional, Tuple, Union
 
 
@@ -32,7 +32,7 @@ class BertLM(AutoMaskedLM):
         self._max_length = max_length
 
         self._add_special_tokens = add_special_tokens
-        self.tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+        self.tokenizer = BertTokenizerFast.from_pretrained("bert-base-uncased")
         self.tokenizer.model_max_length = self.max_length
 
         self.model = model
@@ -57,7 +57,7 @@ class BertLM(AutoMaskedLM):
 
             indices = list(chain.from_iterable([list(range(o, o + n)) for n, o in zip(lengths, offsets)]))
 
-            with torch.no_grad():
+            with torch.inference_mode():
                 output: MaskedLMOutput = self.model(input_ids=token_ids, attention_mask=attention_masks)
                 logits = output.logits.detach()[torch.arange(sum(lengths)), indices]
 

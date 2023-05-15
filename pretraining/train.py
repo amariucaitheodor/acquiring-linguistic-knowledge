@@ -4,7 +4,9 @@ from pytorch_lightning import seed_everything, Trainer
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 
-from callbacks.blimp_eval import BlimpEvalCallback
+from callbacks.blimp_eval import LMEvalHarnessCallback
+from callbacks.multimodal_overfitting_monitor import MultimodalOverfittingMonitor
+from callbacks.pseudo_perplexity_eval import PseudoPerplexityCallback
 from definitions import FLAVAArguments
 from model import BERTPreTrainingLightningModule, FlavaPreTrainingLightningModule
 from utils import build_config, update_ckt_dir_and_batch_size, assign_huggingface_ram, \
@@ -17,6 +19,7 @@ def main():
     if config.training.use_wandb:
         wandb_logger = WandbLogger(
             project=f'flava-textvision-multimodal-{config.datasets.ablation.train[0].key.split("/")[-1]}',
+            resume=False,
             log_model="all",  # checkpoints are logged during training
             tags=[config.model.pretrained if config.model.pretrained else "scratch"],
             magic=True,
@@ -25,10 +28,21 @@ def main():
             entity='rycolab'
         )
 
+        # IMPORTANT KNOB!
+        overwrite_config(struct=config, params=["text_perc", "vision_perc"])
+        if config.text_perc >= config.vision_perc:
+            print(f"Text is the predominant modality ({config.text_perc} v.s. {config.vision_perc} vision), "
+                  f"will sample proportionally for optimal BLiMP performance.")
+            config.datasets.sampling_temperature = 1.
+        else:
+            print(f"Text isn't the predominant modality ({config.text_perc} v.s. {config.vision_perc} vision), "
+                  f"will over-sample text (uniform rates) for better BLiMP performance.")
+            config.datasets.sampling_temperature = 0.
+
         # Overwriting needs to be called after wandb.init()
         overwrite_config(struct=config.training.lightning, params=["accumulate_grad_batches"])
         overwrite_config(struct=config.training, params=["learning_rate", "warmup_steps", "seed"])
-        overwrite_config(struct=config, params=["text_perc", "vision_perc"])
+        overwrite_config(struct=config.datasets, params=["sampling_temperature"])
         update_ckt_dir_and_batch_size(config)
 
         wandb.run.tags += (f"{config.text_perc}% text",)
@@ -49,8 +63,11 @@ def main():
     else:
         raise ValueError(f"Unknown model name: {config.model.name}")
 
-    print("Registering callbacks")
-    callbacks = [LearningRateMonitor(logging_interval="step"), BlimpEvalCallback()]
+    print("Registering basic callbacks")
+    callbacks = [LearningRateMonitor(logging_interval="step"),
+                 LMEvalHarnessCallback(),
+                 PseudoPerplexityCallback(key=config.datasets.ablation.val[0].key,
+                                          limit_val_batches=config.training.lightning['limit_val_batches'])]
 
     if config.training.lightning_checkpoint is not None:
         callbacks.append(
@@ -58,6 +75,26 @@ def main():
                 **OmegaConf.to_container(config.training.lightning_checkpoint)
             )
         )
+
+    if config.text_perc + config.vision_perc > 0:
+        print("Initializing multidatamodule")
+        datamodule = initialize_multidatamodule(config)
+
+        print("Registering multimodal callbacks (overfitting monitors)")
+
+        def add_monitor(name: str):
+            nonlocal callbacks
+            callbacks.append(MultimodalOverfittingMonitor(monitor=f'validation/losses/{name}', datamodule=datamodule,
+                                                          patience=2, verbose=True, strict=False))
+
+        if config.text_perc > 0:
+            add_monitor(name="mlm_loss")
+        if config.vision_perc > 0:
+            add_monitor(name="mim_loss")
+        if config.text_perc > 0 and config.vision_perc > 0:
+            for val_loss in ["itm_loss", "global_contrastive_loss", "mmm_image_loss", "mmm_text_loss"]:
+                add_monitor(name=val_loss)
+
     print(f"Callbacks registered: {callbacks}")
 
     if config.training.use_wandb:
@@ -71,14 +108,15 @@ def main():
     )
 
     if config.text_perc + config.vision_perc > 0:
-        print("Initializing multidatamodule")
-        datamodule = initialize_multidatamodule(config)
-
         print("Starting training")
         trainer.fit(model, datamodule=datamodule, ckpt_path=config.training.lightning_load_from_checkpoint)
+    else:
+        # A datamodule MUST be passed for the trainer.validate() method to work. Validation loss is irrelevant.
+        config.text_perc = 1
+        datamodule = initialize_multidatamodule(config)
 
     print("Starting validation")
-    trainer.validate(model)
+    trainer.validate(model, datamodule=datamodule)
 
     if config.training.use_wandb:
         wandb.finish()  # [optional] finish the wandb run, necessary in notebooks

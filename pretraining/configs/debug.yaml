@@ -14,13 +14,13 @@ training:
     precision: 16-mixed # 'bf16' not supported on either local or Euler GPU
     accumulate_grad_batches: 1
     num_sanity_val_steps: 0
-#    strategy: ddp_find_unused_parameters_true # ddp for BERT
+    strategy: ddp_find_unused_parameters_true # ddp for BERT
     enable_progress_bar: true
   lightning_checkpoint:
     dirpath: "./pretraining-debug"
     filename: pretraining-{epoch:02d}-{step}
     save_last: true
-    every_n_train_steps: 40000 # otherwise it occupies too much disk space
+    every_n_train_steps: 15000 # otherwise it occupies too much disk space
     save_on_train_epoch_end: true
     verbose: true
   lightning_load_from_checkpoint: null
@@ -36,14 +36,6 @@ training:
 
 datasets:
   _target_: pretraining.definitions.TrainingDatasetsInfo
-  imagenet: # not used anymore, had to be a version of ImageNet-1k
-    _target_: pretraining.definitions.TrainingSingleDatasetInfo
-    train:
-      - _target_: pretraining.definitions.HFDatasetInfo
-        key: theodor1289/imagenet-1k_tiny # has 2 columns: ['image', 'label']
-        split_key_mapping:
-          train: train
-          validation: train # 'validation' split does not exist for this 'mini' version, but it makes no difference
   ablation:
     # For VLDataModule, column "image" either needs to have an image (not the case for "facebook/pmd", "wit"), or be missing
     _target_: pretraining.definitions.TrainingSingleDatasetInfo
@@ -61,5 +53,4 @@ datasets:
       text_columns: [ "text" ]
 
 model:
-  pretrained: "hf-tiny-model-private/tiny-random-FlavaForPreTraining"
   name: flava

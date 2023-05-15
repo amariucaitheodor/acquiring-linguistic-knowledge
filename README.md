@@ -7,28 +7,21 @@ Master's thesis of Theodor Amariucai, supervised by Alexander Warstadt and Prof.
 ### Project sections
 
 1. [Text-vision pre-training](./pretraining/README.md) works directly through [HuggingFace](https://huggingface.co/)
-   and [WaB](https://wandb.ai/) for a smooth experience.
+   and [WaB](https://wandb.ai/).
+
+- Log in with *HuggingFace*: `huggingface-cli login`
+- Log in with *Weights and Biases*: `wandb login`
 
 ```shell
-python -m venv .venv/acquiring-linguistic-knowledge
-source .venv/acquiring-linguistic-knowledge/bin/activate
-pip install -r requirements.txt
+poetry build
+poetry install
+poetry shell
 
-cd lm-evaluation-harness
+cd pretraining/callbacks/lm-evaluation-harness
 pip install -e ".[dev]"
 
-# Manually change FLAVA source code:
-nano /cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/.venv/acquiring-linguistic-knowledge/lib64/python3.10/site-packages/transformers/models/flava/modeling_flava.py
-# Rename all_gather_with_backprop to all_gather (https://github.com/huggingface/transformers/issues/23047)
-
-# For model.compile, also add the below changes to avoid RuntimeError: a leaf Variable that requires grad is being used in an in-place operation.:
-#    with torch.no_grad():
-#        mlm_labels_filtered = mlm_labels[masked_tokens]
-#    with torch.no_grad():
-#        sequence_for_image = sequence_for_image[:, -mim_labels.size(1) :, :]
-#        mim_labels_filtered = mim_labels[masked_tokens]
-#        sequence_for_image = sequence_for_image[masked_tokens, :]
-
+# Test run:
+PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512 python -m train config=configs/debug.yaml
 
 ```
 
@@ -40,18 +33,12 @@ nano /cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/.venv/acq
 
 Note: [BLiMP evaluation](./lm-evaluation-harness/README.md) requires >=`python3.9`.
 
-- To start a test run:
-
-```python3
-PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512 python train.py config=configs/debug.yaml
-```
-
 - For sweeps with WandB on the WiT configuration, run e.g.:
 
-```bash
+```shell
 cd examples
 wandb sweep configs/wit_sweep_config.yaml
-# now run sweep agent according to instructions
+bash run_sweep_on_cluster.sh NR_AGENTS SWEEP_ID
 ```
 
 - To connect to the Euler compute node, first ssh into the login node then run e.g.:
@@ -64,15 +51,14 @@ srun --time=4:00:00 \
     --nodes=1 \
     --ntasks-per-node=1 \
     --cpus-per-task=2 \
-    --tmp=400G \
-    --mem-per-cpu=77000 \
+    --mem-per-cpu=30000 \
     --gpus=1 \
-    --gres=gpumem:40g \
+    --gres=gpumem:20g \
     --pty \
     --preserve-env \
     $SHELL
 # Processing node
-srun --time=24:00:00 --tmp=650G --ntasks=1 --mem-per-cpu=256000 --nodes=1 --pty --preserve-env $SHELL
+srun --time=24:00:00 --ntasks=1 --mem-per-cpu=256000 --nodes=1 --pty --preserve-env $SHELL
 ```
 
 - If *WandB* isn't syncing, try running the following **on the compute node**:
@@ -88,12 +74,13 @@ pip install wandb --upgrade
 ```bash
 env2lmod
 module load eth_proxy gcc/8.2.0 python_gpu/3.10.4
-source /cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/.venv/acquiring-linguistic-knowledge/bin/activate
 export HF_DATASETS_CACHE="/cluster/scratch/tamariucai/HuggingfaceDatasets"
 export HF_HOME="/cluster/work/cotterell/tamariucai/HuggingfaceHome"
 export WANDB_CACHE_DIR="/cluster/scratch/tamariucai/WandbCache"
-export PYTHONPATH=/cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/:/cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/lm-evaluation-harness
+export WANDB_DIR="/cluster/work/cotterell/tamariucai/WandbDir"
+export PYTHONPATH=/cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/:/cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/pretraining/callbacks/lm-evaluation-harness
 cd /cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/pretraining/
+poetry shell
 ```
 
 ### Submodules

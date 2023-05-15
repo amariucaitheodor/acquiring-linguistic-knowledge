@@ -1,7 +1,8 @@
 _target_: pretraining.definitions.FLAVAArguments
 
-text_perc: 100
-vision_perc: 100
+# manageable default training data size (e.g. for hyper-parameter sweeps)
+text_perc: 10
+vision_perc: 10
 
 training:
   _target_: pretraining.definitions.TrainingArguments
@@ -10,17 +11,17 @@ training:
     accelerator: 'gpu'
     devices: 1 # -1 for all GPUs (if using more GPUs)
     val_check_interval: 8000
-    limit_val_batches: 1000 # REQUIRED, otherwise the validation loop doesn't terminate
+    limit_val_batches: 2000 # REQUIRED, otherwise the validation loop doesn't terminate
     precision: 16-mixed # 'bf16' not supported on either local or Euler GPU
-    accumulate_grad_batches: 1
+    accumulate_grad_batches: 64
     num_sanity_val_steps: 0
-#    strategy: ddp_find_unused_parameters_true # ddp for BERT
+    strategy: ddp_find_unused_parameters_true # ddp for BERT
     enable_progress_bar: false
   lightning_checkpoint:
     dirpath: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/flava-textvision/"
     filename: flava-{epoch:02d}-{step}
     save_last: true
-    every_n_train_steps: 40000 # otherwise it occupies too much disk space
+    every_n_train_steps: 15000 # otherwise it occupies too much disk space
     save_on_train_epoch_end: true
     verbose: true
   lightning_load_from_checkpoint: null
@@ -36,12 +37,6 @@ training:
 
 datasets:
   _target_: pretraining.definitions.TrainingDatasetsInfo
-  imagenet: # not used anymore, had to be a version of ImageNet-1k
-    _target_: pretraining.definitions.TrainingSingleDatasetInfo
-    train:
-      - _target_: pretraining.definitions.HFDatasetInfo
-        key: imagenet-1k # has 2 columns: ['image', 'label']
-        subset: default
   ablation:
     # For VLDataModule, column "image" either needs to have an image (not the case for "facebook/pmd", "wit"), or be missing
     _target_: pretraining.definitions.TrainingSingleDatasetInfo

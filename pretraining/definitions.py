@@ -50,7 +50,7 @@ class TrainingSingleDatasetInfo:
 @dataclass
 class TrainingDatasetsInfo:
     selected: List[str] = field(default_factory=lambda: ["ablation"])
-    imagenet: Optional[TrainingSingleDatasetInfo] = None
+    sampling_temperature: float = 1.0  # sampling proportional to the dataset sizes (by default)
     ablation: Optional[TrainingSingleDatasetInfo] = None
     num_classes: int = MISSING
 

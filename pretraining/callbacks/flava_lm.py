@@ -60,7 +60,7 @@ class FlavaLM(AutoMaskedLM):
 
             indices = list(chain.from_iterable([list(range(o, o + n)) for n, o in zip(lengths, offsets)]))
 
-            with torch.no_grad():
+            with torch.inference_mode():
                 flava_output: FlavaForPreTrainingOutput = self.model(input_ids_masked=token_ids,
                                                                      attention_mask=attention_masks)
                 logits = flava_output.mlm_logits.detach()[torch.arange(sum(lengths)), indices]

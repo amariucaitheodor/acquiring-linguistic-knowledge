@@ -156,14 +156,22 @@ class MultiDataModule(LightningDataModule):
     # NOTE: Add rest of the functions that should be called on child datamodules
     # as required
     def __init__(
-        self,
-        datamodules: List[LightningDataModule],
-        sampling_func: Optional[Callable] = None,
+            self,
+            datamodules: List[LightningDataModule],
+            sampling_weights: List[float],
     ):
         super().__init__()
         self.datamodules = datamodules
-        self.sampling_func = sampling_func
+        # Table A.2 in https://arxiv.org/pdf/2112.04482.pdf
+        self.sampling_weights = sampling_weights
+        self.sampling_func = None
+        self.update_sampling_function_and_weights(sampling_weights)
         self.current_datamodule_idx = 0
+
+    def update_sampling_function_and_weights(self, sampling_weights: List[float]):
+        self.sampling_weights = sampling_weights
+        self.sampling_func = lambda: random.choices(population=range(len(sampling_weights)),
+                                                    weights=sampling_weights, k=1)[0]
 
     def setup(self, stage=None):
         for datamodule in self.datamodules:

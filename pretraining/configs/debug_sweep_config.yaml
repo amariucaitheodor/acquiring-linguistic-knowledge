@@ -16,8 +16,9 @@ command:
   - config=configs/debug.yaml
 early_terminate:
   type: hyperband
-  max_iter: 27
-  s: 2
+  max_iter: 32
+  s: 4
+  eta: 2
 parameters:
   accumulate_grad_batches:
     distribution: categorical

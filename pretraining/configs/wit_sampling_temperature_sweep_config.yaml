@@ -1,6 +1,6 @@
 program: train.py
-name: flava-textvision-wit-hyperparameters
-description: Hyperparameter sweep search for FLAVA (text-vision) on the WiT dataset.
+name: flava-textvision-wit-sampling_temperature
+description: Sweep search to find the best datamodule sampling temperature for FLAVA (text-vision) on the WiT dataset.
 project: flava-textvision-multimodal-wit
 run_cap: 100
 entity: rycolab
@@ -20,15 +20,13 @@ early_terminate: # We do want to early_terminate here because we're interested i
   s: 4
   eta: 2
 parameters:
-  accumulate_grad_batches:
+  sampling_temperature:
+    distribution: uniform
+    min: 0.0
+    max: 1.0
+  text_perc:
     distribution: categorical
-    values: [ 1, 8, 16, 32 ]
-  warmup_steps:
+    values: [ 1 ]
+  vision_perc:
     distribution: categorical
-    values: [ 2000, 10000 ]
-  learning_rate:
-    distribution: categorical
-    values: [ 0.0001, 0.0002, 0.0004 ]
-  seed:
-    distribution: categorical
-    values: [ 1472111, 2550093, 5501650, 1930309, 7865220, 5974287, 7203693, 887373, 814622, 100000 ]
+    values: [ 100 ]

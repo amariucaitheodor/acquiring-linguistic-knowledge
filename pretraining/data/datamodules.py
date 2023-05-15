@@ -26,12 +26,6 @@ class FlavaAblationDataModule(LightningDataModule):
         self.name = kwargs['name']
         self.processor = FlavaProcessor.from_pretrained("facebook/flava-full")
 
-        # TODO: debug this tiny model for local training
-        if 'pretrained' in kwargs and kwargs['pretrained'] == "hf-tiny-model-private/tiny-random-FlavaForPreTraining":
-            self.processor.image_processor.size = {"height": 30, "width": 30}
-            self.processor.image_processor.crop_size = {"height": 30, "width": 30}
-            self.processor.image_processor.input_size_patches = 15
-
         self.train_dataset_infos = train_infos
         self.val_dataset_infos = val_infos
         if self.val_dataset_infos is None:
@@ -79,16 +73,6 @@ class FlavaAblationDataModule(LightningDataModule):
             return_token_type_ids=True,
             return_special_tokens_mask=True,
         )
-
-
-class ImagenetEvalDataModule(FlavaAblationDataModule):
-
-    def test_dataloader(self):
-        return self.val_dataloader()
-
-    def _build_collator(self, inputs: List[Dict[str, Any]]):
-        # for imagenet eval we don't need to use the processor
-        return inputs
 
 
 class ImageDataModule(FlavaAblationDataModule):
@@ -236,4 +220,5 @@ class VLDataModule(FlavaAblationDataModule):
             inputs=batch["input_ids"].detach().clone(),
             special_tokens_mask=batch.pop("special_tokens_mask", None)
         )
+        batch["itm_labels"] = torch.tensor([i["itm_labels"] for i in inputs])
         return batch

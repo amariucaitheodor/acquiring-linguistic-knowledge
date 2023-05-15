@@ -1,5 +1,6 @@
-export TORCH_HOME=/mnt/d/torch
-export HF_DATASETS_CACHE="/mnt/d/HuggingfaceDatasets/"
-export PYTHONPATH=/mnt/c/Files/Programming/acquiring-linguistic-knowledge/:/mnt/c/Files/Programming/acquiring-linguistic-knowledge/lm-evaluation-harness
-source /home/theodor/.virtualenvs/acquiring-linguistic-knowledge/bin/activate
+MOUNT="/media/theodor/6b23e04a-c08b-4752-a60d-ec8113e80ac0"
+export TORCH_HOME="$MOUNT/torch"
+export HF_DATASETS_CACHE="$MOUNT/HuggingfaceDatasets/"
+export PYTHONPATH=/mnt/c/Files/Programming/acquiring-linguistic-knowledge/:/mnt/c/Files/Programming/acquiring-linguistic-knowledge/pretraining/callbacks/lm-evaluation-harness
+poetry shell
 cd ./pretraining/
