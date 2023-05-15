@@ -5,7 +5,7 @@ import torch
 from datasets import load_dataset
 from pytorch_lightning import Callback
 from tqdm import tqdm
-from transformers import BertTokenizerFast, BertForMaskedLM, FlavaForPreTraining, RobertaForMaskedLM
+from transformers import BertForMaskedLM, FlavaForPreTraining, RobertaForMaskedLM, FlavaProcessor
 
 from data.utils import collapse_wit_text, WIT_ALT_TEXT_COLUMNS
 
@@ -24,7 +24,7 @@ class PseudoPerplexityCallback(Callback):
             remove_columns=WIT_ALT_TEXT_COLUMNS
         )
         self.limit_val_batches = limit_val_batches
-        self.tokenizer = BertTokenizerFast.from_pretrained("bert-base-uncased")
+        self.tokenizer = FlavaProcessor.from_pretrained("facebook/flava-full").tokenizer
 
     @torch.no_grad()
     def on_validation_start(self, trainer, pl_module) -> None:
@@ -49,7 +49,7 @@ class PseudoPerplexityCallback(Callback):
             repeat_input = tensor_input.repeat(tensor_input.size(-1) - 2, 1)
             mask = torch.ones(tensor_input.size(-1) - 1).diag(1)[:-2]
             masked_input = repeat_input.masked_fill(mask == 1, self.tokenizer.mask_token_id)
-            labels = repeat_input.masked_fill(masked_input != self.tokenizer.mask_token_id, -1)
+            labels = repeat_input.masked_fill(masked_input != self.tokenizer.mask_token_id, -100)
             with torch.inference_mode():
                 if type(pl_module.model) in [BertForMaskedLM, RobertaForMaskedLM]:
                     mlm_loss = pl_module.model(input_ids=masked_input.to("cuda:0"),
@@ -59,7 +59,7 @@ class PseudoPerplexityCallback(Callback):
                     mlm_loss = pl_module.model(input_ids_masked=masked_input.to("cuda:0"),
                                                mlm_labels=labels.to("cuda:0"),
                                                return_dict=True,
-                                               return_loss=True).losses.mlm_loss
+                                               return_loss=True).loss_info.mlm
                 else:
                     raise ValueError(f"Model {type(pl_module.model)} not supported for pseudo-perplexity evaluation")
             avg_mlm_loss += mlm_loss.item()

@@ -41,11 +41,9 @@ class FlavaPreTrainingLightningModule(LightningModule):
     def validation_step(self, batch, batch_idx):
         output = self._step(batch)
         losses = output.loss_info
-        total_loss = 0
         for key in losses:
-            total_loss += losses[key]
             self.log(f"validation/losses/{key}_loss", losses[key], prog_bar=True, logger=True, sync_dist=True)
-        return total_loss
+        return output.loss  # total loss
 
     def _step(self, batch) -> FlavaForPreTrainingOutput:
         return self.model(**batch, skip_unmasked_multimodal_encoder=True, return_loss=True)

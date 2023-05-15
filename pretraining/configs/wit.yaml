@@ -1,8 +1,7 @@
 _target_: pretraining.definitions.FLAVAArguments
 
-# manageable default training data size (e.g. for hyper-parameter sweeps)
-text_perc: 10
-vision_perc: 10
+text_perc: 100
+vision_perc: 100
 
 training:
   _target_: pretraining.definitions.TrainingArguments
@@ -55,4 +54,5 @@ datasets:
 
 model:
   _target_: pretraining.definitions.ModelArguments
+  pretrained: null
   name: flava

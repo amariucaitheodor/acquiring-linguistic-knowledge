@@ -28,18 +28,10 @@ def main():
             entity='rycolab'
         )
 
-        # IMPORTANT KNOB!
-        overwrite_config(struct=config, params=["text_perc", "vision_perc"])
-        if config.text_perc >= config.vision_perc:
-            print(f"Text is the predominant modality ({config.text_perc} v.s. {config.vision_perc} vision), "
-                  f"will sample proportionally for optimal BLiMP performance.")
-            config.datasets.sampling_temperature = 1.
-        else:
-            print(f"Text isn't the predominant modality ({config.text_perc} v.s. {config.vision_perc} vision), "
-                  f"will over-sample text (uniform rates) for better BLiMP performance.")
-            config.datasets.sampling_temperature = 0.
+        wandb.init(**wandb_logger._wandb_init)
 
         # Overwriting needs to be called after wandb.init()
+        overwrite_config(struct=config, params=["text_perc", "vision_perc"])
         overwrite_config(struct=config.training.lightning, params=["accumulate_grad_batches"])
         overwrite_config(struct=config.training, params=["learning_rate", "warmup_steps", "seed"])
         overwrite_config(struct=config.datasets, params=["sampling_temperature"])
@@ -51,6 +43,16 @@ def main():
 
     if config.training.seed != -1:
         seed_everything(config.training.seed, workers=True)
+
+    # IMPORTANT KNOB!
+    if config.text_perc >= config.vision_perc:
+        print(f"Text is the predominant modality ({config.text_perc} v.s. {config.vision_perc} vision), "
+              f"will sample proportionally for optimal BLiMP performance.")
+        config.datasets.sampling_temperature = 1.
+    else:
+        print(f"Text isn't the predominant modality ({config.text_perc} v.s. {config.vision_perc} vision), "
+              f"will over-sample text (uniform rates) for better BLiMP performance.")
+        config.datasets.sampling_temperature = 0.
 
     print("Assigning HuggingFace RAM")
     assign_huggingface_ram()

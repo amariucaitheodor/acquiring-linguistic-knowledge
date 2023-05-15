@@ -50,8 +50,8 @@ srun --interactive --jobid JOBID --pty bash
 srun --time=4:00:00 \
     --nodes=1 \
     --ntasks-per-node=1 \
-    --cpus-per-task=2 \
-    --mem-per-cpu=30000 \
+    --cpus-per-task=4 \
+    --mem-per-cpu=15000 \
     --gpus=1 \
     --gres=gpumem:20g \
     --pty \

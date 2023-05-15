@@ -53,4 +53,6 @@ datasets:
       text_columns: [ "text" ]
 
 model:
+  _target_: pretraining.definitions.ModelArguments
+  pretrained: null
   name: flava
