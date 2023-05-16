@@ -9,9 +9,9 @@ CPU_RAM=15000  # RAM for each core (default: 1024)
 # Load modules (might want to run 'env2lmod' prior to this)
 module load eth_proxy gcc/8.2.0 python_gpu/3.10.4
 
+# --mail-type=END,FAIL uncomment to get email notifications
 # Submit job
-sbatch --mail-type=END,FAIL \
-  --job-name="multimodal" \
+sbatch --job-name="multimodal" \
   --time=$TIME \
   --nodes=1 \
   --ntasks-per-node=1 \

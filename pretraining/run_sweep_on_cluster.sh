@@ -11,11 +11,11 @@ module load eth_proxy gcc/8.2.0 python_gpu/3.10.4
 
 echo "Number of agents: $1, sweep name: $2"
 
+# --mail-type=END,FAIL uncomment to get email notifications
 # Submit job
 for ((i = 1; i <= $1; i++)); do
   NR=$i
-  sbatch --mail-type=END,FAIL \
-    --job-name="multimodal" \
+  sbatch --job-name="multimodal" \
     --time=$TIME \
     --nodes=1 \
     --ntasks-per-node=1 \

@@ -9,26 +9,12 @@ from transformers.models.flava.modeling_flava import FlavaForPreTrainingOutput
 
 
 class FlavaPreTrainingLightningModule(LightningModule):
-    def __init__(self,
-                 learning_rate: float = 0.0002,
-                 adam_eps: float = 1.0e-08,
-                 adam_weight_decay: float = 0.01,
-                 adam_betas: Tuple[float, float] = (0.9, 0.999),
-                 warmup_steps: int = 2000,
-                 max_steps: int = 450000,
-                 **kwargs: Any):
+    def __init__(self, **kwargs: Any):
         super().__init__()
         if 'pretrained' in kwargs and kwargs['pretrained']:
             self.model = FlavaForPreTraining.from_pretrained(kwargs['pretrained'])
         else:
             self.model = FlavaForPreTraining(FlavaConfig(**kwargs))
-
-        self.learning_rate = learning_rate
-        self.adam_eps = adam_eps
-        self.adam_betas = adam_betas
-        self.adam_weight_decay = adam_weight_decay
-        self.warmup_steps = warmup_steps
-        self.max_steps = max_steps
 
     def training_step(self, batch, batch_idx):
         output = self._step(batch)
@@ -50,31 +36,24 @@ class FlavaPreTrainingLightningModule(LightningModule):
         return self.model(**batch, skip_unmasked_multimodal_encoder=True, return_loss=True)
 
     def configure_optimizers(self):
-        return configure_default_optimizers(self.model, self.learning_rate, self.adam_eps, self.adam_weight_decay,
-                                            self.adam_betas, self.warmup_steps, self.max_steps)
+        return configure_default_optimizers(
+            self.model,
+            learning_rate=2e-4,
+            adam_eps=1e-8,
+            adam_weight_decay=1e-2,
+            adam_betas=(0.9, 0.999),
+            warmup_steps=2000,
+            max_steps=450000,
+        )
 
 
 class BERTPreTrainingLightningModule(LightningModule):
-    def __init__(self,
-                 learning_rate: float = 0.0002,
-                 adam_eps: float = 1.0e-08,
-                 adam_weight_decay: float = 0.01,
-                 adam_betas: Tuple[float, float] = (0.9, 0.999),
-                 warmup_steps: int = 2000,
-                 max_steps: int = 450000,
-                 **kwargs: Any):
+    def __init__(self, **kwargs: Any):
         super().__init__()
         if 'pretrained' in kwargs and kwargs['pretrained']:
             self.model = BertForMaskedLM.from_pretrained(kwargs['pretrained'])
         else:
             self.model = BertForMaskedLM(BertConfig(**kwargs))
-
-        self.learning_rate = learning_rate
-        self.adam_eps = adam_eps
-        self.adam_betas = adam_betas
-        self.adam_weight_decay = adam_weight_decay
-        self.warmup_steps = warmup_steps
-        self.max_steps = max_steps
 
     def training_step(self, batch, batch_idx):
         output = self._step(batch)
@@ -95,8 +74,15 @@ class BERTPreTrainingLightningModule(LightningModule):
                           return_dict=True)
 
     def configure_optimizers(self):
-        return configure_default_optimizers(self.model, self.learning_rate, self.adam_eps, self.adam_weight_decay,
-                                            self.adam_betas, self.warmup_steps, self.max_steps)
+        return configure_default_optimizers(
+            self.model,
+            learning_rate=2e-4,
+            adam_eps=1e-8,
+            adam_weight_decay=1e-2,
+            adam_betas=(0.9, 0.999),
+            warmup_steps=2000,
+            max_steps=450000,
+        )
 
 
 class RobertaPreTrainingLightningModule(LightningModule):
@@ -129,9 +115,15 @@ class RobertaPreTrainingLightningModule(LightningModule):
                           return_dict=True)
 
     def configure_optimizers(self):
-        optimizer = torch.optim.AdamW(self.model.parameters(), lr=1e-5, weight_decay=0.01)
-        lr_scheduler = get_constant_schedule_with_warmup(optimizer, 100)
-        return [optimizer], [lr_scheduler]
+        return configure_default_optimizers(
+            self.model,
+            learning_rate=2e-4,
+            adam_eps=1e-8,
+            adam_weight_decay=1e-2,
+            adam_betas=(0.9, 0.999),
+            warmup_steps=2000,
+            max_steps=450000,
+        )
 
 
 def configure_default_optimizers(
