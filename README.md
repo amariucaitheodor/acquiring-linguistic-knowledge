@@ -36,7 +36,7 @@ Note: [BLiMP evaluation](./lm-evaluation-harness/README.md) requires >=`python3.
 - For sweeps with WandB on the WiT configuration, run e.g.:
 
 ```shell
-cd examples
+cd pretraining
 wandb sweep configs/wit_sweep_config.yaml
 bash run_sweep_on_cluster.sh NR_AGENTS SWEEP_ID
 ```
@@ -74,6 +74,7 @@ pip install wandb --upgrade
 ```bash
 env2lmod
 module load eth_proxy gcc/8.2.0 python_gpu/3.10.4
+export PATH="$HOME/.local/bin:$PATH"
 export HF_DATASETS_CACHE="/cluster/scratch/tamariucai/HuggingfaceDatasets"
 export HF_HOME="/cluster/work/cotterell/tamariucai/HuggingfaceHome"
 export WANDB_CACHE_DIR="/cluster/scratch/tamariucai/WandbCache"

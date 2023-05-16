@@ -18,7 +18,7 @@ def main():
 
     if config.training.use_wandb:
         wandb_logger = WandbLogger(
-            project=f'flava-textvision-multimodal-{config.datasets.ablation.train[0].key.split("/")[-1]}',
+            project=f'multimodal-{config.datasets.ablation.train[0].key.split("/")[-1]}',
             resume=False,
             log_model="all",  # checkpoints are logged during training
             tags=[config.model.pretrained if config.model.pretrained else "scratch"],

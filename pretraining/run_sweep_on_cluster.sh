@@ -9,10 +9,11 @@ CPU_RAM=15000  # RAM for each core (default: 1024)
 # Load modules (might want to run 'env2lmod' prior to this)
 module load eth_proxy gcc/8.2.0 python_gpu/3.10.4
 
-echo "Number of agents: $1, sweep ID: $2"
+echo "Number of agents: $1, sweep name: $2"
 
 # Submit job
 for ((i = 1; i <= $1; i++)); do
+  NR=$i
   sbatch --mail-type=END,FAIL \
     --job-name="multimodal" \
     --time=$TIME \
@@ -23,6 +24,6 @@ for ((i = 1; i <= $1; i++)); do
     --mem-per-cpu=$CPU_RAM \
     --gpus=$NUM_GPUS \
     --gres=gpumem:20g \
-    -o "wit_sweep_run_$(i)_$(date "+%F-%T").results" \
-    --wrap="WANDB__SERVICE_WAIT=300 NUMEXPR_MAX_THREADS=64 PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512 wandb agent rycolab/flava-textvision-multimodal-wit/$2"
+    -o "wit_sweep_run_${NR}_$(date "+%F-%T").results" \
+    --wrap="WANDB__SERVICE_WAIT=300 NUMEXPR_MAX_THREADS=64 PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512 wandb agent $2"
 done

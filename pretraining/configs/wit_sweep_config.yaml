@@ -1,7 +1,7 @@
 program: train.py
 name: flava-textvision-wit
 description: FLAVA (text-vision) sweep run on the WiT dataset for the final ablation study.
-project: flava-textvision-multimodal-wit
+project: multimodal-wit
 run_cap: 200
 entity: rycolab
 method: grid

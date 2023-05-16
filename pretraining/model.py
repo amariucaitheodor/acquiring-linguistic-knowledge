@@ -105,7 +105,13 @@ class RobertaPreTrainingLightningModule(LightningModule):
         if 'pretrained' in kwargs and kwargs['pretrained']:
             self.model = RobertaForMaskedLM.from_pretrained(kwargs['pretrained'])
         else:
-            self.model = RobertaForMaskedLM(RobertaConfig(**kwargs, vocab_size=50265))
+            # the official configuration sets the wrong values...
+            self.model = RobertaForMaskedLM(RobertaConfig(**kwargs,
+                                                          vocab_size=50265,
+                                                          max_position_embeddings=514,
+                                                          layer_norm_eps=1e-05,
+                                                          type_vocab_size=1,
+                                                          ))
 
     def training_step(self, batch, batch_idx):
         output = self._step(batch)
