@@ -151,20 +151,6 @@ def update_ckt_dir_and_batch_size(config):
             print(f"Real run, changing checkpoint dirpath to {ckt_dir}.")
         config.training.lightning_checkpoint.__setattr__("dirpath", ckt_dir)
 
-        # This is a hack to make sure we use compute node memory to its fullest.
-        if config.model.name in ["bert", "roberta"]:
-            config.training.__setattr__("batch_size", 24)
-        elif "flava" in config.model.name:
-            if config.training.lightning['precision'] in ["bf16", "16-mixed", "16", 16]:
-                config.training.__setattr__("batch_size", 15)  # 36 for 40GB VRAM GPU
-            else:
-                raise ValueError(
-                    f"Unknown batch_size calibration for precision: {config.training.lightning['precision']}.")
-        else:
-            raise ValueError(f"Unknown model name {config.model.name}.")
-        print(f"Precision is {config.training.lightning['precision']}, setting batch "
-              f"size to {config.training['batch_size']}.")
-
 
 def assign_huggingface_ram():
     available_memory_gb = get_local_ram()

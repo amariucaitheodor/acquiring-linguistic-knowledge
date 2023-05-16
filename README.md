@@ -58,7 +58,7 @@ srun --time=4:00:00 \
     --preserve-env \
     $SHELL
 # Processing node
-srun --time=24:00:00 --ntasks=1 --mem-per-cpu=256000 --nodes=1 --pty --preserve-env $SHELL
+srun --time=24:00:00 --ntasks-per-node=1 --cpus-per-task=16 --mem-per-cpu=16000 --nodes=1 --pty --preserve-env $SHELL
 ```
 
 - If *WandB* isn't syncing, try running the following **on the compute node**:
