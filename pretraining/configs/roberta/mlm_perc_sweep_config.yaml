@@ -1,0 +1,25 @@
+program: train.py
+name: roberta-text-wit-hyperparameters
+description: Hyperparameter sweep search for RoBERTa (text-vision) on the WiT dataset.
+project: roberta-text-multimodal-wit
+run_cap: 100
+entity: rycolab
+method: bayes # uses probability of improvement (PI) to select the next hyperparameter configuration
+metric:
+  name: evaluation/pseudo_perplexity
+  goal: minimize
+command:
+  - ${env}
+  - ${interpreter} # makes sure the right interpreter is used on Euler (3.10 req. for BLiMP)
+  - -m
+  - train
+  - config=configs/roberta/wit.yaml
+early_terminate: # We do want to early_terminate here because we're interested in the best configs.
+  type: hyperband
+  max_iter: 32
+  s: 4
+  eta: 2
+parameters:
+  mlm_perc:
+    distribution: uniform
+    values: [ 0.15, 0.4 ]

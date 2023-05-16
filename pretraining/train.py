@@ -7,14 +7,14 @@ from pytorch_lightning.loggers import WandbLogger
 from callbacks.blimp_eval import LMEvalHarnessCallback
 from callbacks.multimodal_overfitting_monitor import MultimodalOverfittingMonitor
 from callbacks.pseudo_perplexity_eval import PseudoPerplexityCallback
-from definitions import FLAVAArguments
-from model import BERTPreTrainingLightningModule, FlavaPreTrainingLightningModule
+from definitions import AblationArguments
+from model import BERTPreTrainingLightningModule, FlavaPreTrainingLightningModule, RobertaPreTrainingLightningModule
 from utils import build_config, update_ckt_dir_and_batch_size, assign_huggingface_ram, \
     initialize_multidatamodule, overwrite_config
 
 
 def main():
-    config: FLAVAArguments = build_config()
+    config: AblationArguments = build_config()
 
     if config.training.use_wandb:
         wandb_logger = WandbLogger(
@@ -31,6 +31,7 @@ def main():
         wandb.init(**wandb_logger._wandb_init)
 
         # Overwriting needs to be called after wandb.init()
+        overwrite_config(struct=config.model, params=["mlm_perc"])
         overwrite_config(struct=config, params=["text_perc", "vision_perc"])
         overwrite_config(struct=config.training.lightning, params=["accumulate_grad_batches"])
         overwrite_config(struct=config.training, params=["learning_rate", "warmup_steps", "seed"])
@@ -60,6 +61,8 @@ def main():
     print("Building model")
     if config.model.name == 'bert':
         model = BERTPreTrainingLightningModule(**config.model)
+    elif config.model.name == 'roberta':
+        model = RobertaPreTrainingLightningModule(**config.model)
     elif config.model.name == 'flava':
         model = FlavaPreTrainingLightningModule(**config.model)
     else:

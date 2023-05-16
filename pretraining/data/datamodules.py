@@ -88,8 +88,8 @@ class MLMDataModule(FlavaAblationDataModule):
             self,
             text_columns: List[str],
             train_infos: List[HFDatasetInfo],
+            mlm_probability: float,
             val_infos: Optional[List[HFDatasetInfo]] = None,
-            mlm_probability: float = 0.15,
             batch_size: int = 32,
             num_workers: int = 4,
             **kwargs: Any,
@@ -112,6 +112,7 @@ class MLMDataModule(FlavaAblationDataModule):
             batched=True,
             num_proc=32,
             batch_size=100,
+            load_from_cache_file=True,  # MUCH faster processing
             remove_columns=utils.WIT_ALT_TEXT_COLUMNS,
             desc="Collapsing WiT text for MLM training",
         )
@@ -121,6 +122,7 @@ class MLMDataModule(FlavaAblationDataModule):
             batched=True,
             num_proc=32,
             batch_size=100,
+            load_from_cache_file=True,  # MUCH faster processing
             remove_columns=utils.WIT_ALT_TEXT_COLUMNS,
             desc="Collapsing WiT text for MLM validation",
         )
@@ -154,7 +156,7 @@ class VLDataModule(FlavaAblationDataModule):
             self,
             train_infos: List[HFDatasetInfo],
             val_infos: List[HFDatasetInfo],
-            mlm_probablity: float = 0.15,
+            mlm_probablity: float,
             batch_size: int = 32,
             num_workers: int = 4,
             itm_probability: float = 0.1,

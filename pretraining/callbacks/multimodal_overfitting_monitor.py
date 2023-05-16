@@ -182,15 +182,15 @@ class MultimodalOverfittingMonitor(Callback):
             prefix = "validation/monitor"
             match self.monitor:
                 case "validation/losses/itm_loss":
-                    trainer.logger.experiment.log({f"{prefix}/itm": pl_module.model.loss.itm_loss_weight})
+                    trainer.logger.experiment.log({f"{prefix}/itm": pl_module.model.itm_weight})
                 case "validation/losses/global_contrastive_loss":
                     trainer.logger.experiment.log(
-                        {f"{prefix}/global_contrastive": pl_module.model.loss.contrastive_loss_weight}
+                        {f"{prefix}/global_contrastive": pl_module.model.global_contrastive_weight}
                     )
                 case "validation/losses/mmm_image_loss":
-                    trainer.logger.experiment.log({f"{prefix}/mmm_image": pl_module.model.loss.mmm_image_loss_weight})
+                    trainer.logger.experiment.log({f"{prefix}/mmm_image": pl_module.model.mmm_image_weight})
                 case "validation/losses/mmm_text_loss":
-                    trainer.logger.experiment.log({f"{prefix}/mmm_text": pl_module.model.loss.mmm_text_loss_weight})
+                    trainer.logger.experiment.log({f"{prefix}/mmm_text": pl_module.model.mmm_text_weight})
                 case "validation/losses/mlm_loss":
                     weight = self.datamodule.sampling_weights[2 if len(self.datamodule.sampling_weights) > 1 else 0]
                     trainer.logger.experiment.log({f"{prefix}/mlm": weight})
@@ -215,13 +215,13 @@ class MultimodalOverfittingMonitor(Callback):
         if wait_count_increased:
             match self.monitor:
                 case "validation/losses/itm_loss":
-                    pl_module.model.loss.itm_loss_weight /= 2.
+                    pl_module.model.itm_weight /= 2.
                 case "validation/losses/global_contrastive_loss":
-                    pl_module.model.loss.contrastive_loss_weight /= 2.
+                    pl_module.model.global_contrastive_weight /= 2.
                 case "validation/losses/mmm_image_loss":
-                    pl_module.model.loss.mmm_image_loss_weight /= 2.
+                    pl_module.model.mmm_image_weight /= 2.
                 case "validation/losses/mmm_text_loss":
-                    pl_module.model.loss.mmm_text_loss_weight /= 2.
+                    pl_module.model.mmm_text_weight /= 2.
                 case "validation/losses/mlm_loss":
                     self._set_sampling_weight_for_modality("text", type="half")
                 case "validation/losses/mim_loss":
@@ -232,26 +232,26 @@ class MultimodalOverfittingMonitor(Callback):
         if patience_exhausted:
             match self.monitor:
                 case "validation/losses/itm_loss":
-                    pl_module.model.loss.itm_loss_weight = 0.
+                    pl_module.model.itm_weight = 0.
                 case "validation/losses/global_contrastive_loss":
-                    pl_module.model.loss.contrastive_loss_weight = 0.
+                    pl_module.model.global_contrastive_weight = 0.
                 case "validation/losses/mmm_image_loss":
-                    pl_module.model.loss.mmm_image_loss_weight = 0.
+                    pl_module.model.mmm_image_weight = 0.
                 case "validation/losses/mmm_text_loss":
-                    pl_module.model.loss.mmm_text_loss_weight = 0.
+                    pl_module.model.mmm_text_weight = 0.
                     if self.datamodule.sampling_weights[2] == 0.:  # With no MLM and MMM_text, stop training
                         self._stop_training(trainer)
                 case "validation/losses/mlm_loss":
                     self._set_sampling_weight_for_modality("text", trainer=trainer, type="zero")
-                    if pl_module.model.loss.mmm_text_loss_weight == 0.:  # With no MLM and MMM_text, stop training
+                    if pl_module.model.mmm_text_weight == 0.:  # With no MLM and MMM_text, stop training
                         self._stop_training(trainer)
                 case "validation/losses/mim_loss":
                     self._set_sampling_weight_for_modality("vision", trainer=trainer, type="zero")
 
-            multimodal_tasks_weights = [pl_module.model.loss.itm_loss_weight,
-                                        pl_module.model.loss.contrastive_loss_weight,
-                                        pl_module.model.loss.mmm_image_loss_weight,
-                                        pl_module.model.loss.mmm_text_loss_weight]
+            multimodal_tasks_weights = [pl_module.model.itm_weight,
+                                        pl_module.model.global_contrastive_weight,
+                                        pl_module.model.mmm_image_weight,
+                                        pl_module.model.mmm_text_weight]
             if all([w == 0. for w in multimodal_tasks_weights]):
                 self._set_sampling_weight_for_modality("multimodal", trainer=trainer, type="zero")
 

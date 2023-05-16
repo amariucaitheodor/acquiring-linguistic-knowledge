@@ -75,11 +75,12 @@ class TrainingArguments:
 @dataclass
 class ModelArguments:
     pretrained: Optional[str] = None
+    mlm_perc: float = 0.15
     name: str = 'flava'
 
 
 @dataclass
-class FLAVAArguments:
+class AblationArguments:
     text_perc: int = 100
     vision_perc: int = 100
     datasets: TrainingDatasetsInfo = TrainingDatasetsInfo()

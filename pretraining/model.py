@@ -2,7 +2,8 @@ from typing import Tuple, Any
 
 import torch
 from pytorch_lightning import LightningModule
-from transformers import FlavaForPreTraining, FlavaConfig, BertForMaskedLM, BertConfig, get_cosine_schedule_with_warmup
+from transformers import FlavaForPreTraining, FlavaConfig, BertForMaskedLM, BertConfig, get_cosine_schedule_with_warmup, \
+    RobertaForMaskedLM, RobertaConfig, get_constant_schedule_with_warmup
 from transformers.modeling_outputs import MaskedLMOutput
 from transformers.models.flava.modeling_flava import FlavaForPreTrainingOutput
 
@@ -96,6 +97,35 @@ class BERTPreTrainingLightningModule(LightningModule):
     def configure_optimizers(self):
         return configure_default_optimizers(self.model, self.learning_rate, self.adam_eps, self.adam_weight_decay,
                                             self.adam_betas, self.warmup_steps, self.max_steps)
+
+
+class RobertaPreTrainingLightningModule(LightningModule):
+    def __init__(self, **kwargs: Any):
+        super().__init__()
+        if 'pretrained' in kwargs and kwargs['pretrained']:
+            self.model = RobertaForMaskedLM.from_pretrained(kwargs['pretrained'])
+        else:
+            self.model = RobertaForMaskedLM(RobertaConfig(**kwargs, vocab_size=50265))
+
+    def training_step(self, batch, batch_idx):
+        output = self._step(batch)
+        self.log(f"train/losses/mlm_loss", output.loss, prog_bar=True, logger=True)
+        return output.loss
+
+    def validation_step(self, batch, batch_idx):
+        output = self._step(batch)
+        self.log(f"validation/losses/mlm_loss", output.loss, prog_bar=True, logger=True)
+        return output.loss
+
+    def _step(self, batch) -> MaskedLMOutput:
+        return self.model(input_ids=batch.get("input_ids"),
+                          labels=batch.get("mlm_labels"),
+                          return_dict=True)
+
+    def configure_optimizers(self):
+        optimizer = torch.optim.AdamW(self.model.parameters(), lr=1e-5, weight_decay=0.01)
+        lr_scheduler = get_constant_schedule_with_warmup(optimizer, 100)
+        return [optimizer], [lr_scheduler]
 
 
 def configure_default_optimizers(

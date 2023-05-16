@@ -1,4 +1,4 @@
-_target_: pretraining.definitions.FLAVAArguments
+_target_: pretraining.definitions.AblationArguments
 
 text_perc: 100
 vision_perc: 100
@@ -14,7 +14,7 @@ training:
     precision: 16-mixed # 'bf16' not supported on either local or Euler GPU
     accumulate_grad_batches: 64
     num_sanity_val_steps: 0
-    strategy: ddp_find_unused_parameters_true # ddp for BERT
+    strategy: ddp_find_unused_parameters_true # ddp for BERT, RoBERTa
     enable_progress_bar: false
   lightning_checkpoint:
     dirpath: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/flava-textvision/"

@@ -5,10 +5,12 @@ import datasets
 import wandb
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
+from transformers import BertTokenizerFast, RobertaTokenizerFast
 
 from data.datamodules import MLMDataModule, ImageDataModule, VLDataModule
 from data.multidata import MultiDataModule
-from pretraining.definitions import TrainingSingleDatasetInfo, TrainingArguments, FLAVAArguments
+from data.text_datamodules import TextDataModule
+from pretraining.definitions import TrainingSingleDatasetInfo, TrainingArguments, AblationArguments
 
 
 def build_datamodule_kwargs(
@@ -34,7 +36,7 @@ def build_config():
     yaml_conf = OmegaConf.load(cli_conf.config)
     conf = instantiate(yaml_conf)
     cli_conf.pop("config")
-    config: FLAVAArguments = OmegaConf.merge(conf, cli_conf)
+    config: AblationArguments = OmegaConf.merge(conf, cli_conf)
 
     assert (
             "max_steps" in config.training.lightning
@@ -43,13 +45,13 @@ def build_config():
     assert 0 <= config.text_perc <= 100, "'text_perc' ablation study percentage must be between 0 and 100"
     assert 0 <= config.vision_perc <= 100, "'vision_perc' ablation study percentage must be between 0 and 100"
 
-    if config.model.name == 'bert':
-        assert config.vision_perc == 0, f"BERT can only be trained on text (vision_perc was {config.vision_perc})"
+    if config.model.name in ['bert', 'roberta', 'deberta']:
+        assert config.vision_perc == 0, f"{config.model.name} can only be trained on text (vision_perc was {config.vision_perc})"
 
     return config
 
 
-def initialize_multidatamodule(config: FLAVAArguments) -> MultiDataModule:
+def initialize_multidatamodule(config: AblationArguments) -> MultiDataModule:
     """
     Suppose we are training on 100% of texts and 10% of images. We will sample the first 10% of the data (paired
     image and text) for the multimodal dataloader, the first 100% of the pairs for the text unimodal dataloader,
@@ -73,7 +75,7 @@ def initialize_multidatamodule(config: FLAVAArguments) -> MultiDataModule:
         vl_config = copy_dataset_config_with_training_subset(config.datasets.ablation, percentage=multimodal_perc)
         vl_datamodule = VLDataModule(
             **build_datamodule_kwargs(vl_config, config.training),
-            mlm_probability=0.4,  # https://arxiv.org/abs/2202.08005
+            mlm_probability=config.model.mlm_perc,  # https://arxiv.org/abs/2202.08005
             name="VLDataModule"
         )
         modules.append(vl_datamodule)
@@ -90,11 +92,21 @@ def initialize_multidatamodule(config: FLAVAArguments) -> MultiDataModule:
     if config.text_perc > 0:
         text_config = copy_dataset_config_with_training_subset(config.datasets.ablation, percentage=config.text_perc)
 
-        mlm_datamodule = MLMDataModule(
-            **build_datamodule_kwargs(text_config, config.training),
-            mlm_probability=0.4,  # https://arxiv.org/abs/2202.08005
-            name="MLMDataModule"
-        )
+        if config.model.name in ['bert', 'roberta']:
+            tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased') if config.model.name == 'bert' \
+                else RobertaTokenizerFast.from_pretrained('roberta-base')
+            mlm_datamodule = TextDataModule(
+                **build_datamodule_kwargs(text_config, config.training),
+                tokenizer=tokenizer,
+                mlm_probability=config.model.mlm_perc,  # https://arxiv.org/abs/2202.08005
+                name="TextDataModule"
+            )
+        else:
+            mlm_datamodule = MLMDataModule(
+                **build_datamodule_kwargs(text_config, config.training),
+                mlm_probability=config.model.mlm_perc,  # https://arxiv.org/abs/2202.08005
+                name="MLMDataModule"
+            )
         modules.append(mlm_datamodule)
 
     if len(modules) == 3:
@@ -139,8 +151,8 @@ def update_ckt_dir_and_batch_size(config):
             print(f"Real run, changing checkpoint dirpath to {ckt_dir}.")
         config.training.lightning_checkpoint.__setattr__("dirpath", ckt_dir)
 
-        # This is a hack to make sure we use the memory on the compute node to the fullest.
-        if config.model.name == "bert":
+        # This is a hack to make sure we use compute node memory to its fullest.
+        if config.model.name in ["bert", "roberta"]:
             config.training.__setattr__("batch_size", 24)
         elif "flava" in config.model.name:
             if config.training.lightning['precision'] in ["bf16", "16-mixed", "16", 16]:

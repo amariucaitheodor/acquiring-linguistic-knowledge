@@ -1,38 +1,33 @@
 _target_: pretraining.definitions.AblationArguments
 
 text_perc: 100
-vision_perc: 100
+vision_perc: 0
 
 training:
   _target_: pretraining.definitions.TrainingArguments
   lightning:
     max_steps: 450000
     accelerator: 'gpu'
-    devices: 1
-    val_check_interval: 200
-    limit_val_batches: 200 # REQUIRED, otherwise the validation loop doesn't terminate
+    devices: 1 # -1 for all GPUs (if using more GPUs)
+    val_check_interval: 8000
+    limit_val_batches: 2000 # REQUIRED, otherwise the validation loop doesn't terminate
     precision: 16-mixed # 'bf16' not supported on either local or Euler GPU
-    accumulate_grad_batches: 1
+    accumulate_grad_batches: 64
     num_sanity_val_steps: 0
-    strategy: ddp_find_unused_parameters_true # ddp for BERT, RoBERTa
-    enable_progress_bar: true
+    strategy: ddp
+    enable_progress_bar: false
   lightning_checkpoint:
-    dirpath: "./pretraining-debug"
-    filename: pretraining-{epoch:02d}-{step}
+    dirpath: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/flava-textvision/"
+    filename: flava-{epoch:02d}-{step}
     save_last: true
     every_n_train_steps: 15000 # otherwise it occupies too much disk space
     save_on_train_epoch_end: true
     verbose: true
   lightning_load_from_checkpoint: null
   seed: -1
-  batch_size: 1
-  num_workers: 1
-  learning_rate: 2e-4
-  adam_eps: 1e-8
-  adam_weight_decay: 1e-2
-  adam_betas: [ 0.9, 0.999 ]
-  warmup_steps: 2000
-  use_wandb: false
+  # batch_size automatically set by precision
+  num_workers: 2
+  use_wandb: true
 
 datasets:
   _target_: pretraining.definitions.TrainingDatasetsInfo
@@ -41,12 +36,12 @@ datasets:
     _target_: pretraining.definitions.TrainingSingleDatasetInfo
     train:
       - _target_: pretraining.definitions.HFDatasetInfo
-        key: theodor1289/wit_mini
+        key: theodor1289/wit
         split_key_mapping:
           validation: test # 'validation' split does not exist for wit
     val:
       - _target_: pretraining.definitions.HFDatasetInfo
-        key: theodor1289/wit_mini
+        key: theodor1289/wit
         split_key_mapping:
           validation: test # 'validation' split does not exist for wit
     datamodule_extra_kwargs: # This key is used in the MLMDataModule
@@ -55,4 +50,4 @@ datasets:
 model:
   _target_: pretraining.definitions.ModelArguments
   pretrained: null
-  name: flava
+  name: roberta
