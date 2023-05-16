@@ -2,9 +2,10 @@ import logging
 import time
 from datetime import timedelta
 
-from transformers import BertForMaskedLM, FlavaForPreTraining
+from transformers import BertForMaskedLM, FlavaForPreTraining, RobertaForMaskedLM, BertTokenizerFast, \
+    RobertaTokenizerFast
 
-from pretraining.callbacks.bert_lm import BertLM
+from pretraining.callbacks.text_lm import TextLM
 from pretraining.callbacks.flava_lm import FlavaLM
 
 logger = logging.getLogger(__name__)
@@ -38,10 +39,16 @@ class LMEvalHarnessCallback(Callback):
         print("Starting LM Evaluation Harness")
         start = time.time()
 
-        if type(pl_module.model) == BertForMaskedLM:
-            model_eval_wrapper = BertLM
+        if type(pl_module.model) in [BertForMaskedLM, RobertaForMaskedLM]:
+            tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased') \
+                if type(pl_module.model) == BertForMaskedLM \
+                else RobertaTokenizerFast.from_pretrained('roberta-base')
+            eval_model = TextLM(model=pl_module.model,
+                                tokenizer=tokenizer,
+                                batch_size=trainer.val_dataloaders.loaders[0].batch_size)
         elif type(pl_module.model) == FlavaForPreTraining:
-            model_eval_wrapper = FlavaLM
+            eval_model = FlavaLM(model=pl_module.model,
+                                 batch_size=trainer.val_dataloaders.loaders[0].batch_size)
         else:
             raise ValueError(f"Model {type(pl_module.model)} not supported for BLiMP eval")
 
@@ -69,8 +76,7 @@ class LMEvalHarnessCallback(Callback):
                 # Get accuracy
                 task_accuracy = accuracy_on_task(
                     task_name=task_name,
-                    eval_model=model_eval_wrapper(model=pl_module.model,
-                                                  batch_size=trainer.val_dataloaders.loaders[0].batch_size),
+                    eval_model=eval_model,
                     template_name=template_name,
                     num_fewshot=0
                 )

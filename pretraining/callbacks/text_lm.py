@@ -11,18 +11,19 @@ lm_eval = importlib.import_module(name="lm_eval", package="lm-evaluation-harness
 from lm_eval.api import utils
 from lm_eval.models.huggingface import AutoMaskedLM
 from tqdm import tqdm
-from transformers import BertForMaskedLM, BertTokenizerFast
+from transformers import BertForMaskedLM, PreTrainedTokenizerFast
 from typing import List, Optional, Tuple, Union
 
 
-class BertLM(AutoMaskedLM):
-    """Implements a language model interface for the BERT PyTorch model.
+class TextLM(AutoMaskedLM):
+    """Implements a language model interface for the BERT/RoBERTa/etc. text PyTorch models.
     See: https://github.com/aaronmueller/lm-evaluation-harness
     """
 
     def __init__(
             self,
             model: BertForMaskedLM,
+            tokenizer: PreTrainedTokenizerFast,
             batch_size: Optional[int] = 1,
             max_length: Optional[int] = TEXT_MAX_LENGTH_DEFAULT,
             add_special_tokens: Optional[bool] = None,
@@ -32,7 +33,7 @@ class BertLM(AutoMaskedLM):
         self._max_length = max_length
 
         self._add_special_tokens = add_special_tokens
-        self.tokenizer = BertTokenizerFast.from_pretrained("bert-base-uncased")
+        self.tokenizer = tokenizer
         self.tokenizer.model_max_length = self.max_length
 
         self.model = model

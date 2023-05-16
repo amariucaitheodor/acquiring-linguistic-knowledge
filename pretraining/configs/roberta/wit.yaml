@@ -18,7 +18,7 @@ training:
     enable_progress_bar: false
   lightning_checkpoint:
     dirpath: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/flava-textvision/"
-    filename: flava-{epoch:02d}-{step}
+    filename: roberta-{epoch:02d}-{step}
     save_last: true
     every_n_train_steps: 15000 # otherwise it occupies too much disk space
     save_on_train_epoch_end: true
