@@ -3,7 +3,7 @@ from typing import List
 from datasets import concatenate_datasets, load_dataset
 from datasets.utils.file_utils import get_datasets_user_agent
 
-from pretraining.definitions import HFDatasetInfo
+from alkmi.definitions import HFDatasetInfo
 
 DATASETS_USER_AGENT = get_datasets_user_agent()
 

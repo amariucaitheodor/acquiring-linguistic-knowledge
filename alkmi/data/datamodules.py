@@ -9,10 +9,10 @@ from transformers import (
     FlavaProcessor,
 )
 
-from pretraining.data import utils
-from pretraining.data.transforms import ITMTransform
-from pretraining.data.utils import build_datasets_from_info
-from pretraining.definitions import HFDatasetInfo, TEXT_MAX_LENGTH_DEFAULT, VL_MAX_LENGTH_DEFAULT
+from alkmi.data import utils
+from alkmi.data.transforms import ITMTransform
+from alkmi.data.utils import build_datasets_from_info
+from alkmi.definitions import HFDatasetInfo, TEXT_MAX_LENGTH_DEFAULT, VL_MAX_LENGTH_DEFAULT
 
 
 class FlavaAblationDataModule(LightningDataModule):

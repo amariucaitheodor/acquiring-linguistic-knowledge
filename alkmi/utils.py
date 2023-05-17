@@ -10,7 +10,7 @@ from transformers import BertTokenizerFast, RobertaTokenizerFast
 from data.datamodules import MLMDataModule, ImageDataModule, VLDataModule
 from data.multidata import MultiDataModule
 from data.text_datamodules import TextDataModule
-from pretraining.definitions import TrainingSingleDatasetInfo, TrainingArguments, AblationArguments
+from alkmi.definitions import TrainingSingleDatasetInfo, TrainingArguments, AblationArguments
 
 
 def build_datamodule_kwargs(

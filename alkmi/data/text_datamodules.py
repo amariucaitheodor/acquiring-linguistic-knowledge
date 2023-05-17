@@ -7,9 +7,9 @@ from transformers import (
     PreTrainedTokenizerFast,
 )
 
-from pretraining.data import utils
-from pretraining.data.utils import build_datasets_from_info
-from pretraining.definitions import HFDatasetInfo, TEXT_MAX_LENGTH_DEFAULT
+from alkmi.data import utils
+from alkmi.data.utils import build_datasets_from_info
+from alkmi.definitions import HFDatasetInfo, TEXT_MAX_LENGTH_DEFAULT
 
 
 class TextDataModule(LightningDataModule):

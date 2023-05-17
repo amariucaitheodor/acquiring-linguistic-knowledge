@@ -4,8 +4,8 @@ from datetime import timedelta
 
 from transformers import BertForMaskedLM, FlavaForPreTraining, RobertaForMaskedLM
 
-from pretraining.callbacks.text_lm import TextLM
-from pretraining.callbacks.flava_lm import FlavaLM
+from alkmi.callbacks.text_lm import TextLM
+from alkmi.callbacks.flava_lm import FlavaLM
 
 logger = logging.getLogger(__name__)
 

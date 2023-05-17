@@ -1,46 +1,51 @@
-_target_: pretraining.definitions.AblationArguments
+_target_: alkmi.definitions.AblationArguments
 
 text_perc: 100
-vision_perc: 0
+vision_perc: 100
 
 training:
-  _target_: pretraining.definitions.TrainingArguments
+  _target_: alkmi.definitions.TrainingArguments
   lightning:
     max_steps: 450000
     accelerator: 'gpu'
-    devices: 1 # -1 for all GPUs (if using more GPUs)
+    devices: 1
     val_check_interval: 200
     limit_val_batches: 200 # REQUIRED, otherwise the validation loop doesn't terminate
     precision: 16-mixed # 'bf16' not supported on either local or Euler GPU
     accumulate_grad_batches: 1
     num_sanity_val_steps: 0
-    strategy: ddp
+    strategy: ddp_find_unused_parameters_true # ddp for BERT, RoBERTa
     enable_progress_bar: true
   lightning_checkpoint:
-    dirpath: "./bert-debug"
-    filename: bert-{epoch:02d}-{step}
+    dirpath: "./alkmi-debug"
+    filename: flava-{epoch:02d}-{step}
     save_last: true
     every_n_train_steps: 15000 # otherwise it occupies too much disk space
     save_on_train_epoch_end: true
     verbose: true
   lightning_load_from_checkpoint: null
   seed: -1
-  batch_size: 24
+  batch_size: 15
   num_workers: 1
+  learning_rate: 2e-4
+  adam_eps: 1e-8
+  adam_weight_decay: 1e-2
+  adam_betas: [ 0.9, 0.999 ]
+  warmup_steps: 2000
   use_wandb: true
 
 datasets:
-  _target_: pretraining.definitions.TrainingDatasetsInfo
+  _target_: alkmi.definitions.TrainingDatasetsInfo
   ablation:
     # For VLDataModule, column "image" either needs to have an image (not the case for "facebook/pmd", "wit"), or be missing
-    _target_: pretraining.definitions.TrainingSingleDatasetInfo
+    _target_: alkmi.definitions.TrainingSingleDatasetInfo
     train:
-      - _target_: pretraining.definitions.HFDatasetInfo
+      - _target_: alkmi.definitions.HFDatasetInfo
         key: theodor1289/wit_mini
         split_key_mapping:
           validation: test # 'validation' split does not exist for wit
     val:
-      - _target_: pretraining.definitions.HFDatasetInfo
+      - _target_: alkmi.definitions.HFDatasetInfo
         key: theodor1289/wit_mini
         split_key_mapping:
           validation: test # 'validation' split does not exist for wit
@@ -48,7 +53,6 @@ datasets:
       text_columns: [ "text" ]
 
 model:
-  _target_: pretraining.definitions.ModelArguments
+  _target_: alkmi.definitions.ModelArguments
   pretrained: null
-  mlm_perc: 0.15
-  name: bert
+  name: flava

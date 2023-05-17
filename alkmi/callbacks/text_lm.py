@@ -5,7 +5,7 @@ import torch
 from transformers.modeling_outputs import MaskedLMOutput
 
 from callbacks.utils import get_corresponding_tokenizer_for_model
-from pretraining.definitions import TEXT_MAX_LENGTH_DEFAULT
+from alkmi.definitions import TEXT_MAX_LENGTH_DEFAULT
 
 lm_eval = importlib.import_module(name="lm_eval", package="lm-evaluation-harness")
 

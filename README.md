@@ -6,7 +6,7 @@ Master's thesis of Theodor Amariucai, supervised by Alexander Warstadt and Prof.
 
 ### Project sections
 
-1. [Text-vision pre-training](./pretraining/README.md) works directly through [HuggingFace](https://huggingface.co/)
+1. [Text-vision pre-training](alkmi/README.md) works directly through [HuggingFace](https://huggingface.co/)
    and [WaB](https://wandb.ai/).
 
 - Log in with *HuggingFace*: `huggingface-cli login`
@@ -17,7 +17,7 @@ poetry build
 poetry install
 poetry shell
 
-cd pretraining/callbacks/lm-evaluation-harness
+cd alkmi/callbacks/lm-evaluation-harness
 pip install -e ".[dev]"
 
 # Test run:
@@ -36,7 +36,7 @@ Note: [BLiMP evaluation](./lm-evaluation-harness/README.md) requires >=`python3.
 - For sweeps with WandB on the WiT configuration, run e.g.:
 
 ```shell
-cd pretraining
+cd alkmi
 wandb sweep configs/wit_sweep_config.yaml
 bash run_sweep_on_cluster.sh NR_AGENTS SWEEP_ID
 ```
@@ -79,8 +79,8 @@ export HF_DATASETS_CACHE="/cluster/scratch/tamariucai/HuggingfaceDatasets"
 export HF_HOME="/cluster/work/cotterell/tamariucai/HuggingfaceHome"
 export WANDB_CACHE_DIR="/cluster/scratch/tamariucai/WandbCache"
 export WANDB_DIR="/cluster/work/cotterell/tamariucai/WandbDir"
-export PYTHONPATH=/cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/:/cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/pretraining/callbacks/lm-evaluation-harness
-cd /cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/pretraining/
+export PYTHONPATH=/cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/:/cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/alkmi/callbacks/lm-evaluation-harness
+cd /cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/alkmi/
 poetry shell
 ```
 

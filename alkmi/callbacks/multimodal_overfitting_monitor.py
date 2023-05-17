@@ -74,7 +74,7 @@ class MultimodalOverfittingMonitor(Callback):
     Example::
 
         >>> from pytorch_lightning import Trainer
-        >>> from pretraining.callbacks.multimodal_overfitting_monitor import MultimodalOverfittingMonitor
+        >>> from alkmi.callbacks.multimodal_overfitting_monitor import MultimodalOverfittingMonitor
         >>> multimodal_overfitting_monitor = MultimodalOverfittingMonitor('validation/losses/itm_loss')
         >>> trainer = Trainer(callbacks=[multimodal_overfitting_monitor])
 
