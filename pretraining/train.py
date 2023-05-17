@@ -88,19 +88,16 @@ def main():
         def add_monitor(name: str):
             nonlocal callbacks
             callbacks.append(MultimodalOverfittingMonitor(monitor=f'validation/losses/{name}', datamodule=datamodule,
-                                             patience=2, verbose=True, strict=False))
+                                                          patience=2, verbose=True, strict=False))
 
-        if config.model.name == 'flava':
-            print("Registering multimodal callbacks (overfitting monitors)")
-            if config.text_perc > 0:
-                add_monitor(name="mlm_loss")
-            if config.vision_perc > 0:
-                add_monitor(name="mim_loss")
-            if config.text_perc > 0 and config.vision_perc > 0:
-                for val_loss in ["itm_loss", "global_contrastive_loss", "mmm_image_loss", "mmm_text_loss"]:
-                    add_monitor(name=val_loss)
-        else:
+        print("Registering multimodal callbacks (overfitting monitors)")
+        if config.text_perc > 0:
             add_monitor(name="mlm_loss")
+        if config.vision_perc > 0:
+            add_monitor(name="mim_loss")
+        if config.text_perc > 0 and config.vision_perc > 0:
+            for val_loss in ["itm_loss", "global_contrastive_loss", "mmm_image_loss", "mmm_text_loss"]:
+                add_monitor(name=val_loss)
 
     print(f"Callbacks registered: {callbacks}")
 

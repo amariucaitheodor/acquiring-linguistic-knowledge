@@ -14,7 +14,7 @@ class FlavaPreTrainingLightningModule(LightningModule):
         if 'pretrained' in kwargs and kwargs['pretrained']:
             self.model = FlavaForPreTraining.from_pretrained(kwargs['pretrained'])
         else:
-            self.model = FlavaForPreTraining(FlavaConfig(**kwargs))
+            self.model = FlavaForPreTraining(FlavaConfig())
 
     def training_step(self, batch, batch_idx):
         output = self._step(batch)
@@ -53,7 +53,7 @@ class BERTPreTrainingLightningModule(LightningModule):
         if 'pretrained' in kwargs and kwargs['pretrained']:
             self.model = BertForMaskedLM.from_pretrained(kwargs['pretrained'])
         else:
-            self.model = BertForMaskedLM(BertConfig(**kwargs))
+            self.model = BertForMaskedLM(BertConfig())
 
     def training_step(self, batch, batch_idx):
         output = self._step(batch)
@@ -66,12 +66,7 @@ class BERTPreTrainingLightningModule(LightningModule):
         return output.loss
 
     def _step(self, batch) -> MaskedLMOutput:
-        """
-        Reuses the same processor as Flava, which shouldn't be a problem...
-        """
-        return self.model(input_ids=batch.get("input_ids"),
-                          labels=batch.get("mlm_labels"),
-                          return_dict=True)
+        return self.model(input_ids=batch.get("input_ids_masked"), labels=batch.get("mlm_labels"), return_dict=True)
 
     def configure_optimizers(self):
         return configure_default_optimizers(
@@ -92,8 +87,7 @@ class RobertaPreTrainingLightningModule(LightningModule):
             self.model = RobertaForMaskedLM.from_pretrained(kwargs['pretrained'])
         else:
             # the official configuration sets the wrong values...
-            self.model = RobertaForMaskedLM(RobertaConfig(**kwargs,
-                                                          vocab_size=50265,
+            self.model = RobertaForMaskedLM(RobertaConfig(vocab_size=50265,
                                                           max_position_embeddings=514,
                                                           layer_norm_eps=1e-05,
                                                           type_vocab_size=1,
@@ -110,9 +104,7 @@ class RobertaPreTrainingLightningModule(LightningModule):
         return output.loss
 
     def _step(self, batch) -> MaskedLMOutput:
-        return self.model(input_ids=batch.get("input_ids"),
-                          labels=batch.get("mlm_labels"),
-                          return_dict=True)
+        return self.model(input_ids=batch.get("input_ids_masked"), labels=batch.get("mlm_labels"), return_dict=True)
 
     def configure_optimizers(self):
         return configure_default_optimizers(

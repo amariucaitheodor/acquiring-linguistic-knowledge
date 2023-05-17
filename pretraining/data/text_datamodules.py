@@ -67,12 +67,12 @@ class TextDataModule(LightningDataModule):
         )
 
     def train_dataloader(self):
-        return self._build_dataloader(self.train_dataset)
+        return self._build_dataloader(self.train_dataset, shuffle=True)
 
     def val_dataloader(self):
         return self._build_dataloader(self.val_dataset, shuffle=False)
 
-    def _build_dataloader(self, dataset, shuffle=True):
+    def _build_dataloader(self, dataset, shuffle: bool):
         return torch.utils.data.DataLoader(
             dataset,
             batch_size=self.batch_size,
