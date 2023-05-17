@@ -1,5 +1,6 @@
 from typing import List
 
+import evaluate
 from datasets import concatenate_datasets, load_dataset
 from datasets.utils.file_utils import get_datasets_user_agent
 
@@ -8,7 +9,7 @@ from alkmi.definitions import HFDatasetInfo
 DATASETS_USER_AGENT = get_datasets_user_agent()
 
 
-def build_datasets_from_info(dataset_infos: List[HFDatasetInfo], split: str = "train"):
+def build_datasets_from_info(dataset_infos: List[HFDatasetInfo], split: str = "train", count_words=True):
     dataset_list = []
     for dataset_info in dataset_infos:
         current_dataset = load_dataset(
@@ -19,6 +20,14 @@ def build_datasets_from_info(dataset_infos: List[HFDatasetInfo], split: str = "t
             num_proc=32,
             **dataset_info.extra_kwargs,
         )
+
+        if count_words:
+            wordcount = evaluate.load("word_count")
+            results = wordcount.compute(data=current_dataset["text"])
+            print(f"Perc: {dataset_info.split_key_mapping[split].split(':')[1].split(']')[0]} ----> "
+                  f"Total words: {results['total_word_count']}, "
+                  f"No. of duplicates: {results['total_word_count'] - results['unique_words']}, "
+                  f"No. of unique: {results['unique_words']}")
 
         if dataset_info.remove_columns is not None:
             current_dataset = current_dataset.remove_columns(dataset_info.remove_columns)

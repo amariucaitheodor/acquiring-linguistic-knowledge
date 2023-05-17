@@ -1,6 +1,8 @@
-# acquiring-linguistic-knowledge
+# alkmi
 
 Master's thesis of Theodor Amariucai, supervised by Alexander Warstadt and Prof. Ryan Cotterell.
+
+![alt text](./assets/alkmi-high-resolution-color-logo.png "ALKMI logo")
 
 ### Introduction
 
@@ -25,13 +27,10 @@ PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512 python -m train config=configs/deb
 
 ```
 
-2. [Text-audio development](./audio/README.md) for the novel text-audio fusion model.
-3. Evaluation involves the [lm-evaluation-harness](./lm-evaluation-harness/README.md) project
-   for [BLiMP](https://github.com/alexwarstadt/blimp) and [...] for sBLiMP.
+2. Evaluation involves the [lm-evaluation-harness](./lm-evaluation-harness/README.md) project
+   for [BLiMP](https://github.com/alexwarstadt/blimp). Note: this requires >=`python3.9`.
 
 ### Miscellaneous
-
-Note: [BLiMP evaluation](./lm-evaluation-harness/README.md) requires >=`python3.9`.
 
 - For sweeps with WandB on the WiT configuration, run e.g.:
 
@@ -59,12 +58,6 @@ srun --time=4:00:00 \
     $SHELL
 # Processing node
 srun --time=24:00:00 --ntasks-per-node=1 --cpus-per-task=16 --mem-per-cpu=16000 --nodes=1 --pty --preserve-env $SHELL
-```
-
-- If *WandB* isn't syncing, try running the following **on the compute node**:
-
-```bash
-pip install wandb --upgrade
 ```
 
 ### Euler
