@@ -5,8 +5,9 @@ import torch
 from datasets import load_dataset
 from pytorch_lightning import Callback
 from tqdm import tqdm
-from transformers import BertForMaskedLM, FlavaForPreTraining, RobertaForMaskedLM, FlavaProcessor
+from transformers import BertForMaskedLM, FlavaForPreTraining, RobertaForMaskedLM
 
+from callbacks.utils import get_corresponding_tokenizer_for_model
 from data.utils import collapse_wit_text, WIT_ALT_TEXT_COLUMNS
 
 
@@ -24,7 +25,6 @@ class PseudoPerplexityCallback(Callback):
             remove_columns=WIT_ALT_TEXT_COLUMNS
         )
         self.limit_val_batches = limit_val_batches
-        self.tokenizer = FlavaProcessor.from_pretrained("facebook/flava-full").tokenizer
 
     @torch.no_grad()
     def on_validation_start(self, trainer, pl_module) -> None:
@@ -38,18 +38,19 @@ class PseudoPerplexityCallback(Callback):
         start = time.time()
 
         phrases_count = self.limit_val_batches
-        self.text = self.dataset[:phrases_count]["text"]
+        text = self.dataset[:phrases_count]["text"]
+        tokenizer = get_corresponding_tokenizer_for_model(pl_module.model)
 
         avg_mlm_loss = torch.zeros(1, dtype=torch.float64)
-        for phrase in tqdm(self.text, desc="Pseudo-Perplexity Evaluation", total=phrases_count, unit="phrase"):
-            tensor_input = self.tokenizer(phrase,
-                                          truncation=True,
-                                          max_length=200,  # input size is squared! (experimentally, 200 fits in memory)
-                                          return_tensors='pt')['input_ids']
+        for phrase in tqdm(text, desc="Pseudo-Perplexity Evaluation", total=phrases_count, unit="phrase"):
+            tensor_input = tokenizer(phrase,
+                                     truncation=True,
+                                     max_length=200,  # input size is squared! (experimentally, 200 fits in memory)
+                                     return_tensors='pt')['input_ids']
             repeat_input = tensor_input.repeat(tensor_input.size(-1) - 2, 1)
             mask = torch.ones(tensor_input.size(-1) - 1).diag(1)[:-2]
-            masked_input = repeat_input.masked_fill(mask == 1, self.tokenizer.mask_token_id)
-            labels = repeat_input.masked_fill(masked_input != self.tokenizer.mask_token_id, -100)
+            masked_input = repeat_input.masked_fill(mask == 1, tokenizer.mask_token_id)
+            labels = repeat_input.masked_fill(masked_input != tokenizer.mask_token_id, -100)
             with torch.inference_mode():
                 if type(pl_module.model) in [BertForMaskedLM, RobertaForMaskedLM]:
                     mlm_loss = pl_module.model(input_ids=masked_input.to("cuda:0"),

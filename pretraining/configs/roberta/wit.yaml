@@ -50,4 +50,5 @@ datasets:
 model:
   _target_: pretraining.definitions.ModelArguments
   pretrained: null
+  mlm_perc: 0.3  # https://wandb.ai/rycolab/multimodal-wit/sweeps/ni7km9wf?workspace=user-tamariucai
   name: roberta

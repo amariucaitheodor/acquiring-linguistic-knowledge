@@ -4,6 +4,7 @@ from itertools import chain
 import torch
 from transformers.modeling_outputs import MaskedLMOutput
 
+from callbacks.utils import get_corresponding_tokenizer_for_model
 from pretraining.definitions import TEXT_MAX_LENGTH_DEFAULT
 
 lm_eval = importlib.import_module(name="lm_eval", package="lm-evaluation-harness")
@@ -11,7 +12,7 @@ lm_eval = importlib.import_module(name="lm_eval", package="lm-evaluation-harness
 from lm_eval.api import utils
 from lm_eval.models.huggingface import AutoMaskedLM
 from tqdm import tqdm
-from transformers import BertForMaskedLM, PreTrainedTokenizerFast
+from transformers import PreTrainedModel
 from typing import List, Optional, Tuple, Union
 
 
@@ -22,8 +23,7 @@ class TextLM(AutoMaskedLM):
 
     def __init__(
             self,
-            model: BertForMaskedLM,
-            tokenizer: PreTrainedTokenizerFast,
+            model: PreTrainedModel,
             batch_size: Optional[int] = 1,
             max_length: Optional[int] = TEXT_MAX_LENGTH_DEFAULT,
             add_special_tokens: Optional[bool] = None,
@@ -33,7 +33,7 @@ class TextLM(AutoMaskedLM):
         self._max_length = max_length
 
         self._add_special_tokens = add_special_tokens
-        self.tokenizer = tokenizer
+        self.tokenizer = get_corresponding_tokenizer_for_model(model)
         self.tokenizer.model_max_length = self.max_length
 
         self.model = model
