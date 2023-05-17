@@ -9,24 +9,24 @@ training:
     max_steps: 450000
     accelerator: 'gpu'
     devices: 1 # -1 for all GPUs (if using more GPUs)
-    val_check_interval: 400
-    limit_val_batches: 400 # REQUIRED, otherwise the validation loop doesn't terminate
+    val_check_interval: 8000
+    limit_val_batches: 2000 # REQUIRED, otherwise the validation loop doesn't terminate
     precision: 16-mixed # 'bf16' not supported on either local or Euler GPU
-    accumulate_grad_batches: 1
+    accumulate_grad_batches: 64
     num_sanity_val_steps: 0
     strategy: ddp
-    enable_progress_bar: true
+    enable_progress_bar: false
   lightning_checkpoint:
-    dirpath: "./roberta-debug"
-    filename: roberta-{epoch:02d}-{step}
+    dirpath: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/bert-text/"
+    filename: bert-{epoch:02d}-{step}
     save_last: true
     every_n_train_steps: 15000 # otherwise it occupies too much disk space
     save_on_train_epoch_end: true
     verbose: true
   lightning_load_from_checkpoint: null
   seed: -1
-  batch_size: 26
-  num_workers: 1
+  batch_size: 24
+  num_workers: 2
   use_wandb: true
 
 datasets:
@@ -36,12 +36,12 @@ datasets:
     _target_: pretraining.definitions.TrainingSingleDatasetInfo
     train:
       - _target_: pretraining.definitions.HFDatasetInfo
-        key: theodor1289/wit  # not enough VRAM locally anyway
+        key: theodor1289/wit
         split_key_mapping:
           validation: test # 'validation' split does not exist for wit
     val:
       - _target_: pretraining.definitions.HFDatasetInfo
-        key: theodor1289/wit  # not enough VRAM locally anyway
+        key: theodor1289/wit
         split_key_mapping:
           validation: test # 'validation' split does not exist for wit
     datamodule_extra_kwargs: # This key is used in the MLMDataModule
@@ -50,5 +50,5 @@ datasets:
 model:
   _target_: pretraining.definitions.ModelArguments
   pretrained: null
-  mlm_perc: 0.3  # https://wandb.ai/rycolab/multimodal-wit/sweeps/ni7km9wf?workspace=user-tamariucai
-  name: roberta
+  mlm_perc: 0.15
+  name: bert

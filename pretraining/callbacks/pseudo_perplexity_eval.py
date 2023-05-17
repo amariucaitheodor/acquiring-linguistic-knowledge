@@ -29,7 +29,7 @@ class PseudoPerplexityCallback(Callback):
     @torch.no_grad()
     def on_validation_start(self, trainer, pl_module) -> None:
         """
-        We use the pseudo-perplexity (PPPL) of FLAVA (an MLM) as an intrinsic measure of how well it models a corpus
+        We use the pseudo-perplexity (PPPL) of an MLM as an intrinsic measure of how well it models a corpus
         of sentences. This differs from conventional (causal) LMs, which use perplexity (PPL).
 
         References: Section 2.3 of https://arxiv.org/pdf/1910.14659.pdf

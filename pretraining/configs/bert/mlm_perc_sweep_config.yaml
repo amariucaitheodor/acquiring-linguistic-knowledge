@@ -1,0 +1,26 @@
+program: train.py
+name: bert-text-wit-mlm_perc
+description: Hyperparameter sweep search for BERT (text) on the WiT dataset.
+project: multimodal-wit
+run_cap: 100
+entity: rycolab
+method: bayes # uses probability of improvement (PI) to select the next hyperparameter configuration
+metric:
+  name: evaluation/blimp/average
+  goal: maximize
+command:
+  - ${env}
+  - ${interpreter} # makes sure the right interpreter is used on Euler (3.10 req. for BLiMP)
+  - -m
+  - train
+  - config=configs/bert/wit.yaml
+early_terminate: # We do want to early_terminate here because we're interested in the best configs.
+  type: hyperband
+  max_iter: 32
+  s: 4
+  eta: 2
+parameters:
+  mlm_perc:
+    distribution: uniform
+    min: 0.15
+    max: 0.5
