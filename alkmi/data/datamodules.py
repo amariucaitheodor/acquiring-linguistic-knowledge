@@ -156,7 +156,7 @@ class VLDataModule(FlavaAblationDataModule):
             self,
             train_infos: List[HFDatasetInfo],
             val_infos: List[HFDatasetInfo],
-            mlm_probablity: float,
+            mlm_probability: float,
             batch_size: int = 32,
             num_workers: int = 4,
             itm_probability: float = 0.1,
@@ -167,7 +167,7 @@ class VLDataModule(FlavaAblationDataModule):
         self.collator = DataCollatorForLanguageModeling(
             self.processor.tokenizer,
             mlm=True,
-            mlm_probability=mlm_probablity,
+            mlm_probability=mlm_probability,
             return_tensors="pt"
         )
         self.itm_probability = itm_probability

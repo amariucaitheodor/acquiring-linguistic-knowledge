@@ -23,7 +23,7 @@ cd alkmi/callbacks/lm-evaluation-harness
 pip install -e ".[dev]"
 
 # Test run:
-PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512 python -m train config=configs/debug.yaml
+bash run_locally.sh configs/debug.yaml
 
 ```
 

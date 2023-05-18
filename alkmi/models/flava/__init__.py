@@ -13,7 +13,12 @@
 # limitations under the License.
 from typing import TYPE_CHECKING
 
-from transformers import is_vision_available, OptionalDependencyNotAvailable, is_torch_available, _LazyModule
+from transformers import is_vision_available, is_torch_available
+
+
+class OptionalDependencyNotAvailable(BaseException):
+    """Internally used error class for signalling an optional dependency was not found."""
+
 
 _import_structure = {
     "configuration_flava": [
@@ -53,44 +58,38 @@ else:
         "FlavaTextModel",
     ]
 
-if TYPE_CHECKING:
-    from .configuration_flava import (
-        FLAVA_PRETRAINED_CONFIG_ARCHIVE_MAP,
-        FlavaConfig,
-        FlavaImageCodebookConfig,
-        FlavaImageConfig,
-        FlavaMultimodalConfig,
-        FlavaTextConfig,
-    )
+from .configuration_flava import (
+    FLAVA_PRETRAINED_CONFIG_ARCHIVE_MAP,
+    FlavaConfig,
+    FlavaImageCodebookConfig,
+    FlavaImageConfig,
+    FlavaMultimodalConfig,
+    FlavaTextConfig,
+)
 
-    try:
-        if not is_vision_available():
-            raise OptionalDependencyNotAvailable()
-    except OptionalDependencyNotAvailable:
-        pass
-    else:
-        from .feature_extraction_flava import FlavaFeatureExtractor
-        from .image_processing_flava import FlavaImageProcessor
-        from .processing_flava import FlavaProcessor
-
-    try:
-        if not is_torch_available():
-            raise OptionalDependencyNotAvailable()
-    except OptionalDependencyNotAvailable:
-        pass
-    else:
-        from .modeling_flava import (
-            FLAVA_PRETRAINED_MODEL_ARCHIVE_LIST,
-            FlavaForPreTraining,
-            FlavaImageCodebook,
-            FlavaImageModel,
-            FlavaModel,
-            FlavaMultimodalModel,
-            FlavaPreTrainedModel,
-            FlavaTextModel,
-        )
-
+try:
+    if not is_vision_available():
+        raise OptionalDependencyNotAvailable()
+except OptionalDependencyNotAvailable:
+    pass
 else:
-    import sys
+    from .feature_extraction_flava import FlavaFeatureExtractor
+    from .image_processing_flava import FlavaImageProcessor
+    from .processing_flava import FlavaProcessor
 
-    sys.modules[__name__] = _LazyModule(__name__, globals()["__file__"], _import_structure, module_spec=__spec__)
+try:
+    if not is_torch_available():
+        raise OptionalDependencyNotAvailable()
+except OptionalDependencyNotAvailable:
+    pass
+else:
+    from .modeling_flava import (
+        FLAVA_PRETRAINED_MODEL_ARCHIVE_LIST,
+        FlavaForPreTraining,
+        FlavaImageCodebook,
+        FlavaImageModel,
+        FlavaModel,
+        FlavaMultimodalModel,
+        FlavaPreTrainedModel,
+        FlavaTextModel,
+    )
