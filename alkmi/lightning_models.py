@@ -18,6 +18,7 @@ class FlavaPreTrainingLightningModule(LightningModule):
         else:
             self.model = FlavaForPreTraining(FlavaConfig())
 
+        kwargs.pop('pretrained')
         self.optimizers = configure_default_optimizers(self.model, **kwargs)
 
     def training_step(self, batch, batch_idx):
@@ -51,6 +52,7 @@ class BERTPreTrainingLightningModule(LightningModule):
         else:
             self.model = BertForMaskedLM(BertConfig())
 
+        kwargs.pop('pretrained')
         self.optimizers = configure_default_optimizers(self.model, **kwargs)
 
     def training_step(self, batch, batch_idx):
@@ -82,7 +84,7 @@ class RobertaPreTrainingLightningModule(LightningModule):
                                                           layer_norm_eps=1e-05,
                                                           type_vocab_size=1,
                                                           ))
-
+        kwargs.pop('pretrained')
         self.optimizers = configure_default_optimizers(self.model, **kwargs)
 
     def training_step(self, batch, batch_idx):

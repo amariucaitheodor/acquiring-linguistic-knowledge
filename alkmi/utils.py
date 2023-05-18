@@ -36,6 +36,7 @@ def build_model_kwargs(
         "adam_eps": training_config.adam_eps,
         "adam_betas": training_config.adam_betas,
         "warmup_steps": training_config.warmup_steps,
+        "adam_weight_decay": training_config.adam_weight_decay,
         "max_steps": 450000,  # fixed for now...
     }
 
