@@ -93,11 +93,10 @@ def initialize_multidatamodule(config: AblationArguments) -> MultiDataModule:
         text_config = copy_dataset_config_with_training_subset(config.datasets.ablation, percentage=config.text_perc)
 
         if config.model.name in ['bert', 'roberta']:
-            tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased') if config.model.name == 'bert' \
-                else RobertaTokenizerFast.from_pretrained('roberta-base')
             mlm_datamodule = TextDataModule(
                 **build_datamodule_kwargs(text_config, config.training),
-                tokenizer=tokenizer,
+                tokenizer=BertTokenizerFast.from_pretrained('bert-base-uncased') if config.model.name == 'bert' \
+                    else RobertaTokenizerFast.from_pretrained('roberta-base'),
                 mlm_probability=config.model.mlm_perc,  # https://arxiv.org/abs/2202.08005
                 name="TextDataModule"
             )

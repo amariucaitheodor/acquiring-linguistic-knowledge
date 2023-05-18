@@ -1,5 +1,6 @@
 from typing import Any, Dict, List
 
+import evaluate
 import torch
 from pytorch_lightning import LightningDataModule
 from transformers import (
@@ -10,6 +11,17 @@ from transformers import (
 from alkmi.data import utils
 from alkmi.data.utils import build_datasets_from_info
 from alkmi.definitions import HFDatasetInfo, TEXT_MAX_LENGTH_DEFAULT
+
+
+def count_words(train, train_infos, validation, validation_infos, after: bool):
+    for dataset, split in [(train, train_infos[0].split_key_mapping['train']),
+                           (validation, validation_infos[0].split_key_mapping['validation'])]:
+        wordcount = evaluate.load("word_count")
+        results = wordcount.compute(data=dataset["text"])
+        print(f"Split {'after' if after else 'before'} collapsing: {split} ----> "
+              f"Total words: {results['total_word_count']}, "
+              f"No. of duplicates: {results['total_word_count'] - results['unique_words']}, "
+              f"No. of unique: {results['unique_words']}")
 
 
 class TextDataModule(LightningDataModule):
@@ -41,9 +53,12 @@ class TextDataModule(LightningDataModule):
         )
         self.text_columns = text_columns
 
-    def setup(self, stage=None):
+    def setup(self, stage=None, should_count_words: bool = False):
         self.train_dataset = build_datasets_from_info(self.train_dataset_infos, split="train")
         self.val_dataset = build_datasets_from_info(self.val_dataset_infos, split="validation")
+
+        if should_count_words:
+            count_words(self.train_dataset, self.train_dataset_infos, self.val_dataset, self.val_dataset_infos, False)
 
         self.train_dataset = self.train_dataset.remove_columns('image')
         self.train_dataset = self.train_dataset.map(
@@ -65,6 +80,9 @@ class TextDataModule(LightningDataModule):
             remove_columns=utils.WIT_ALT_TEXT_COLUMNS,
             desc="Collapsing WiT text for MLM validation",
         )
+
+        if should_count_words:
+            count_words(self.train_dataset, self.train_dataset_infos, self.val_dataset, self.val_dataset_infos, True)
 
     def train_dataloader(self):
         return self._build_dataloader(self.train_dataset, shuffle=True)
