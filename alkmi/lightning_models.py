@@ -18,6 +18,8 @@ class FlavaPreTrainingLightningModule(LightningModule):
         else:
             self.model = FlavaForPreTraining(FlavaConfig())
 
+        self.optimizers = configure_default_optimizers(self.model, **kwargs)
+
     def training_step(self, batch, batch_idx):
         output = self._step(batch)
         losses = output.loss_info
@@ -38,15 +40,7 @@ class FlavaPreTrainingLightningModule(LightningModule):
         return self.model(**batch, skip_unmasked_multimodal_encoder=True, return_loss=True)
 
     def configure_optimizers(self):
-        return configure_default_optimizers(
-            self.model,
-            learning_rate=2e-4,
-            adam_eps=1e-8,
-            adam_weight_decay=1e-2,
-            adam_betas=(0.9, 0.999),
-            warmup_steps=2000,
-            max_steps=450000,
-        )
+        return self.optimizers
 
 
 class BERTPreTrainingLightningModule(LightningModule):
@@ -56,6 +50,8 @@ class BERTPreTrainingLightningModule(LightningModule):
             self.model = BertForMaskedLM.from_pretrained(kwargs['pretrained'])
         else:
             self.model = BertForMaskedLM(BertConfig())
+
+        self.optimizers = configure_default_optimizers(self.model, **kwargs)
 
     def training_step(self, batch, batch_idx):
         output = self._step(batch)
@@ -71,15 +67,7 @@ class BERTPreTrainingLightningModule(LightningModule):
         return self.model(input_ids=batch.get("input_ids_masked"), labels=batch.get("mlm_labels"), return_dict=True)
 
     def configure_optimizers(self):
-        return configure_default_optimizers(
-            self.model,
-            learning_rate=2e-4,
-            adam_eps=1e-8,
-            adam_weight_decay=1e-2,
-            adam_betas=(0.9, 0.999),
-            warmup_steps=2000,
-            max_steps=450000,
-        )
+        return self.optimizers
 
 
 class RobertaPreTrainingLightningModule(LightningModule):
@@ -95,6 +83,8 @@ class RobertaPreTrainingLightningModule(LightningModule):
                                                           type_vocab_size=1,
                                                           ))
 
+        self.optimizers = configure_default_optimizers(self.model, **kwargs)
+
     def training_step(self, batch, batch_idx):
         output = self._step(batch)
         self.log(f"train/losses/mlm_loss", output.loss, prog_bar=True, logger=True)
@@ -109,15 +99,7 @@ class RobertaPreTrainingLightningModule(LightningModule):
         return self.model(input_ids=batch.get("input_ids_masked"), labels=batch.get("mlm_labels"), return_dict=True)
 
     def configure_optimizers(self):
-        return configure_default_optimizers(
-            self.model,
-            learning_rate=2e-4,
-            adam_eps=1e-8,
-            adam_weight_decay=1e-2,
-            adam_betas=(0.9, 0.999),
-            warmup_steps=2000,
-            max_steps=450000,
-        )
+        return self.optimizers
 
 
 def configure_default_optimizers(

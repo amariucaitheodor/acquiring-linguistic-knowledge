@@ -1,6 +1,6 @@
 program: train.py
-name: roberta-text-wit-mlm_perc
-description: Hyperparameter sweep search for RoBERTa (text) on the WiT dataset.
+name: bert-text-wit
+description: Hyperparameter sweep search for BERT (text) on the WiT dataset.
 project: multimodal-wit
 run_cap: 100
 entity: rycolab
@@ -13,7 +13,7 @@ command:
   - ${interpreter} # makes sure the right interpreter is used on Euler (3.10 req. for BLiMP)
   - -m
   - train
-  - config=configs/roberta/wit.yaml
+  - config=configs/bert/wit.yaml
 early_terminate: # We do want to early_terminate here because we're interested in the best configs.
   type: hyperband
   max_iter: 32
@@ -24,3 +24,6 @@ parameters:
     distribution: uniform
     min: 0.15
     max: 0.5
+  learning_rate:
+    distribution: categorical
+    values: [ 1e-3, 5e-4, 1e-4 ] # FLAVA, RoBERTa, BERT

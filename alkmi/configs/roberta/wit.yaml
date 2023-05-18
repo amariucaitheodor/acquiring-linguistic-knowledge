@@ -28,6 +28,12 @@ training:
   batch_size: 26
   num_workers: 2
   use_wandb: true
+  # https://huggingface.co/nyu-mll/roberta-base-100M-2, Table 9
+  learning_rate: 5e-4
+  adam_eps: 1e-6
+  adam_weight_decay: 1e-2
+  adam_betas: [ 0.9, 0.98 ]
+  warmup_steps: 10000
 
 datasets:
   _target_: alkmi.definitions.TrainingDatasetsInfo

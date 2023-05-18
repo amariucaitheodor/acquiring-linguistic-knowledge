@@ -10,7 +10,7 @@ from transformers import BertTokenizerFast, RobertaTokenizerFast
 from data.datamodules import MLMDataModule, ImageDataModule, VLDataModule
 from data.multidata import MultiDataModule
 from data.text_datamodules import TextDataModule
-from alkmi.definitions import TrainingSingleDatasetInfo, TrainingArguments, AblationArguments
+from alkmi.definitions import TrainingSingleDatasetInfo, TrainingArguments, AblationArguments, ModelArguments
 
 
 def build_datamodule_kwargs(
@@ -25,6 +25,19 @@ def build_datamodule_kwargs(
     }
     kwargs.update(dm_config.datamodule_extra_kwargs)
     return kwargs
+
+
+def build_model_kwargs(
+        training_config: TrainingArguments, model_config: ModelArguments
+):
+    return {
+        "pretrained": model_config.pretrained,
+        "learning_rate": training_config.learning_rate,
+        "adam_eps": training_config.adam_eps,
+        "adam_betas": training_config.adam_betas,
+        "warmup_steps": training_config.warmup_steps,
+        "max_steps": 450000,  # fixed for now...
+    }
 
 
 def build_config():

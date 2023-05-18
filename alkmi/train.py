@@ -8,9 +8,9 @@ from callbacks.blimp_eval import LMEvalHarnessCallback
 from callbacks.multimodal_overfitting_monitor import MultimodalOverfittingMonitor
 from callbacks.pseudo_perplexity_eval import PseudoPerplexityCallback
 from definitions import AblationArguments
-from model import BERTPreTrainingLightningModule, FlavaPreTrainingLightningModule, RobertaPreTrainingLightningModule
+from lightning_models import BERTPreTrainingLightningModule, FlavaPreTrainingLightningModule, RobertaPreTrainingLightningModule
 from utils import build_config, update_ckt_dir_and_batch_size, assign_huggingface_ram, \
-    initialize_multidatamodule, overwrite_config
+    initialize_multidatamodule, overwrite_config, build_model_kwargs
 
 
 def main():
@@ -60,11 +60,11 @@ def main():
 
     print("Building model")
     if config.model.name == 'bert':
-        model = BERTPreTrainingLightningModule(**config.model)
+        model = BERTPreTrainingLightningModule(**build_model_kwargs(config.training, config.model))
     elif config.model.name == 'roberta':
-        model = RobertaPreTrainingLightningModule(**config.model)
+        model = RobertaPreTrainingLightningModule(**build_model_kwargs(config.training, config.model))
     elif config.model.name == 'flava':
-        model = FlavaPreTrainingLightningModule(**config.model)
+        model = FlavaPreTrainingLightningModule(**build_model_kwargs(config.training, config.model))
     else:
         raise ValueError(f"Unknown model name: {config.model.name}")
 
