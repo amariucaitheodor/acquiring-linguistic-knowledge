@@ -2,7 +2,7 @@
 
 Master's thesis of Theodor Amariucai, supervised by Alexander Warstadt and Prof. Ryan Cotterell.
 
-![alt text](./assets/alkmi-high-resolution-color-logo.png "ALKMI logo")
+![alt text](./assets/alkmi-low-resolution-color-logo.png "ALKMI logo")
 
 ### Introduction
 

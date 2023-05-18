@@ -12,7 +12,7 @@ training:
     val_check_interval: 8000
     limit_val_batches: 2000 # REQUIRED, otherwise the validation loop doesn't terminate
     precision: 16-mixed # 'bf16' not supported on either local or Euler GPU
-    accumulate_grad_batches: 64
+    accumulate_grad_batches: 32
     num_sanity_val_steps: 0
     strategy: ddp_find_unused_parameters_true # ddp for BERT, RoBERTa
     enable_progress_bar: false
