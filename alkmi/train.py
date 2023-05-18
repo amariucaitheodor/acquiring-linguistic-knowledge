@@ -20,7 +20,7 @@ def main():
         wandb_logger = WandbLogger(
             project=f'multimodal-{config.datasets.ablation.train[0].key.split("/")[-1]}',
             resume=False,
-            log_model="all",  # checkpoints are logged during training
+            log_model=True,  # checkpoints are logged at the end of training
             tags=[config.model.pretrained if config.model.pretrained else "scratch"],
             magic=True,
             force=True,

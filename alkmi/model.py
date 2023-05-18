@@ -2,10 +2,12 @@ from typing import Tuple, Any
 
 import torch
 from pytorch_lightning import LightningModule
-from transformers import FlavaForPreTraining, FlavaConfig, BertForMaskedLM, BertConfig, get_cosine_schedule_with_warmup, \
-    RobertaForMaskedLM, RobertaConfig, get_constant_schedule_with_warmup
+from transformers import FlavaConfig, BertForMaskedLM, BertConfig, get_cosine_schedule_with_warmup, \
+    RobertaForMaskedLM, RobertaConfig
 from transformers.modeling_outputs import MaskedLMOutput
 from transformers.models.flava.modeling_flava import FlavaForPreTrainingOutput
+
+from models.flava import FlavaForPreTraining
 
 
 class FlavaPreTrainingLightningModule(LightningModule):

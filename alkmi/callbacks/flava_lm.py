@@ -5,6 +5,7 @@ import torch
 from transformers.models.flava.modeling_flava import FlavaForPreTrainingOutput
 
 from alkmi.definitions import TEXT_MAX_LENGTH_DEFAULT
+from models.flava import FlavaForPreTraining
 
 lm_eval = importlib.import_module(name="lm_eval", package="lm-evaluation-harness")
 
@@ -13,8 +14,6 @@ from lm_eval.models.huggingface import AutoMaskedLM
 from tqdm import tqdm
 from transformers import FlavaProcessor
 from typing import List, Optional, Tuple, Union
-
-from transformers import FlavaForPreTraining
 
 
 class FlavaLM(AutoMaskedLM):

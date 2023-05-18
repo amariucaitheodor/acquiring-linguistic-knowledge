@@ -5,10 +5,11 @@ import torch
 from datasets import load_dataset
 from pytorch_lightning import Callback
 from tqdm import tqdm
-from transformers import BertForMaskedLM, FlavaForPreTraining, RobertaForMaskedLM
+from transformers import BertForMaskedLM, RobertaForMaskedLM
 
 from callbacks.utils import get_corresponding_tokenizer_for_model
 from data.utils import collapse_wit_text, WIT_ALT_TEXT_COLUMNS
+from models.flava import FlavaForPreTraining
 
 
 class PseudoPerplexityCallback(Callback):

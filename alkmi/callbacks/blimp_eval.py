@@ -2,10 +2,11 @@ import logging
 import time
 from datetime import timedelta
 
-from transformers import BertForMaskedLM, FlavaForPreTraining, RobertaForMaskedLM
+from transformers import BertForMaskedLM, RobertaForMaskedLM
 
 from alkmi.callbacks.text_lm import TextLM
 from alkmi.callbacks.flava_lm import FlavaLM
+from models.flava import FlavaForPreTraining
 
 logger = logging.getLogger(__name__)
 
