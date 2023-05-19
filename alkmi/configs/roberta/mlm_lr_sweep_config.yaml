@@ -1,26 +1,28 @@
 program: train.py
-name: flava-textvision-wit-mlm_percentage
-description: MLM percentage sweep search for FLAVA (text-vision) on the WiT dataset.
+name: roberta-text-wit
+description: Hyperparameter sweep search for RoBERTa (text) on the WiT dataset.
 project: multimodal-wit
 run_cap: 100
 entity: rycolab
 method: bayes # uses probability of improvement (PI) to select the next hyperparameter configuration
 metric:
-  name: evaluation/blimp/average
-  goal: maximize
+  name: evaluation/pseudo_perplexity
+  goal: minimize
 command:
   - ${env}
   - ${interpreter} # makes sure the right interpreter is used on Euler (3.10 req. for BLiMP)
   - -m
   - train
-  - config=configs/wit.yaml
+  - config=configs/roberta/wit.yaml
 early_terminate: # We do want to early_terminate here because we're interested in the best configs.
   type: hyperband
-  max_iter: 32
+  max_iter: 64
   s: 4
   eta: 2
 parameters:
   mlm_perc:
-    distribution: uniform
-    min: 0.15
-    max: 0.5
+    distribution: categorical
+    values: [ 0.15, 0.3, 0.4 ]
+  learning_rate:
+    distribution: categorical
+    values: [ 3e-3, 2e-3, 1e-3, 6e-4, 5e-4 ] # FLAVA x3x2x1, RoBERTa BASE, NYU RoBERTa training

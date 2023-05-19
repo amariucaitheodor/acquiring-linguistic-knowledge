@@ -6,8 +6,8 @@ run_cap: 200
 entity: rycolab
 method: grid
 metric:
-  name: evaluation/blimp/average
-  goal: maximize
+  name: evaluation/pseudo_perplexity
+  goal: minimize
 command:
   - ${env}
   - ${interpreter} # makes sure the right interpreter is used on Euler (3.10 req. for BLiMP)
