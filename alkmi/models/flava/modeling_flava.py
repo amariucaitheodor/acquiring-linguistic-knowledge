@@ -1218,15 +1218,15 @@ class FlavaModel(FlavaPreTrainedModel):
 
         self.text_model = FlavaTextModel(text_config)
         if config.compile_submodels:
-            print("Compiling the text model...")
+            print("Compiling FLAVA's text model...")
             self.text_model = torch.compile(self.text_model)
         self.image_model = FlavaImageModel(image_config)
         if config.compile_submodels:
-            print("Compiling the image model...")
+            print("Compiling FLAVA's image model...")
             self.image_model = torch.compile(self.image_model)
         self.multimodal_model = FlavaMultimodalModel(multimodal_config)
         if config.compile_submodels:
-            print("Compiling the multimodal model...")
+            print("Compiling FLAVA's multimodal model...")
             self.multimodal_model = torch.compile(self.multimodal_model)
 
         self.image_projection = nn.Linear(self.image_hidden_size, self.projection_dim)
@@ -1742,8 +1742,11 @@ class FlavaForPreTraining(FlavaPreTrainedModel):
         self.image_codebook = image_codebook
         if self.image_codebook is None and config.init_codebook:
             self.image_codebook = FlavaImageCodebook(config.image_codebook_config)
+            if config.compile_submodels:
+                print("Compiling FLAVA's image codebook...")
+                self.image_codebook = torch.compile(self.image_codebook)
 
-        # Levarage text and image encoder configs to create the masked
+        # Leverage text and image encoder configs to create the masked
         # head since it has the right vocab
         self.mim_head = FlavaMaskedPredictionHead(config.image_config)
         self.mlm_head = FlavaMaskedPredictionHead(config.text_config)

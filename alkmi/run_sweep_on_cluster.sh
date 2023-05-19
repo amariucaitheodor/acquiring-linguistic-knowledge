@@ -6,9 +6,6 @@ NUM_GPUS=1     # GPUs per node
 NUM_CPUS=4     # Number of cores (default: 1)
 CPU_RAM=15000  # RAM for each core (default: 1024)
 
-# Load modules (might want to run 'env2lmod' prior to this)
-module load eth_proxy gcc/8.2.0 python_gpu/3.10.4
-
 echo "Number of agents: $1, sweep name: $2"
 
 # --mail-type=END,FAIL uncomment to get email notifications
