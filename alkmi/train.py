@@ -113,6 +113,7 @@ def main():
         **OmegaConf.to_container(config.training.lightning),
         callbacks=callbacks,
         logger=wandb_logger if config.training.use_wandb else True,
+        inference_mode=False
     )
 
     if config.text_perc + config.vision_perc > 0:
