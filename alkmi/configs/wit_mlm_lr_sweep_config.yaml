@@ -25,4 +25,4 @@ parameters:
     values: [ 0.15, 0.3, 0.4 ]
   learning_rate:
     distribution: categorical
-    values: [ 1e-3, 5e-4, 1e-4 ] # FLAVA, NYU RoBERTa training, BERT
+    values: [ 3e-3, 2e-3, 1e-3, 5e-4, 1e-4 ] # FLAVA x3x2x1, NYU RoBERTa training, BERT

@@ -1049,7 +1049,7 @@ class FlavaTextModel(FlavaPreTrainedModel):
         # and head_mask is converted to shape [num_hidden_layers x batch x num_heads x seq_length x seq_length]
         head_mask = self.get_head_mask(head_mask, self.config.num_hidden_layers)
         extended_attention_mask: torch.Tensor = self.get_extended_attention_mask(
-            attention_mask, input_shape, input_ids.device
+            attention_mask, input_shape
         )
 
         embedding_output = self.embeddings(
@@ -1153,7 +1153,7 @@ class FlavaMultimodalModel(FlavaPreTrainedModel):
         # and head_mask is converted to shape [num_hidden_layers x batch x num_heads x seq_length x seq_length]
         head_mask = self.get_head_mask(head_mask, self.config.num_hidden_layers)
         extended_attention_mask: torch.Tensor = self.get_extended_attention_mask(
-            attention_mask, (batch_size, seq_length), hidden_states.device
+            attention_mask, (batch_size, seq_length)
         )
 
         encoder_outputs = self.encoder(
@@ -1218,12 +1218,15 @@ class FlavaModel(FlavaPreTrainedModel):
 
         self.text_model = FlavaTextModel(text_config)
         if config.compile_submodels:
+            print("Compiling the text model...")
             self.text_model = torch.compile(self.text_model)
         self.image_model = FlavaImageModel(image_config)
         if config.compile_submodels:
+            print("Compiling the image model...")
             self.image_model = torch.compile(self.image_model)
         self.multimodal_model = FlavaMultimodalModel(multimodal_config)
         if config.compile_submodels:
+            print("Compiling the multimodal model...")
             self.multimodal_model = torch.compile(self.multimodal_model)
 
         self.image_projection = nn.Linear(self.image_hidden_size, self.projection_dim)

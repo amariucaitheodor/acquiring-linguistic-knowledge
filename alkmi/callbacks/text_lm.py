@@ -58,7 +58,7 @@ class TextLM(AutoMaskedLM):
 
             indices = list(chain.from_iterable([list(range(o, o + n)) for n, o in zip(lengths, offsets)]))
 
-            with torch.inference_mode():
+            with torch.no_grad():
                 output: MaskedLMOutput = self.model(input_ids=token_ids, attention_mask=attention_masks)
                 logits = output.logits.detach()[torch.arange(sum(lengths)), indices]
 

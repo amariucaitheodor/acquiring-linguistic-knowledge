@@ -18,7 +18,8 @@ command:
 # What we do want is over-fitting detection, but that's done on the average validation loss using callbacks.
 parameters:
   text_perc:
-    values: [ 1, 10, 100 ] # 0 is relevant just for completeness...
+    # 59% is approx. 100M words, 0% would be relevant just for completeness
+    values: [ 1, 10, 59, 100 ]
   vision_perc:
     values: [ 0, 1, 10, 100 ]
   seed: # Repeat each run three times with different seeds (then take average)

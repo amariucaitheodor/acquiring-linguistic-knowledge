@@ -52,7 +52,7 @@ class PseudoPerplexityCallback(Callback):
             mask = torch.ones(tensor_input.size(-1) - 1).diag(1)[:-2]
             masked_input = repeat_input.masked_fill(mask == 1, tokenizer.mask_token_id)
             labels = repeat_input.masked_fill(masked_input != tokenizer.mask_token_id, -100)
-            with torch.inference_mode():
+            with torch.no_grad():
                 if type(pl_module.model) in [BertForMaskedLM, RobertaForMaskedLM]:
                     mlm_loss = pl_module.model(input_ids=masked_input.to("cuda:0"),
                                                labels=labels.to("cuda:0"),
