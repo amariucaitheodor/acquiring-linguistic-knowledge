@@ -63,7 +63,7 @@ class LMEvalHarnessCallback(Callback):
             accuracies = []
             for task in TASKS[group_title]:
                 # Setup
-                task_name = f"blimp_from_file:../lm-evaluation-harness/filter-data/blimp_filtered/{task}" \
+                task_name = f"blimp_from_file:./callbacks/lm-evaluation-harness/filter-data/blimp_filtered/{task}" \
                     if group_title == "blimp" else \
                     f"{task}:../lm-evaluation-harness/filter-data/glue_filtered/{task if task != 'mnli_mismatched' else 'mnli'}"
                 template_name = "null_prompt" if group_title == "blimp" else lm_eval.list_templates(task)[0]

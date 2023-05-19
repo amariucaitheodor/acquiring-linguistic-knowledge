@@ -61,7 +61,6 @@ def main():
     assign_huggingface_ram()
 
     print("Building model")
-    torch._dynamo.config.cache_size_limit = 96
     if config.model.name == 'bert':
         model = BERTPreTrainingLightningModule(**build_model_kwargs(config.training, config.model))
         model = torch.compile(model)
