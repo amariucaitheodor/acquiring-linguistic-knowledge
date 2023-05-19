@@ -56,5 +56,5 @@ datasets:
 model:
   _target_: alkmi.definitions.ModelArguments
   pretrained: null
-  mlm_perc: 0.3  # https://wandb.ai/rycolab/multimodal-wit/sweeps/ni7km9wf?workspace=user-tamariucai
+  mlm_perc: 0.3  # found by a sweep
   name: roberta

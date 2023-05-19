@@ -1,3 +1,5 @@
+import torch
+
 import wandb
 from omegaconf import OmegaConf
 from pytorch_lightning import seed_everything, Trainer
@@ -61,8 +63,10 @@ def main():
     print("Building model")
     if config.model.name == 'bert':
         model = BERTPreTrainingLightningModule(**build_model_kwargs(config.training, config.model))
+        model = torch.compile(model)
     elif config.model.name == 'roberta':
         model = RobertaPreTrainingLightningModule(**build_model_kwargs(config.training, config.model))
+        model = torch.compile(model)
     elif config.model.name == 'flava':
         model = FlavaPreTrainingLightningModule(**build_model_kwargs(config.training, config.model))
     else:

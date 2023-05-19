@@ -20,7 +20,7 @@ poetry install
 poetry shell
 
 cd alkmi/callbacks/lm-evaluation-harness
-pip install -e ".[dev]"
+poetry run pip install -e ".[dev]"
 
 # Test run:
 bash run_locally.sh configs/debug.yaml
