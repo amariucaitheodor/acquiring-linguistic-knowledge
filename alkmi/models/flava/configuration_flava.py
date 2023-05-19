@@ -552,6 +552,7 @@ class FlavaConfig(PretrainedConfig):
         global_backprop_contrastive: bool = True,
         skip_unmasked_multimodal_encoder: bool = True,
         return_loss: bool = True,
+        compile_submodels: bool = False,
         **kwargs,
     ):
         # If `_config_dict` exist, we use them for the backward compatibility.
@@ -731,6 +732,8 @@ class FlavaConfig(PretrainedConfig):
         self.global_backprop_contrastive = global_backprop_contrastive
         self.skip_unmasked_multimodal_encoder = skip_unmasked_multimodal_encoder
         self.return_loss = return_loss
+
+        self.compile_submodels = compile_submodels
 
     @classmethod
     def from_configs(

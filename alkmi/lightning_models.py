@@ -16,7 +16,7 @@ class FlavaPreTrainingLightningModule(LightningModule):
         if 'pretrained' in kwargs and kwargs['pretrained']:
             self.model = FlavaForPreTraining.from_pretrained(kwargs['pretrained'])
         else:
-            self.model = FlavaForPreTraining(FlavaConfig())
+            self.model = FlavaForPreTraining(FlavaConfig(compile_submodels=True))
 
         kwargs.pop('pretrained')
         self.optimizers = configure_default_optimizers(self.model, **kwargs)

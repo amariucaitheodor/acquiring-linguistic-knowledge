@@ -1217,8 +1217,14 @@ class FlavaModel(FlavaPreTrainedModel):
         self.mm_hidden_size = multimodal_config.hidden_size
 
         self.text_model = FlavaTextModel(text_config)
+        if config.compile_submodels:
+            self.text_model = torch.compile(self.text_model)
         self.image_model = FlavaImageModel(image_config)
+        if config.compile_submodels:
+            self.image_model = torch.compile(self.image_model)
         self.multimodal_model = FlavaMultimodalModel(multimodal_config)
+        if config.compile_submodels:
+            self.multimodal_model = torch.compile(self.multimodal_model)
 
         self.image_projection = nn.Linear(self.image_hidden_size, self.projection_dim)
         self.text_projection = nn.Linear(self.text_hidden_size, self.projection_dim)
