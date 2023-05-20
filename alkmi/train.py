@@ -77,6 +77,7 @@ def main():
     callbacks = [LearningRateMonitor(logging_interval="step"),
                  LMEvalHarnessCallback(enable_progress_bar=config.training.lightning['enable_progress_bar']),
                  PseudoPerplexityCallback(key=config.datasets.ablation.val[0].key,
+                                          split=config.datasets.ablation.val[0].split_key_mapping['validation'],
                                           limit_val_batches=config.training.lightning['limit_val_batches'],
                                           enable_progress_bar=config.training.lightning['enable_progress_bar'])]
 

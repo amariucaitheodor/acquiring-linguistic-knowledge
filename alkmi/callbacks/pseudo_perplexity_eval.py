@@ -8,28 +8,21 @@ from tqdm import tqdm
 from transformers import BertForMaskedLM, RobertaForMaskedLM
 
 from callbacks.utils import get_corresponding_tokenizer_for_model
-from data.utils import collapse_wit_text, WIT_ALT_TEXT_COLUMNS
+from data.utils import collapse_text_columns
 from models.flava import FlavaForPreTraining
 
 
 class PseudoPerplexityCallback(Callback):
     def __init__(self,
                  key: str,
+                 split: str,
                  limit_val_batches: int,
                  enable_progress_bar: bool,
-                 text_collapse_batch_size: int = 100,
                  ):
         super().__init__()
 
-        self.dataset = load_dataset(key, split="test", use_auth_token=True, num_proc=32) \
-            .remove_columns(["image"])
-        self.dataset = self.dataset.map(
-            collapse_wit_text,
-            batched=True,
-            num_proc=16,
-            batch_size=text_collapse_batch_size,
-            remove_columns=WIT_ALT_TEXT_COLUMNS
-        )
+        self.dataset = load_dataset(key, split=split, use_auth_token=True, num_proc=16)
+        self.dataset = collapse_text_columns(self.dataset, purpose_msg="PPL Evaluation", need_images=False, num_proc=16)
         self.limit_val_batches = limit_val_batches
         self.enable_progress_bar = enable_progress_bar
 

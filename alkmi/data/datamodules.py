@@ -11,7 +11,7 @@ from transformers import (
 
 from alkmi.data import utils
 from alkmi.data.transforms import ITMTransform
-from alkmi.data.utils import build_datasets_from_info
+from alkmi.data.utils import build_datasets_from_info, collapse_text_columns
 from alkmi.definitions import HFDatasetInfo, TEXT_MAX_LENGTH_DEFAULT, VL_MAX_LENGTH_DEFAULT
 
 
@@ -106,26 +106,8 @@ class MLMDataModule(FlavaAblationDataModule):
     def setup(self, stage=None):
         super().setup(stage)
 
-        self.train_dataset = self.train_dataset.remove_columns('image')
-        self.train_dataset = self.train_dataset.map(
-            utils.collapse_wit_text,
-            batched=True,
-            num_proc=32,
-            batch_size=100,
-            load_from_cache_file=True,  # MUCH faster processing
-            remove_columns=utils.WIT_ALT_TEXT_COLUMNS,
-            desc="Collapsing WiT text for MLM training",
-        )
-        self.val_dataset = self.val_dataset.remove_columns('image')
-        self.val_dataset = self.val_dataset.map(
-            utils.collapse_wit_text,
-            batched=True,
-            num_proc=32,
-            batch_size=100,
-            load_from_cache_file=True,  # MUCH faster processing
-            remove_columns=utils.WIT_ALT_TEXT_COLUMNS,
-            desc="Collapsing WiT text for MLM validation",
-        )
+        self.train_dataset = collapse_text_columns(self.train_dataset, need_images=False, purpose_msg="MLM training")
+        self.val_dataset = collapse_text_columns(self.val_dataset, need_images=False, purpose_msg="MLM validation")
 
     def _build_collator(self, inputs: List[Dict[str, Any]]):
         text_to_process = []
@@ -187,31 +169,11 @@ class VLDataModule(FlavaAblationDataModule):
             itm_probability=self.itm_probability,
         )
 
-        self.train_dataset = self.train_dataset.cast_column("image", Image(decode=False))  # MUCH faster processing
-        self.train_dataset = self.train_dataset.map(
-            utils.collapse_wit_text,
-            batched=True,
-            num_proc=32,
-            batch_size=100,
-            remove_columns=utils.WIT_ALT_TEXT_COLUMNS,
-            load_from_cache_file=True,  # MUCH faster processing
-            desc="Collapsing WiT text for VL training",
-        )
+        self.train_dataset = collapse_text_columns(self.train_dataset, need_images=True, purpose_msg="VL training")
         self.train_dataset.set_transform(vl_transform(self.train_dataset))
-        self.train_dataset = self.train_dataset.cast_column("image", Image(decode=True))  # MUCH faster processing
 
-        self.val_dataset = self.val_dataset.cast_column("image", Image(decode=False))  # MUCH faster processing
-        self.val_dataset = self.val_dataset.map(
-            utils.collapse_wit_text,
-            batched=True,
-            num_proc=32,
-            batch_size=100,
-            remove_columns=utils.WIT_ALT_TEXT_COLUMNS,
-            load_from_cache_file=True,  # MUCH faster processing
-            desc="Collapsing WiT text for VL validation",
-        )
+        self.val_dataset = collapse_text_columns(self.val_dataset, need_images=True, purpose_msg="VL validation")
         self.val_dataset.set_transform(vl_transform(self.val_dataset))
-        self.val_dataset = self.val_dataset.cast_column("image", Image(decode=True))  # MUCH faster processing
 
         # https://discuss.huggingface.co/t/use-existing-dataset-with-a-generator/36219/4
 

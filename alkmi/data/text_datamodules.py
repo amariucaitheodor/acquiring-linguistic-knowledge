@@ -8,8 +8,7 @@ from transformers import (
     PreTrainedTokenizerFast,
 )
 
-from alkmi.data import utils
-from alkmi.data.utils import build_datasets_from_info
+from alkmi.data.utils import build_datasets_from_info, collapse_text_columns
 from alkmi.definitions import HFDatasetInfo, TEXT_MAX_LENGTH_DEFAULT
 
 
@@ -60,26 +59,8 @@ class TextDataModule(LightningDataModule):
         if should_count_words:
             count_words(self.train_dataset, self.train_dataset_infos, self.val_dataset, self.val_dataset_infos, False)
 
-        self.train_dataset = self.train_dataset.remove_columns('image')
-        self.train_dataset = self.train_dataset.map(
-            utils.collapse_wit_text,
-            batched=True,
-            num_proc=32,
-            batch_size=100,
-            load_from_cache_file=True,  # MUCH faster processing
-            remove_columns=utils.WIT_ALT_TEXT_COLUMNS,
-            desc="Collapsing WiT text for MLM training",
-        )
-        self.val_dataset = self.val_dataset.remove_columns('image')
-        self.val_dataset = self.val_dataset.map(
-            utils.collapse_wit_text,
-            batched=True,
-            num_proc=32,
-            batch_size=100,
-            load_from_cache_file=True,  # MUCH faster processing
-            remove_columns=utils.WIT_ALT_TEXT_COLUMNS,
-            desc="Collapsing WiT text for MLM validation",
-        )
+        self.train_dataset = collapse_text_columns(self.train_dataset, need_images=False, purpose_msg="MLM training")
+        self.val_dataset = collapse_text_columns(self.val_dataset, need_images=False, purpose_msg="MLM validation")
 
         if should_count_words:
             count_words(self.train_dataset, self.train_dataset_infos, self.val_dataset, self.val_dataset_infos, True)

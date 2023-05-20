@@ -1,6 +1,6 @@
 from typing import List
 
-from datasets import concatenate_datasets, load_dataset
+from datasets import concatenate_datasets, load_dataset, Image
 from datasets.utils.file_utils import get_datasets_user_agent
 
 from alkmi.definitions import HFDatasetInfo
@@ -47,3 +47,21 @@ def collapse_wit_text(batch):
                     batch[field][i].split("English: ")[1] if batch[field][i].startswith("English: ")
                     else batch[field][i])
     return batch
+
+
+def collapse_text_columns(dataset, need_images: bool, purpose_msg: str, num_proc: int = 16, batch_size: int = 100):
+    if len(dataset.column_names) > 1:
+        if 'image' in dataset.column_names:
+            dataset = dataset.cast_column("image", Image(decode=False))  # MUCH faster processing
+        dataset = dataset.map(
+            collapse_wit_text,
+            batched=True,
+            num_proc=num_proc,
+            batch_size=batch_size,
+            remove_columns=WIT_ALT_TEXT_COLUMNS,
+            load_from_cache_file=True,  # MUCH faster processing
+            desc=f"Collapsing WiT text for {purpose_msg}",
+        )
+        if 'image' in dataset.column_names and need_images:
+            dataset = dataset.cast_column("image", Image(decode=True))
+    return dataset
