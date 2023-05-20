@@ -239,12 +239,12 @@ class MultimodalOverfittingMonitor(Callback):
                     pl_module.model.mmm_image_weight = 0.
                 case "validation/losses/mmm_text_loss":
                     pl_module.model.mmm_text_weight = 0.
-                    if self.datamodule.sampling_weights[2] == 0.:  # With no MLM and MMM_text, stop training
-                        self._stop_training(trainer)
+                    if self.datamodule.sampling_weights[2] == 0.:
+                        self._stop_training(trainer)  # With no MLM and MMM_text, stop training
                 case "validation/losses/mlm_loss":
                     self._set_sampling_weight_for_modality("text", trainer=trainer, type="zero")
-                    if pl_module.model.mmm_text_weight == 0.:  # With no MLM and MMM_text, stop training
-                        self._stop_training(trainer)
+                    if hasattr(pl_module.model, 'mmm_text_weight') and pl_module.model.mmm_text_weight == 0.:
+                        self._stop_training(trainer)  # With no MLM and MMM_text, stop training
                 case "validation/losses/mim_loss":
                     self._set_sampling_weight_for_modality("vision", trainer=trainer, type="zero")
 

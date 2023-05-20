@@ -31,6 +31,11 @@ def accuracy_on_task(task_name, eval_model, template_name, num_fewshot):
 
 
 class LMEvalHarnessCallback(Callback):
+
+    def __init__(self, enable_progress_bar: bool):
+        super().__init__()
+        self.enable_progress_bar = enable_progress_bar
+
     def log_metric(self, name: str, value):
         self.log(name, value, prog_bar=True, logger=True, rank_zero_only=True, sync_dist=True)
 
@@ -41,10 +46,12 @@ class LMEvalHarnessCallback(Callback):
 
         if type(pl_module.model) in [BertForMaskedLM, RobertaForMaskedLM]:
             eval_model = TextLM(model=pl_module.model,
-                                batch_size=trainer.val_dataloaders.loaders[0].batch_size)
+                                batch_size=trainer.val_dataloaders.loaders[0].batch_size,
+                                enable_progress_bar=self.enable_progress_bar)
         elif type(pl_module.model) == FlavaForPreTraining:
             eval_model = FlavaLM(model=pl_module.model,
-                                 batch_size=trainer.val_dataloaders.loaders[0].batch_size)
+                                 batch_size=trainer.val_dataloaders.loaders[0].batch_size,
+                                 enable_progress_bar=self.enable_progress_bar)
         else:
             raise ValueError(f"Model {type(pl_module.model)} not supported for BLiMP eval")
 
@@ -79,6 +86,6 @@ class LMEvalHarnessCallback(Callback):
                 accuracies.append(round(task_accuracy * 100, 2))
                 self.log_metric(name=f"evaluation/{group_title}/{metric_name}", value=accuracies[-1])
 
-            self.log_metric(name=f"evaluation/{group_title}/average", value=sum(accuracies) / len(accuracies))
+            self.log_metric(name=f"evaluation/{group_title}_average", value=sum(accuracies) / len(accuracies))
 
         print(f"Ending LM Evaluation Harness (duration: {timedelta(seconds=time.time() - start)})")

@@ -25,6 +25,7 @@ class FlavaLM(AutoMaskedLM):
     def __init__(
             self,
             model: FlavaForPreTraining,
+            enable_progress_bar: bool,
             batch_size: Optional[int] = 1,
             max_length: Optional[int] = TEXT_MAX_LENGTH_DEFAULT,
             add_special_tokens: Optional[bool] = None,
@@ -40,6 +41,8 @@ class FlavaLM(AutoMaskedLM):
         self.model = model
         self._device = device
 
+        self.enable_progress_bar = enable_progress_bar
+
     def loglikelihood(
             self, requests: List[Tuple[str, str]]
     ) -> List[Tuple[float, bool]]:
@@ -47,7 +50,7 @@ class FlavaLM(AutoMaskedLM):
         Returns *pseudo*-loglikelihoods, as described in Salazar et al. (2020).
         """
         scores = []
-        for chunk in utils.chunks(tqdm(requests, disable=False), self.batch_size):
+        for chunk in utils.chunks(tqdm(requests, disable=not self.enable_progress_bar), self.batch_size):
             _, continuation = zip(*chunk)
 
             tokenized = self._prepare_text(continuation)

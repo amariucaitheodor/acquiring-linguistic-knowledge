@@ -3,7 +3,7 @@ from datetime import timedelta
 
 import torch
 from datasets import load_dataset
-from pytorch_lightning import Callback
+from pytorch_lightning import Callback, Trainer
 from tqdm import tqdm
 from transformers import BertForMaskedLM, RobertaForMaskedLM
 
@@ -13,7 +13,12 @@ from models.flava import FlavaForPreTraining
 
 
 class PseudoPerplexityCallback(Callback):
-    def __init__(self, key: str, limit_val_batches: int, text_collapse_batch_size: int = 100):
+    def __init__(self,
+                 key: str,
+                 limit_val_batches: int,
+                 enable_progress_bar: bool,
+                 text_collapse_batch_size: int = 100,
+                 ):
         super().__init__()
 
         self.dataset = load_dataset(key, split="test", use_auth_token=True, num_proc=32) \
@@ -26,9 +31,10 @@ class PseudoPerplexityCallback(Callback):
             remove_columns=WIT_ALT_TEXT_COLUMNS
         )
         self.limit_val_batches = limit_val_batches
+        self.enable_progress_bar = enable_progress_bar
 
     @torch.no_grad()
-    def on_validation_start(self, trainer, pl_module) -> None:
+    def on_validation_start(self, trainer: Trainer, pl_module) -> None:
         """
         We use the pseudo-perplexity (PPPL) of an MLM as an intrinsic measure of how well it models a corpus
         of sentences. This differs from conventional (causal) LMs, which use perplexity (PPL).
@@ -43,7 +49,8 @@ class PseudoPerplexityCallback(Callback):
         tokenizer = get_corresponding_tokenizer_for_model(pl_module.model)
 
         avg_mlm_loss = torch.zeros(1, dtype=torch.float64)
-        for phrase in tqdm(text, desc="Pseudo-Perplexity Evaluation", total=phrases_count, unit="phrase"):
+        for phrase in tqdm(text, desc="Pseudo-Perplexity Evaluation", total=phrases_count, unit="phrase",
+                           disable=not self.enable_progress_bar):
             tensor_input = tokenizer(phrase,
                                      truncation=True,
                                      max_length=200,  # input size is squared! (experimentally, 200 fits in memory)

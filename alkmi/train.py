@@ -10,7 +10,8 @@ from callbacks.blimp_eval import LMEvalHarnessCallback
 from callbacks.multimodal_overfitting_monitor import MultimodalOverfittingMonitor
 from callbacks.pseudo_perplexity_eval import PseudoPerplexityCallback
 from definitions import AblationArguments
-from lightning_models import BERTPreTrainingLightningModule, FlavaPreTrainingLightningModule, RobertaPreTrainingLightningModule
+from lightning_models import BERTPreTrainingLightningModule, FlavaPreTrainingLightningModule, \
+    RobertaPreTrainingLightningModule
 from utils import build_config, update_ckt_dir_and_batch_size, assign_huggingface_ram, \
     initialize_multidatamodule, overwrite_config, build_model_kwargs
 
@@ -74,9 +75,10 @@ def main():
 
     print("Registering basic callbacks")
     callbacks = [LearningRateMonitor(logging_interval="step"),
-                 LMEvalHarnessCallback(),
+                 LMEvalHarnessCallback(enable_progress_bar=config.training.lightning['enable_progress_bar']),
                  PseudoPerplexityCallback(key=config.datasets.ablation.val[0].key,
-                                          limit_val_batches=config.training.lightning['limit_val_batches'])]
+                                          limit_val_batches=config.training.lightning['limit_val_batches'],
+                                          enable_progress_bar=config.training.lightning['enable_progress_bar'])]
 
     if config.training.lightning_checkpoint is not None:
         callbacks.append(

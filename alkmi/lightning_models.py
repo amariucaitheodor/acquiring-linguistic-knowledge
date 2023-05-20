@@ -27,7 +27,7 @@ class FlavaPreTrainingLightningModule(LightningModule):
         total_loss = 0
         for key in losses:
             total_loss += losses[key]
-            self.log(f"train/losses/{key}_loss", losses[key], prog_bar=True, logger=True)
+            self.log(f"train/losses/{key}_loss", losses[key], prog_bar=True, logger=True, sync_dist=True)
         return total_loss
 
     def validation_step(self, batch, batch_idx):
@@ -57,12 +57,12 @@ class BERTPreTrainingLightningModule(LightningModule):
 
     def training_step(self, batch, batch_idx):
         output = self._step(batch)
-        self.log(f"train/losses/mlm_loss", output.loss, prog_bar=True, logger=True)
+        self.log(f"train/losses/mlm_loss", output.loss, prog_bar=True, logger=True, sync_dist=True)
         return output.loss
 
     def validation_step(self, batch, batch_idx):
         output = self._step(batch)
-        self.log(f"validation/losses/mlm_loss", output.loss, prog_bar=True, logger=True)
+        self.log(f"validation/losses/mlm_loss", output.loss, prog_bar=True, logger=True, sync_dist=True)
         return output.loss
 
     def _step(self, batch) -> MaskedLMOutput:
@@ -89,12 +89,12 @@ class RobertaPreTrainingLightningModule(LightningModule):
 
     def training_step(self, batch, batch_idx):
         output = self._step(batch)
-        self.log(f"train/losses/mlm_loss", output.loss, prog_bar=True, logger=True)
+        self.log(f"train/losses/mlm_loss", output.loss, prog_bar=True, logger=True, sync_dist=True)
         return output.loss
 
     def validation_step(self, batch, batch_idx):
         output = self._step(batch)
-        self.log(f"validation/losses/mlm_loss", output.loss, prog_bar=True, logger=True)
+        self.log(f"validation/losses/mlm_loss", output.loss, prog_bar=True, logger=True, sync_dist=True)
         return output.loss
 
     def _step(self, batch) -> MaskedLMOutput:

@@ -29,7 +29,7 @@ training:
   num_workers: 1
   use_wandb: true
   # https://huggingface.co/nyu-mll/roberta-base-100M-2, Table 9
-  learning_rate: 5e-4
+  learning_rate: 3e-3  # Sweep: https://wandb.ai/rycolab/multimodal-wit/sweeps/k84pvx6y/workspace?workspace=user-tamariucai (replaces 5e-4)
   adam_eps: 1e-6
   adam_weight_decay: 1e-2
   adam_betas: [ 0.9, 0.98 ]
@@ -56,5 +56,5 @@ datasets:
 model:
   _target_: alkmi.definitions.ModelArguments
   pretrained: null
-  mlm_perc: 0.3  # found by a sweep
+  mlm_perc: 0.4  # Sweep: https://wandb.ai/rycolab/multimodal-wit/sweeps/k84pvx6y/workspace?workspace=user-tamariucai
   name: roberta
