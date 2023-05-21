@@ -61,7 +61,7 @@ def main():
     print("Assigning HuggingFace RAM")
     assign_huggingface_ram()
 
-    print("Building model")
+    print(f"Building model '{config.model.name}'")
     if config.model.name == 'bert':
         model = BERTPreTrainingLightningModule(**build_model_kwargs(config.training, config.model))
         model = torch.compile(model)
@@ -106,7 +106,7 @@ def main():
             for val_loss in ["itm_loss", "global_contrastive_loss", "mmm_image_loss", "mmm_text_loss"]:
                 add_monitor(name=val_loss)
 
-    print(f"Callbacks registered: {callbacks}")
+    print(f"Callbacks registered: {[type(c).__name__ for c in callbacks]}")
 
     if config.training.use_wandb:
         wandb_logger.experiment.config.update(config)
