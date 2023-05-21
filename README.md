@@ -62,6 +62,13 @@ srun --time=24:00:00 --ntasks-per-node=1 --cpus-per-task=16 --mem-per-cpu=16000 
 
 ### Euler
 
+- Check space:
+```shell
+du -h -d 2 ~ | sort -h                                   # home directory
+du -h -d 2 /cluster/scratch/tamariucai/ | sort -h        # scratch space
+du -h -d 2 /cluster/work/cotterell/tamariucai/ | sort -h # work directory
+```
+
 - For faster access, set up a `~/init.sh`:
 
 ```bash

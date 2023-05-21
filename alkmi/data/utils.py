@@ -1,6 +1,6 @@
 from typing import List
 
-from datasets import concatenate_datasets, load_dataset, Image
+from datasets import concatenate_datasets, load_dataset, Image, Dataset
 from datasets.utils.file_utils import get_datasets_user_agent
 
 from alkmi.definitions import HFDatasetInfo
@@ -49,7 +49,12 @@ def collapse_wit_text(batch):
     return batch
 
 
-def collapse_text_columns(dataset, need_images: bool, purpose_msg: str, num_proc: int = 16, batch_size: int = 100):
+def collapse_text_columns(dataset: Dataset,
+                          need_images: bool,
+                          purpose_msg: str,
+                          num_proc: int = 16,
+                          batch_size: int = 100
+                          ):
     if len(dataset.column_names) > 1:
         if 'image' in dataset.column_names:
             dataset = dataset.cast_column("image", Image(decode=False))  # MUCH faster processing
