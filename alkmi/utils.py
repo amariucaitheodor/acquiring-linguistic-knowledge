@@ -1,4 +1,5 @@
 import os
+import time
 from typing import List
 
 import datasets
@@ -154,14 +155,12 @@ def overwrite_config(struct, params: List[str]):
 def update_ckt_dir_and_batch_size(config):
     ckt_dir = config.training.lightning_checkpoint["dirpath"]
     if "debug" not in ckt_dir:
-        if "accumulate_grad_batches" in wandb.config:
-            hyperparam_string = f"seed{wandb.config['seed']}-accumulate{wandb.config['accumulate_grad_batches']}-" \
-                                f"lr{wandb.config['learning_rate']}-warmup{wandb.config['warmup_steps']}"
-            ckt_dir = ckt_dir.replace('flava-textvision', f'flava-hyperparams-{hyperparam_string}')
-            print(f"Hyperparameter sweep detected, changing checkpoint dirpath to {ckt_dir}.")
-        else:
-            ckt_dir = ckt_dir.replace('flava-textvision', f'flava-textvision-{config.text_perc}t{config.vision_perc}v')
-            print(f"Real run, changing checkpoint dirpath to {ckt_dir}.")
+        timestamp = time.strftime("date(%Y-%m-%d)_time(%H:%M:%S)")
+        hparam_string = ""
+        for hparam, value in wandb.config.items():
+            hparam_string += f"{hparam}({value})-"
+        ckt_dir += f'{timestamp}/{hparam_string[:-1]}/'
+        print(f"Setting checkpoint dirpath to {ckt_dir}")
         config.training.lightning_checkpoint.__setattr__("dirpath", ckt_dir)
 
 

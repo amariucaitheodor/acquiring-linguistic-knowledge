@@ -21,9 +21,8 @@ def main():
 
     if config.training.use_wandb:
         wandb_logger = WandbLogger(
-            project=f'multimodal-{config.datasets.ablation.train[0].key.split("/")[-1]}',
-            resume=False,
-            log_model=True,  # checkpoints are logged at the end of training
+            project=f'alkmi-{config.datasets.ablation.train[0].key.split("/")[-1]}',
+            log_model=False,  # set to "True" to also log checkpoints to WandB
             tags=[config.model.pretrained if config.model.pretrained else "scratch"],
             magic=True,
             force=True,
@@ -67,6 +66,8 @@ def main():
         model = torch.compile(model)
     elif config.model.name == 'roberta':
         model = RobertaPreTrainingLightningModule(**build_model_kwargs(config.training, config.model))
+        # if config.training.use_wandb:
+        #     wandb_logger.watch(model, log="all", log_graph=True, log_freq=500)
         model = torch.compile(model)
     elif config.model.name == 'flava':
         model = FlavaPreTrainingLightningModule(**build_model_kwargs(config.training, config.model))

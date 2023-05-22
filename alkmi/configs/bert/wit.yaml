@@ -17,7 +17,7 @@ training:
     strategy: ddp
     enable_progress_bar: false
   lightning_checkpoint:
-    dirpath: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/bert-text/"
+    dirpath: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/bert-wit/"
     filename: bert-{epoch:02d}-{step}
     save_last: true
     every_n_train_steps: 15000 # otherwise it occupies too much disk space

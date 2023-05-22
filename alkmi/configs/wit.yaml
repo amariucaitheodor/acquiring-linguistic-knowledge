@@ -17,7 +17,7 @@ training:
     strategy: ddp_find_unused_parameters_true # ddp for BERT, RoBERTa
     enable_progress_bar: false
   lightning_checkpoint:
-    dirpath: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/flava-textvision/"
+    dirpath: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/flava-wit/"
     filename: flava-{epoch:02d}-{step}
     save_last: true
     every_n_train_steps: 4000 # <70 PPL from scratch
