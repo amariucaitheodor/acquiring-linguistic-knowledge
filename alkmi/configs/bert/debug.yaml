@@ -8,7 +8,7 @@ training:
   lightning:
     max_steps: 450000
     accelerator: 'gpu'
-    devices: 1 # -1 for all GPUs (if using more GPUs)
+    devices: -1
     val_check_interval: 200
     limit_val_batches: 200 # REQUIRED, otherwise the validation loop doesn't terminate
     precision: 16-mixed # 'bf16' not supported on either local or Euler GPU
