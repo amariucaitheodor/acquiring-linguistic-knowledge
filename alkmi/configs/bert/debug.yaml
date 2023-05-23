@@ -19,10 +19,6 @@ training:
   lightning_checkpoint:
     dirpath: "./bert-debug"
     filename: bert-{epoch:02d}-{step}
-    save_last: true
-    every_n_train_steps: 15000 # otherwise it occupies too much disk space
-    save_on_train_epoch_end: true
-    verbose: true
   lightning_load_from_checkpoint: null
   seed: -1
   batch_size: 24

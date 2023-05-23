@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import torch
 
 import wandb
@@ -66,8 +68,6 @@ def main():
         model = torch.compile(model)
     elif config.model.name == 'roberta':
         model = RobertaPreTrainingLightningModule(**build_model_kwargs(config.training, config.model))
-        # if config.training.use_wandb:
-        #     wandb_logger.watch(model, log="all", log_graph=True, log_freq=500)
         model = torch.compile(model)
     elif config.model.name == 'flava':
         model = FlavaPreTrainingLightningModule(**build_model_kwargs(config.training, config.model))
@@ -85,7 +85,13 @@ def main():
     if config.training.lightning_checkpoint is not None:
         callbacks.append(
             ModelCheckpoint(
-                **OmegaConf.to_container(config.training.lightning_checkpoint)
+                **OmegaConf.to_container(config.training.lightning_checkpoint),
+                train_time_interval=timedelta(hours=3),
+                monitor='evaluation/pseudo_perplexity',
+                mode='min',
+                save_top_k=1,
+                save_last=True,
+                verbose=True,
             )
         )
 
