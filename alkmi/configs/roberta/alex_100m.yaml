@@ -12,7 +12,7 @@ training:
     val_check_interval: 8000
     limit_val_batches: 2000 # REQUIRED, otherwise the validation loop doesn't terminate
     precision: 16-mixed # 'bf16' not supported on either local or Euler GPU
-    accumulate_grad_batches: 32
+    accumulate_grad_batches: 8 # ~1024 effective batch size for 5 GPUs
     num_sanity_val_steps: 0
     strategy: ddp
     enable_progress_bar: false
@@ -38,12 +38,12 @@ datasets:
     _target_: alkmi.definitions.TrainingSingleDatasetInfo
     train:
       - _target_: alkmi.definitions.HFDatasetInfo
-        key: openwebtext
+        key: theodor1289/alex_100m
         split_key_mapping: # neither 'validation' nor 'test' splits exist for openwebtext
           validation: train
     val:
       - _target_: alkmi.definitions.HFDatasetInfo
-        key: theodor1289/alex_100m
+        key: openwebtext
         split_key_mapping: # neither 'validation' nor 'test' splits exist for openwebtext
           validation: train
     datamodule_extra_kwargs: # This key is used in the MLMDataModule
