@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Job details
-TIME=48:00:00 # HH:MM (default: 04:00, max: 240:00)
+TIME=96:00:00 # HH:MM:SS (default: 04:00, max: 240:00)
 NUM_CPUS=12   # Number of cores (default: 1)
 CPU_RAM=72000  # RAM for each core (default: 1024)
 
@@ -17,4 +17,4 @@ sbatch --mail-type=END,FAIL \
   --tmp=650G \
   --mem-per-cpu=$CPU_RAM \
   -o "process_run_$(date "+%F-%T").results" \
-  --wrap="NUMEXPR_MAX_THREADS=164 python3.8 process_wit.py"
+  --wrap="NUMEXPR_MAX_THREADS=164 python initial_setup.py"

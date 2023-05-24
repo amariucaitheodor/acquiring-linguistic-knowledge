@@ -38,8 +38,8 @@ datasets:
     _target_: alkmi.definitions.TrainingSingleDatasetInfo
     train:
       - _target_: alkmi.definitions.HFDatasetInfo
-        key: theodor1289/alex_100m
-        split_key_mapping: # neither 'validation' nor 'test' splits exist for alex_100m
+        key: theodor1289/nyu_100m
+        split_key_mapping: # neither 'validation' nor 'test' splits exist for nyu_100m
           validation: train
     val:
       - _target_: alkmi.definitions.HFDatasetInfo

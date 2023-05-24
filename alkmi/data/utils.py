@@ -42,7 +42,8 @@ def collapse_wit_text(batch):
     for i in range(original_len):
         for field in WIT_ALT_TEXT_COLUMNS:
             if batch[field][i] is not None:
-                if "image" in batch: batch["image"].append(batch["image"][i])
+                if "image" in batch:
+                    batch["image"].append(batch["image"][i])
                 batch["text"].append(
                     batch[field][i].split("English: ")[1] if batch[field][i].startswith("English: ")
                     else batch[field][i])

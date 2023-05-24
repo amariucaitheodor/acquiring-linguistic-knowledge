@@ -2,7 +2,6 @@ import io
 import json
 import urllib
 from concurrent.futures import ThreadPoolExecutor
-from functools import partial
 
 import PIL.Image
 import datasets
@@ -13,7 +12,7 @@ from alkmi.data.utils import WIT_ALT_TEXT_COLUMNS
 USER_AGENT = get_datasets_user_agent()
 
 
-def fetch_single_image(image_url, timeout, retries):
+def fetch_single_image(image_url, timeout=None, retries: int = 3):
     for _ in range(retries + 1):
         try:
             # "Wikimedia commons" down-sampling URL technique...
@@ -39,10 +38,9 @@ def fetch_single_image(image_url, timeout, retries):
     return image
 
 
-def fetch_images(batch, num_threads, timeout=None, retries=3):
-    fetch_single_image_with_args = partial(fetch_single_image, timeout=timeout, retries=retries)
+def fetch_images(batch, num_threads: int):
     with ThreadPoolExecutor(max_workers=num_threads) as executor:
-        batch["image"] = list(executor.map(fetch_single_image_with_args, batch["image_url"]))
+        batch["image"] = list(executor.map(fetch_single_image, batch["image_url"]))
     return batch
 
 
