@@ -44,7 +44,7 @@ datasets:
     val:
       - _target_: alkmi.definitions.HFDatasetInfo
         key: theodor1289/alex_100m
-        split_key_mapping: # neither 'validation' nor 'test' splits exist for openwebtext
+        split_key_mapping: # neither 'validation' nor 'test' splits exist for alex_100m
           validation: train
     datamodule_extra_kwargs: # This key is used in the MLMDataModule
       text_columns: [ "text" ]

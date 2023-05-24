@@ -39,7 +39,7 @@ datasets:
     train:
       - _target_: alkmi.definitions.HFDatasetInfo
         key: theodor1289/alex_100m
-        split_key_mapping: # neither 'validation' nor 'test' splits exist for openwebtext
+        split_key_mapping: # neither 'validation' nor 'test' splits exist for alex_100m
           validation: train
     val:
       - _target_: alkmi.definitions.HFDatasetInfo

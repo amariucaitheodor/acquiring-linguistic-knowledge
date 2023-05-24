@@ -8,6 +8,8 @@ import PIL.Image
 import datasets
 from datasets.utils.file_utils import get_datasets_user_agent
 
+from alkmi.data.utils import WIT_ALT_TEXT_COLUMNS
+
 USER_AGENT = get_datasets_user_agent()
 
 
@@ -44,24 +46,22 @@ def fetch_images(batch, num_threads, timeout=None, retries=3):
     return batch
 
 
-def process_text(batch, num_threads, collapse):
-    alt_text_columns = ["context_page_description", "context_section_description",
-                        "caption_alt_text_description", "caption_attribution_description"]
+def process_text(batch, num_threads: int, collapse: bool):
     # This extracts the alternative text fields from the "meta" field
     with ThreadPoolExecutor(max_workers=num_threads) as executor:  # "text" is the caption
-        for field in alt_text_columns:
+        for field in WIT_ALT_TEXT_COLUMNS:
             batch[field] = list(executor.map(lambda meta: json.loads(meta)[field], batch["meta"]))
     if collapse:  # This pairs every image with each corresponding alternative text field
         # WARNING: This increases the disk space requirement by a factor of ~4
         original_len = len(batch["text"])
         for i in range(original_len):
-            for field in alt_text_columns:
+            for field in WIT_ALT_TEXT_COLUMNS:
                 if batch[field][i] is not None:
                     batch["image"].append(batch["image"][i])
                     batch["text"].append(
                         batch[field][i].split("English: ")[1] if batch[field][i].startswith("English: ")
                         else batch[field][i])
-        for field in alt_text_columns: del batch[field]
+        for field in WIT_ALT_TEXT_COLUMNS: del batch[field]
     return batch
 
 
@@ -79,7 +79,7 @@ if __name__ == "__main__":
         dataset = dataset.map(fetch_images,
                               fn_kwargs={"num_threads": NUM_THREADS},
                               batched=True, batch_size=50,
-                              num_proc=32, remove_columns=["image_url"])
+                              num_proc=16, remove_columns=["image_url"])
         dataset = dataset.filter(
             text_and_image_both_present,
             batched=True,
@@ -96,8 +96,8 @@ if __name__ == "__main__":
         dataset.push_to_hub(f"theodor1289/{'wit_collapsed' if COLLAPSE_TEXT else 'wit'}", max_shard_size="500MB",
                             private=False)
     else:
-        STAGE = 0
-        SAVE_DISK_SHARD_SIZE, UPLOAD_SHARD_SIZE, SAVE_NUM_PROC = "10GB", "500MB", 40
+        STAGE = 1
+        SAVE_DISK_SHARD_SIZE, UPLOAD_SHARD_SIZE, SAVE_NUM_PROC = "10GB", "500MB", 32
         SCRATCH_PATH, FINAL_PATH = '/cluster/scratch/tamariucai', '/cluster/work/cotterell/tamariucai'
 
         if STAGE in [1, 0]:
@@ -106,8 +106,8 @@ if __name__ == "__main__":
             dataset = dataset.map(fetch_images,
                                   fn_kwargs={"num_threads": NUM_THREADS},
                                   batched=True,
-                                  batch_size=50,
-                                  num_proc=32,
+                                  batch_size=10,
+                                  num_proc=16,
                                   remove_columns=["image_url"])
             dataset.save_to_disk(f'{SCRATCH_PATH}/wit_images/', max_shard_size=SAVE_DISK_SHARD_SIZE,
                                  num_proc=SAVE_NUM_PROC)
