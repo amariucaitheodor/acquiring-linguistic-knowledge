@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Job details
-TIME=120:00:00 # HH:MM (default: 04:00, max: 240:00)
-NUM_GPUS=${2-1}     # GPUs per node
-NUM_CPUS=4     # Number of cores (default: 1)
-CPU_RAM=15000  # RAM for each core (default: 1024)
+TIME=120:00:00  # HH:MM (default: 04:00, max: 240:00)
+NUM_GPUS=${2-1} # GPUs per node
+NUM_CPUS=2      # Number of cores (default: 1)
+CPU_RAM=16000   # RAM for each core (default: 1024)
 
 echo "Selected configuration: $1, GPUs: ${2-1}, memory per GPU: ${3-20g}"
 
@@ -13,7 +13,7 @@ echo "Selected configuration: $1, GPUs: ${2-1}, memory per GPU: ${3-20g}"
 sbatch --job-name="multimodal" \
   --time=$TIME \
   --nodes=1 \
-  --ntasks-per-node=1 \
+  --ntasks-per-node="$NUM_GPUS" \
   --cpus-per-task=$NUM_CPUS \
   --tmp=100G \
   --mem-per-cpu=$CPU_RAM \

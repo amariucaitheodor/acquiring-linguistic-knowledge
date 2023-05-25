@@ -3,10 +3,10 @@
 # Job details
 TIME=120:00:00 # HH:MM (default: 04:00, max: 240:00)
 NUM_GPUS=1     # GPUs per node
-NUM_CPUS=4     # Number of cores (default: 1)
-CPU_RAM=15000  # RAM for each core (default: 1024)
+NUM_CPUS=2     # Number of cores (default: 1)
+CPU_RAM=16000  # RAM for each core (default: 1024)
 
-echo "Number of agents: $1, sweep name: $2"
+echo "Number of agents: $1, GPUs per agent: 1, sweep name: $2"
 
 # --mail-type=END,FAIL uncomment to get email notifications
 # Submit job

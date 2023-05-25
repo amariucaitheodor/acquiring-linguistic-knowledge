@@ -17,7 +17,7 @@ training:
     strategy: ddp
     enable_progress_bar: false
   lightning_checkpoint:
-    dirpath: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/roberta-openwebtext/"
+    dirpath: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/roberta-nyu_100m/"
     filename: roberta-{epoch:02d}-{step}
   lightning_load_from_checkpoint: null
   seed: -1
