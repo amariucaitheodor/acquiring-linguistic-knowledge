@@ -115,9 +115,6 @@ def main():
 
     print(f"Callbacks registered: {[type(c).__name__ for c in callbacks]}")
 
-    if config.training.use_wandb:
-        wandb_logger.experiment.config.update(config)
-
     print("Initializing trainer")
     trainer = Trainer(
         **OmegaConf.to_container(config.training.lightning),
@@ -125,6 +122,9 @@ def main():
         logger=wandb_logger if config.training.use_wandb else True,
         inference_mode=False
     )
+
+    if config.training.use_wandb and trainer.global_rank == 0:
+        wandb_logger.experiment.config.update(config)
 
     if config.text_perc + config.vision_perc > 0:
         print("Starting training")
