@@ -18,7 +18,7 @@ class FlavaAblationDataModule(LightningDataModule):
     def __init__(self,
                  train_infos: List[HFDatasetInfo],
                  val_infos: List[HFDatasetInfo],
-                 batch_size: int = 32,
+                 batch_size: int,
                  num_workers: int = 4,
                  **kwargs: Any):
         super().__init__()
@@ -31,6 +31,8 @@ class FlavaAblationDataModule(LightningDataModule):
             self.val_dataset_infos = train_infos
         self.batch_size = batch_size
         self.num_workers = num_workers
+
+        print(f"{self.name}: batch_size is {batch_size}, num_workers is {num_workers}")
 
     def setup(self, stage=None):
         self.train_dataset = build_datasets_from_info(self.train_dataset_infos, split="train")
@@ -151,7 +153,7 @@ class VLDataModule(FlavaAblationDataModule):
             train_infos: List[HFDatasetInfo],
             val_infos: List[HFDatasetInfo],
             mlm_probability: float,
-            batch_size: int = 32,
+            batch_size: int,
             num_workers: int = 4,
             itm_probability: float = 0.1,
             # text_columns implicitly only 'text' here!

@@ -33,6 +33,7 @@ def build_model_kwargs(
     return {
         "pretrained": model_config.pretrained,
         "learning_rate": training_config.learning_rate,
+        "learning_rate_text_submodel": training_config.learning_rate_text_submodel,
         "adam_eps": training_config.adam_eps,
         "adam_betas": training_config.adam_betas,
         "warmup_steps": training_config.warmup_steps,
@@ -163,7 +164,7 @@ def update_ckt_dir_and_batch_size(config):
 
 def assign_huggingface_ram():
     available_memory_gb = get_local_ram()
-    huggingface_threshold_gib = 25
+    huggingface_threshold_gib = 5
     if available_memory_gb > huggingface_threshold_gib:
         datasets.config.IN_MEMORY_MAX_SIZE = huggingface_threshold_gib * 1_000_000_000
         print(

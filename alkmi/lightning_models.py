@@ -1,7 +1,8 @@
-from typing import Tuple, Any
+from typing import Tuple, Any, Iterator
 
 import torch
 from pytorch_lightning import LightningModule
+from torch.nn import Parameter
 from transformers import BertForMaskedLM, BertConfig, get_cosine_schedule_with_warmup, \
     RobertaForMaskedLM, RobertaConfig
 from transformers.modeling_outputs import MaskedLMOutput
@@ -20,7 +21,22 @@ class FlavaPreTrainingLightningModule(LightningModule):
 
         if 'pretrained' in kwargs:
             kwargs.pop('pretrained')
-        self.optimizers = configure_default_optimizers(self.model, **kwargs)
+
+        if 'learning_rate_text_submodel' in kwargs:
+            print(f"FLAVA will use a different learning rate for its text submodel "
+                  f"({kwargs['learning_rate_text_submodel']}) compared to its other submodels "
+                  f"({kwargs['learning_rate']})")
+
+            for n, _ in self.model.flava.text_model.named_parameters():
+                n += 'text_model.'
+
+            self.optimizers = configure_default_optimizers(parameters=[
+                {'params': [p for n, p in self.model.named_parameters() if 'text_model' not in n]},
+                {'params': self.model.flava.text_model.parameters(), 'lr': kwargs['learning_rate_text_submodel']}
+            ], **kwargs)
+        else:
+            print(f"FLAVA will use a global learning rate of {kwargs['learning_rate']}")
+            self.optimizers = configure_default_optimizers(parameters=self.model.parameters(), **kwargs)
 
     def training_step(self, batch, batch_idx):
         output = self._step(batch)
@@ -55,7 +71,7 @@ class BERTPreTrainingLightningModule(LightningModule):
 
         if 'pretrained' in kwargs:
             kwargs.pop('pretrained')
-        self.optimizers = configure_default_optimizers(self.model, **kwargs)
+        self.optimizers = configure_default_optimizers(parameters=self.model.parameters(), **kwargs)
 
     def training_step(self, batch, batch_idx):
         output = self._step(batch)
@@ -89,7 +105,7 @@ class RobertaPreTrainingLightningModule(LightningModule):
 
         if 'pretrained' in kwargs:
             kwargs.pop('pretrained')
-        self.optimizers = configure_default_optimizers(self.model, **kwargs)
+        self.optimizers = configure_default_optimizers(parameters=self.model.parameters(), **kwargs)
 
     def training_step(self, batch, batch_idx):
         output = self._step(batch)
@@ -109,7 +125,7 @@ class RobertaPreTrainingLightningModule(LightningModule):
 
 
 def configure_default_optimizers(
-        model: torch.nn.Module,
+        parameters: (list[dict[str, Iterator[Parameter]]] | Iterator[Parameter]),
         learning_rate: float,
         adam_eps: float,
         adam_weight_decay: float,
@@ -117,7 +133,7 @@ def configure_default_optimizers(
         warmup_steps: int,
         max_steps: int):
     optimizer = torch.optim.AdamW(
-        model.parameters(),
+        parameters,
         lr=learning_rate,
         betas=adam_betas,
         eps=adam_eps,

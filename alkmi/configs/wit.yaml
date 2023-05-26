@@ -25,7 +25,8 @@ training:
   num_workers: 2
   use_wandb: true
   # https://arxiv.org/pdf/2112.04482.pdf, A. Hyperparameters and details of FLAVA
-  learning_rate: 1e-3 # N.B. FLAVA pretrains unimodally on text with 5e-4!
+  learning_rate: 1e-3
+  learning_rate_text_submodel: 5e-4  # N.B. FLAVA pretrains unimodally on text with 5e-4
   adam_eps: 1e-8
   adam_weight_decay: 1e-1
   adam_betas: [ 0.9, 0.999 ]

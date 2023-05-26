@@ -63,8 +63,9 @@ class TrainingArguments:
     lightning_load_from_checkpoint: Optional[str] = None
     seed: int = -1
     batch_size: int = 8
-    num_workers: int = 4
-    learning_rate: float = 0.0002
+    num_workers: int = 2
+    learning_rate: float = 0.003
+    learning_rate_text_submodel: float = 0.0005
     adam_eps: float = 1e-08
     adam_weight_decay: float = 0.01
     adam_betas: Tuple[float, float] = field(default_factory=lambda: (0.9, 0.999))
