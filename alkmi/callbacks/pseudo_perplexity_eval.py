@@ -4,12 +4,44 @@ from datetime import timedelta
 import torch
 from datasets import load_dataset
 from pytorch_lightning import Callback, Trainer
+from pytorch_lightning.utilities import rank_zero_only
 from tqdm import tqdm
-from transformers import BertForMaskedLM, RobertaForMaskedLM
+from transformers import BertForMaskedLM, RobertaForMaskedLM, PreTrainedModel
 
 from callbacks.utils import get_corresponding_tokenizer_for_model
 from data.utils import collapse_text_columns
 from models.flava import FlavaForPreTraining
+
+
+@rank_zero_only
+def get_mlm_loss(enable_progress_bar: bool, phrases_count: int, model: PreTrainedModel, text):
+    tokenizer = get_corresponding_tokenizer_for_model(model)
+
+    mlm_loss = torch.zeros(1, dtype=torch.float64)
+    for phrase in tqdm(text, desc="Pseudo-Perplexity Evaluation", total=phrases_count, unit="phrase",
+                       disable=not enable_progress_bar):
+        tensor_input = tokenizer(phrase,
+                                 truncation=True,
+                                 max_length=200,  # input size is squared! (experimentally, 200 fits in memory)
+                                 return_tensors='pt')['input_ids']
+        repeat_input = tensor_input.repeat(tensor_input.size(-1) - 2, 1)
+        mask = torch.ones(tensor_input.size(-1) - 1).diag(1)[:-2]
+        masked_input = repeat_input.masked_fill(mask == 1, tokenizer.mask_token_id)
+        labels = repeat_input.masked_fill(masked_input != tokenizer.mask_token_id, -100)
+        with torch.no_grad():
+            if type(model) in [BertForMaskedLM, RobertaForMaskedLM]:
+                mlm_loss = model(input_ids=masked_input.to("cuda:0"),
+                                 labels=labels.to("cuda:0"),
+                                 return_dict=True).loss
+            elif type(model) == FlavaForPreTraining:
+                mlm_loss = model(input_ids_masked=masked_input.to("cuda:0"),
+                                 mlm_labels=labels.to("cuda:0"),
+                                 return_dict=True,
+                                 return_loss=True).loss_info.mlm
+            else:
+                raise ValueError(f"Model {type(model)} not supported for pseudo-perplexity evaluation")
+        mlm_loss += mlm_loss.item()
+    return mlm_loss
 
 
 class PseudoPerplexityCallback(Callback):
@@ -39,34 +71,10 @@ class PseudoPerplexityCallback(Callback):
 
         phrases_count = self.limit_val_batches
         text = self.dataset[:phrases_count]["text"]
-        tokenizer = get_corresponding_tokenizer_for_model(pl_module.model)
 
-        avg_mlm_loss = torch.zeros(1, dtype=torch.float64)
-        for phrase in tqdm(text, desc="Pseudo-Perplexity Evaluation", total=phrases_count, unit="phrase",
-                           disable=not self.enable_progress_bar):
-            tensor_input = tokenizer(phrase,
-                                     truncation=True,
-                                     max_length=200,  # input size is squared! (experimentally, 200 fits in memory)
-                                     return_tensors='pt')['input_ids']
-            repeat_input = tensor_input.repeat(tensor_input.size(-1) - 2, 1)
-            mask = torch.ones(tensor_input.size(-1) - 1).diag(1)[:-2]
-            masked_input = repeat_input.masked_fill(mask == 1, tokenizer.mask_token_id)
-            labels = repeat_input.masked_fill(masked_input != tokenizer.mask_token_id, -100)
-            with torch.no_grad():
-                if type(pl_module.model) in [BertForMaskedLM, RobertaForMaskedLM]:
-                    mlm_loss = pl_module.model(input_ids=masked_input.to("cuda:0"),
-                                               labels=labels.to("cuda:0"),
-                                               return_dict=True).loss
-                elif type(pl_module.model) == FlavaForPreTraining:
-                    mlm_loss = pl_module.model(input_ids_masked=masked_input.to("cuda:0"),
-                                               mlm_labels=labels.to("cuda:0"),
-                                               return_dict=True,
-                                               return_loss=True).loss_info.mlm
-                else:
-                    raise ValueError(f"Model {type(pl_module.model)} not supported for pseudo-perplexity evaluation")
-            avg_mlm_loss += mlm_loss.item()
+        mlm_loss = get_mlm_loss(self.enable_progress_bar, phrases_count, pl_module.model, text)
 
-        ppl = torch.exp(avg_mlm_loss / phrases_count).item()
+        ppl = torch.exp(mlm_loss / phrases_count).item()
         self.log("evaluation/pseudo_perplexity", ppl, prog_bar=True, logger=True, rank_zero_only=True, sync_dist=True)
 
         print(f"Ending Pseudo-Perplexity Evaluation (PPL: {ppl}) (duration: {timedelta(seconds=time.time() - start)})")
