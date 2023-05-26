@@ -19,12 +19,11 @@ class FlavaPreTrainingLightningModule(LightningModule):
         else:
             self.model = FlavaForPreTraining(FlavaConfig(compile_submodels=True))
 
-        if 'pretrained' in kwargs:
-            kwargs.pop('pretrained')
-
         if 'learning_rate_text_submodel' in kwargs:
+            text_lr = kwargs.pop('learning_rate_text_submodel')
+
             print(f"FLAVA will use a different learning rate for its text submodel "
-                  f"({kwargs['learning_rate_text_submodel']}) compared to its other submodels "
+                  f"({text_lr}) compared to its other submodels "
                   f"({kwargs['learning_rate']})")
 
             for n, _ in self.model.flava.text_model.named_parameters():
@@ -32,7 +31,7 @@ class FlavaPreTrainingLightningModule(LightningModule):
 
             self.optimizers = configure_default_optimizers(parameters=[
                 {'params': [p for n, p in self.model.named_parameters() if 'text_model' not in n]},
-                {'params': self.model.flava.text_model.parameters(), 'lr': kwargs['learning_rate_text_submodel']}
+                {'params': self.model.flava.text_model.parameters(), 'lr': text_lr}
             ], **kwargs)
         else:
             print(f"FLAVA will use a global learning rate of {kwargs['learning_rate']}")
@@ -69,8 +68,6 @@ class BERTPreTrainingLightningModule(LightningModule):
         else:
             self.model = BertForMaskedLM(BertConfig())
 
-        if 'pretrained' in kwargs:
-            kwargs.pop('pretrained')
         self.optimizers = configure_default_optimizers(parameters=self.model.parameters(), **kwargs)
 
     def training_step(self, batch, batch_idx):
@@ -103,8 +100,6 @@ class RobertaPreTrainingLightningModule(LightningModule):
                                                           type_vocab_size=1,
                                                           ))
 
-        if 'pretrained' in kwargs:
-            kwargs.pop('pretrained')
         self.optimizers = configure_default_optimizers(parameters=self.model.parameters(), **kwargs)
 
     def training_step(self, batch, batch_idx):
@@ -131,7 +126,8 @@ def configure_default_optimizers(
         adam_weight_decay: float,
         adam_betas: Tuple[float, float],
         warmup_steps: int,
-        max_steps: int):
+        max_steps: int,
+        **kwargs: Any):
     optimizer = torch.optim.AdamW(
         parameters,
         lr=learning_rate,
