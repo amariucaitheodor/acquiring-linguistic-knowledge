@@ -2,16 +2,15 @@ from functools import partial
 from typing import Any, Dict, List, Optional
 
 import torch
-from datasets import Image
 from pytorch_lightning import LightningDataModule
 from transformers import (
     DataCollatorForLanguageModeling,
-    FlavaProcessor,
+    FlavaProcessor, PreTrainedTokenizerFast,
 )
 
 from alkmi.data import utils
 from alkmi.data.transforms import ITMTransform
-from alkmi.data.utils import build_datasets_from_info, collapse_text_columns
+from alkmi.data.utils import build_datasets_from_info, collapse_text_columns, count_words
 from alkmi.definitions import HFDatasetInfo, TEXT_MAX_LENGTH_DEFAULT, VL_MAX_LENGTH_DEFAULT
 
 
@@ -38,12 +37,12 @@ class FlavaAblationDataModule(LightningDataModule):
         self.val_dataset = build_datasets_from_info(self.val_dataset_infos, split="validation")
 
     def train_dataloader(self):
-        return self._build_dataloader(self.train_dataset)
+        return self._build_dataloader(self.train_dataset, shuffle=True)
 
     def val_dataloader(self):
         return self._build_dataloader(self.val_dataset, shuffle=False)
 
-    def _build_dataloader(self, dataset, shuffle=True):
+    def _build_dataloader(self, dataset, shuffle: bool):
         return torch.utils.data.DataLoader(
             dataset,
             batch_size=self.batch_size,
@@ -89,32 +88,45 @@ class MLMDataModule(FlavaAblationDataModule):
             text_columns: List[str],
             train_infos: List[HFDatasetInfo],
             mlm_probability: float,
+            tokenizer: PreTrainedTokenizerFast,
             val_infos: Optional[List[HFDatasetInfo]] = None,
             batch_size: int = 32,
             num_workers: int = 4,
             **kwargs: Any,
     ):
         super().__init__(train_infos, val_infos, batch_size, num_workers, **kwargs)
+
+        if tokenizer is None:
+            self.tokenizer = self.processor.tokenizer
+        else:
+            self.tokenizer = tokenizer
+
         self.collator = DataCollatorForLanguageModeling(
-            self.processor.tokenizer,
+            self.tokenizer,
             mlm=True,
             mlm_probability=mlm_probability,
             return_tensors="pt"
         )
         self.text_columns = text_columns
 
-    def setup(self, stage=None):
+    def setup(self, stage=None, should_count_words: bool = False):
         super().setup(stage)
+
+        if should_count_words:
+            count_words(self.train_dataset, self.train_dataset_infos, self.val_dataset, self.val_dataset_infos, False)
 
         self.train_dataset = collapse_text_columns(self.train_dataset, need_images=False, purpose_msg="MLM training")
         self.val_dataset = collapse_text_columns(self.val_dataset, need_images=False, purpose_msg="MLM validation")
+
+        if should_count_words:
+            count_words(self.train_dataset, self.train_dataset_infos, self.val_dataset, self.val_dataset_infos, True)
 
     def _build_collator(self, inputs: List[Dict[str, Any]]):
         text_to_process = []
         for col in self.text_columns:
             for i in inputs:
                 text_to_process.append(i[col])
-        batch = self.processor.tokenizer(
+        batch = self.tokenizer(
             text=text_to_process,
             return_tensors="pt",
             padding="max_length",

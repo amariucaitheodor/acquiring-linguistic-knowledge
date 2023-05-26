@@ -104,7 +104,7 @@ if __name__ == "__main__":
             dataset = dataset.map(fetch_images,
                                   fn_kwargs={"num_threads": NUM_THREADS},
                                   batched=True,
-                                  batch_size=10,
+                                  batch_size=15,
                                   num_proc=16,
                                   remove_columns=["image_url"])
             dataset.save_to_disk(f'{SCRATCH_PATH}/wit_images/', max_shard_size=SAVE_DISK_SHARD_SIZE,

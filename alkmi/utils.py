@@ -10,7 +10,6 @@ from transformers import BertTokenizerFast, RobertaTokenizerFast
 
 from data.datamodules import MLMDataModule, ImageDataModule, VLDataModule
 from data.multidata import MultiDataModule
-from data.text_datamodules import TextDataModule
 from alkmi.definitions import TrainingSingleDatasetInfo, TrainingArguments, AblationArguments, ModelArguments
 
 
@@ -107,20 +106,18 @@ def initialize_multidatamodule(config: AblationArguments) -> MultiDataModule:
     if config.text_perc > 0:
         text_config = copy_dataset_config_with_training_subset(config.datasets.ablation, percentage=config.text_perc)
 
-        if config.model.name in ['bert', 'roberta']:
-            mlm_datamodule = TextDataModule(
-                **build_datamodule_kwargs(text_config, config.training),
-                tokenizer=BertTokenizerFast.from_pretrained('bert-base-uncased') if config.model.name == 'bert' \
-                    else RobertaTokenizerFast.from_pretrained('roberta-base'),
-                mlm_probability=config.model.mlm_perc,  # https://arxiv.org/abs/2202.08005
-                name="TextDataModule"
-            )
-        else:
-            mlm_datamodule = MLMDataModule(
-                **build_datamodule_kwargs(text_config, config.training),
-                mlm_probability=config.model.mlm_perc,  # https://arxiv.org/abs/2202.08005
-                name="MLMDataModule"
-            )
+        tokenizer = None
+        if config.model.name == 'bert':
+            tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased')
+        elif config.model.name == 'roberta':
+            tokenizer = RobertaTokenizerFast.from_pretrained('roberta-base')
+
+        mlm_datamodule = MLMDataModule(
+            **build_datamodule_kwargs(text_config, config.training),
+            tokenizer=tokenizer,
+            mlm_probability=config.model.mlm_perc,  # https://arxiv.org/abs/2202.08005
+            name="MLMDataModule"
+        )
         modules.append(mlm_datamodule)
 
     if len(modules) == 3:

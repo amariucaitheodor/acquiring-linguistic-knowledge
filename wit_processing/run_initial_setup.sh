@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Job details
-TIME=96:00:00 # HH:MM:SS (default: 04:00, max: 240:00)
+TIME=120:00:00 # HH:MM:SS (default: 04:00, max: 240:00)
 NUM_CPUS=12   # Number of cores (default: 1)
 CPU_RAM=72000  # RAM for each core (default: 1024)
 

@@ -21,6 +21,6 @@ for ((i = 1; i <= $1; i++)); do
     --mem-per-cpu=$CPU_RAM \
     --gpus=$NUM_GPUS \
     --gres=gpumem:20g \
-    -o "wit_sweep_run_($2)_#${NR}_($(date "+%F-%T")).results" \
+    -o "sweep_run_($2)_#${NR}_($(date "+%F-%T")).results" \
     --wrap="WANDB__SERVICE_WAIT=300 NUMEXPR_MAX_THREADS=64 PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512 wandb agent $2"
 done
