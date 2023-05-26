@@ -22,14 +22,6 @@ import importlib
 lm_eval = importlib.import_module(name="lm_eval", package="lm-evaluation-harness")
 
 
-@rank_zero_only
-def accuracy_on_task(task_name, eval_model, template_name, num_fewshot):
-    eval_task = lm_eval.get_task_list(task_name, template_names=[template_name])
-    results = lm_eval.evaluate(model=eval_model, tasks=eval_task, seed=12, num_fewshot=num_fewshot)
-    accuracy = results['results'][0]['acc']
-    return accuracy
-
-
 class LMEvalHarnessCallback(Callback):
 
     def __init__(self, enable_progress_bar: bool):
@@ -40,6 +32,7 @@ class LMEvalHarnessCallback(Callback):
         self.log(name, value, prog_bar=True, logger=True, rank_zero_only=True, sync_dist=True)
 
     @torch.no_grad()
+    @rank_zero_only
     def on_validation_start(self, trainer, pl_module) -> None:
         print("Starting LM Evaluation Harness")
         start = time.time()
@@ -77,12 +70,10 @@ class LMEvalHarnessCallback(Callback):
                 metric_name = task.split('.json')[0] if group_title == "blimp" else task
 
                 # Get accuracy
-                task_accuracy = accuracy_on_task(
-                    task_name=task_name,
-                    eval_model=eval_model,
-                    template_name=template_name,
-                    num_fewshot=0
-                )
+                eval_task = lm_eval.get_task_list(task_name, template_names=[template_name])
+                results = lm_eval.evaluate(model=eval_model, tasks=eval_task, seed=12, num_fewshot=0)
+                task_accuracy = results['results'][0]['acc']
+
                 accuracies.append(round(task_accuracy * 100, 2))
                 self.log_metric(name=f"evaluation/{group_title}/{metric_name}", value=accuracies[-1])
 
