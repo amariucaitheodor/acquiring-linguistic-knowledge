@@ -1,7 +1,7 @@
 program: train.py
-name: flava-textvision-wit-sampling_temperature
-description: Sweep search to find the best datamodule sampling temperature for FLAVA (text-vision) on the WiT dataset.
-project: alkmi-wit
+name: roberta-nyu_100m-seeds
+description: Seed sweep search for RoBERTa (text) on the NYU-100M dataset.
+project: alkmi-nyu_100m
 run_cap: 100
 entity: rycolab
 method: bayes # uses probability of improvement (PI) to select the next hyperparameter configuration
@@ -13,20 +13,13 @@ command:
   - ${interpreter} # makes sure the right interpreter is used on Euler (3.10 req. for BLiMP)
   - -m
   - train
-  - config=configs/wit.yaml
+  - config=configs/roberta/nyu_100m.yaml
 early_terminate: # We do want to early_terminate here because we're interested in the best configs.
   type: hyperband
   max_iter: 64
   s: 4
   eta: 2
 parameters:
-  sampling_temperature:
-    distribution: uniform
-    min: 0.0
-    max: 1.0
-  text_perc:
+  seed:
     distribution: categorical
-    values: [ 1 ]
-  vision_perc:
-    distribution: categorical
-    values: [ 100 ]
+    values: [ 1472111, 2550093, 5501650, 1930309, 7865220, 5974287, 7203693, 887373, 814622, 100000 ]

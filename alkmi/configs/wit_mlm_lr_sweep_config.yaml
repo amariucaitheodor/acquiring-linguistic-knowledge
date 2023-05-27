@@ -1,7 +1,7 @@
 program: train.py
 name: flava-textvision-wit-mlm_percentage
 description: MLM percentage sweep search for FLAVA (text-vision) on the WiT dataset.
-project: multimodal-wit
+project: alkmi-wit
 run_cap: 100
 entity: rycolab
 method: bayes # uses probability of improvement (PI) to select the next hyperparameter configuration
