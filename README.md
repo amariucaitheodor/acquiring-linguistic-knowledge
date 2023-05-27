@@ -46,12 +46,13 @@ bash run_sweep_on_cluster.sh NR_AGENTS SWEEP_ID
 # An already-running job
 srun --interactive --jobid JOBID --pty bash
 # Interactive GPU node (N.B. don't 'source init.sh' again!)
-srun --time=4:00:00 \
+srun --job-name "interactive" \
+    --time=4:00:00 \
     --nodes=1 \
-    --ntasks-per-node=1 \
-    --cpus-per-task=4 \
-    --mem-per-cpu=15000 \
-    --gpus=1 \
+    --ntasks-per-node=2 \
+    --cpus-per-task=2 \
+    --mem-per-cpu=8000 \
+    --gpus=2 \
     --gres=gpumem:20g \
     --pty \
     --preserve-env \

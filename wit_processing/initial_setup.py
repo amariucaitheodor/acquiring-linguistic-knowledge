@@ -5,6 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import PIL.Image
 import datasets
+from datasets import Image
 from datasets.utils.file_utils import get_datasets_user_agent
 
 from alkmi.data.utils import WIT_ALT_TEXT_COLUMNS
@@ -114,6 +115,7 @@ if __name__ == "__main__":
         if STAGE in [2, 0]:
             print(f"Running STEP 2: load from disk, filter missing content, save to disk")
             dataset = datasets.load_from_disk(f'{SCRATCH_PATH}/wit_images/')
+            dataset = dataset.cast_column("image", Image(decode=False))  # MUCH faster processing
             dataset = dataset.filter(
                 text_and_image_both_present,
                 batched=True,
@@ -127,6 +129,7 @@ if __name__ == "__main__":
         if STAGE in [3, 0]:
             print(f"Running STEP 3: load filtered WiT; split, process the text, then save to disk")
             dataset = datasets.load_from_disk(f'{SCRATCH_PATH}/wit_filtered/')
+            dataset = dataset.cast_column("image", Image(decode=False))  # MUCH faster processing
             dataset = dataset.train_test_split(test_size=0.1, train_size=0.9)
 
             print(f"Midpoint STEP 3: processing the text AFTER splitting the dataset (collapse={COLLAPSE_TEXT})...")

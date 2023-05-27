@@ -15,4 +15,4 @@ sbatch --job-name="multimodal" \
   --mem-per-cpu=8000 \
   --gres=gpumem:"$VRAM_PER_GPU" \
   -o "singlenode_run_$(date "+%F-%T").results" \
-  --wrap="WANDB__SERVICE_WAIT=300 NUMEXPR_MAX_THREADS=64 python -m train config=$1"
+  --wrap="WANDB_RUN_GROUP=DDP-$(date "+%F-%T") WANDB__SERVICE_WAIT=300 NUMEXPR_MAX_THREADS=64 python -m train config=$1"
