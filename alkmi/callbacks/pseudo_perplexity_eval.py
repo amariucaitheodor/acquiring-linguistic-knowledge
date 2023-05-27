@@ -34,21 +34,31 @@ class PseudoPerplexityCallback(Callback):
 
         References: Section 2.3 of https://arxiv.org/pdf/1910.14659.pdf
         """
-        start = time.time()
-
-        idx_start = trainer.global_rank * self.limit_val_batches
-        idx_end = (trainer.global_rank + 1) * self.limit_val_batches
+        if trainer.global_rank == 0 and trainer.world_size > 1:
+            print(f"Rank {trainer.global_rank}/{trainer.world_size} will skip PPL evaluation as it's doing BLiMP.")
+            return
+        elif trainer.world_size > 1:  # global_rank != 0
+            idx_start = (trainer.global_rank - 1) * self.limit_val_batches
+            idx_end = trainer.global_rank * self.limit_val_batches
+        else:  # global_rank is 0, world_size is 1
+            idx_start = trainer.global_rank * self.limit_val_batches
+            idx_end = (trainer.global_rank + 1) * self.limit_val_batches
 
         print(f"Starting Pseudo-Perplexity Evaluation (from index {idx_start} to {idx_end})")
+        start = time.time()
+
+        vram_gb = round(torch.cuda.mem_get_info()[1] / (1024 ** 3), 2)
+        max_phrase_length = 200 if vram_gb > 20 else 100
+        print(f"Based on the available VRAM ({vram_gb}GBs), we will use a max phrase length of {max_phrase_length}")
 
         text = self.dataset[idx_start:idx_end]["text"]
         tokenizer = get_corresponding_tokenizer_for_model(pl_module.model)
-        mlm_loss = torch.zeros(1, dtype=torch.float64)
+        total_mlm_loss = torch.zeros(1, dtype=torch.float64)
         for phrase in tqdm(text, desc="Pseudo-Perplexity Evaluation", total=self.limit_val_batches, unit="phrase",
                            disable=not self.enable_progress_bar):
             tensor_input = tokenizer(phrase,
                                      truncation=True,
-                                     max_length=100,  # 200 for 24GB VRAM, 100 for 11GB VRAM
+                                     max_length=max_phrase_length,
                                      return_tensors='pt')['input_ids']
             repeat_input = tensor_input.repeat(tensor_input.size(-1) - 2, 1)
             mask = torch.ones(tensor_input.size(-1) - 1).diag(1)[:-2]
@@ -66,9 +76,9 @@ class PseudoPerplexityCallback(Callback):
                                                return_loss=True).loss_info.mlm
                 else:
                     raise ValueError(f"Model {type(pl_module.model)} not supported for pseudo-perplexity evaluation")
-            mlm_loss += mlm_loss.item()
+            total_mlm_loss += mlm_loss.item()
 
-        ppl = torch.exp(mlm_loss / self.limit_val_batches).item()
+        ppl = torch.exp(total_mlm_loss / self.limit_val_batches).item()
         self.log("evaluation/pseudo_perplexity", ppl, prog_bar=True, logger=True, rank_zero_only=False, sync_dist=True)
 
         print(f"Ending Pseudo-Perplexity Evaluation (PPL: {ppl}) (duration: {timedelta(seconds=time.time() - start)})")
