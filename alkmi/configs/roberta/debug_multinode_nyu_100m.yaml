@@ -1,0 +1,57 @@
+_target_: alkmi.definitions.AblationArguments
+
+text_perc: 100
+vision_perc: 0
+
+training:
+  _target_: alkmi.definitions.TrainingArguments
+  lightning:
+    max_steps: 450000
+    accelerator: 'gpu'
+    num_nodes: 2  # use this for multinode runs
+    devices: 1
+    val_check_interval: 100
+    limit_val_batches: 100 # REQUIRED, otherwise the validation loop doesn't terminate
+    precision: 16-mixed # 'bf16' not supported on either local or Euler GPU
+    accumulate_grad_batches: 12 # ~1024 effective batch size for 10 GPUs
+    num_sanity_val_steps: 0
+    strategy: ddp
+    enable_progress_bar: false
+  lightning_checkpoint:
+    dirpath: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/roberta-nyu_100m/"
+    filename: roberta-{epoch:02d}-{step}
+  lightning_load_from_checkpoint: null
+  seed: -1
+  batch_size: 8 # 13 samples / 11GB VRAM
+  num_workers: 2
+  use_wandb: true
+  # https://huggingface.co/nyu-mll/roberta-base-100M-2, Table 9
+  learning_rate: 5e-4
+  adam_eps: 1e-6
+  adam_weight_decay: 1e-2
+  adam_betas: [ 0.9, 0.98 ]
+  warmup_steps: 2000
+
+datasets:
+  _target_: alkmi.definitions.TrainingDatasetsInfo
+  ablation:
+    # For VLDataModule, column "image" either needs to have an image (not the case for "facebook/pmd", "wit"), or be missing
+    _target_: alkmi.definitions.TrainingSingleDatasetInfo
+    train:
+      - _target_: alkmi.definitions.HFDatasetInfo
+        key: theodor1289/nyu_100m
+        split_key_mapping: # neither 'validation' nor 'test' splits exist for nyu_100m
+          validation: train
+    val:
+      - _target_: alkmi.definitions.HFDatasetInfo
+        key: openwebtext
+        split_key_mapping: # neither 'validation' nor 'test' splits exist for openwebtext
+          validation: train
+    datamodule_extra_kwargs: # This key is used in the MLMDataModule
+      text_columns: [ "text" ]
+
+model:
+  _target_: alkmi.definitions.ModelArguments
+  pretrained: null
+  mlm_perc: 0.4  # Sweep: https://wandb.ai/rycolab/multimodal-wit/sweeps/k84pvx6y/workspace?workspace=user-tamariucai
+  name: roberta

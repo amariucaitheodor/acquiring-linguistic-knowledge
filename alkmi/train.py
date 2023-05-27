@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+import os
 import torch
 
 import wandb
@@ -19,6 +20,8 @@ from utils import build_config, update_ckt_dir_and_batch_size, assign_huggingfac
 
 
 def main():
+    os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
+
     config: AblationArguments = build_config()
 
     if config.training.use_wandb:

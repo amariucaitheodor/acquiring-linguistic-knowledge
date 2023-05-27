@@ -4,7 +4,6 @@ from datetime import timedelta
 import torch
 from datasets import load_dataset
 from pytorch_lightning import Callback, Trainer
-from pytorch_lightning.utilities import rank_zero_only
 from tqdm import tqdm
 from transformers import BertForMaskedLM, RobertaForMaskedLM
 
@@ -28,7 +27,6 @@ class PseudoPerplexityCallback(Callback):
         self.enable_progress_bar = enable_progress_bar
 
     @torch.no_grad()
-    @rank_zero_only
     def on_validation_start(self, trainer: Trainer, pl_module) -> None:
         """
         We use the pseudo-perplexity (PPPL) of an MLM as an intrinsic measure of how well it models a corpus
@@ -36,15 +34,17 @@ class PseudoPerplexityCallback(Callback):
 
         References: Section 2.3 of https://arxiv.org/pdf/1910.14659.pdf
         """
-        print("Starting Pseudo-Perplexity Evaluation")
         start = time.time()
 
-        phrases_count = self.limit_val_batches
-        text = self.dataset[:phrases_count]["text"]
-        tokenizer = get_corresponding_tokenizer_for_model(pl_module.model)
+        idx_start = trainer.global_rank * self.limit_val_batches
+        idx_end = (trainer.global_rank + 1) * self.limit_val_batches
 
+        print(f"Starting Pseudo-Perplexity Evaluation (from index {idx_start} to {idx_end})")
+
+        text = self.dataset[idx_start:idx_end]["text"]
+        tokenizer = get_corresponding_tokenizer_for_model(pl_module.model)
         mlm_loss = torch.zeros(1, dtype=torch.float64)
-        for phrase in tqdm(text, desc="Pseudo-Perplexity Evaluation", total=phrases_count, unit="phrase",
+        for phrase in tqdm(text, desc="Pseudo-Perplexity Evaluation", total=self.limit_val_batches, unit="phrase",
                            disable=not self.enable_progress_bar):
             tensor_input = tokenizer(phrase,
                                      truncation=True,
@@ -68,7 +68,7 @@ class PseudoPerplexityCallback(Callback):
                     raise ValueError(f"Model {type(pl_module.model)} not supported for pseudo-perplexity evaluation")
             mlm_loss += mlm_loss.item()
 
-        ppl = torch.exp(mlm_loss / phrases_count).item()
+        ppl = torch.exp(mlm_loss / self.limit_val_batches).item()
         self.log("evaluation/pseudo_perplexity", ppl, prog_bar=True, logger=True, rank_zero_only=True, sync_dist=True)
 
         print(f"Ending Pseudo-Perplexity Evaluation (PPL: {ppl}) (duration: {timedelta(seconds=time.time() - start)})")
