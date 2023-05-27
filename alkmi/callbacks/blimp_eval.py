@@ -29,7 +29,7 @@ class LMEvalHarnessCallback(Callback):
         self.enable_progress_bar = enable_progress_bar
 
     def log_metric(self, name: str, value):
-        self.log(name, value, prog_bar=True, logger=True, rank_zero_only=True, sync_dist=True)
+        self.log(name, value, prog_bar=True, logger=True, rank_zero_only=True, sync_dist=False)
 
     @torch.no_grad()
     @rank_zero_only

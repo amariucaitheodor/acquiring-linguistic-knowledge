@@ -48,7 +48,7 @@ class PseudoPerplexityCallback(Callback):
                            disable=not self.enable_progress_bar):
             tensor_input = tokenizer(phrase,
                                      truncation=True,
-                                     max_length=200,  # input size is squared! (experimentally, 200 fits in memory)
+                                     max_length=100,  # 200 for 24GB VRAM, 100 for 11GB VRAM
                                      return_tensors='pt')['input_ids']
             repeat_input = tensor_input.repeat(tensor_input.size(-1) - 2, 1)
             mask = torch.ones(tensor_input.size(-1) - 1).diag(1)[:-2]
@@ -69,6 +69,6 @@ class PseudoPerplexityCallback(Callback):
             mlm_loss += mlm_loss.item()
 
         ppl = torch.exp(mlm_loss / self.limit_val_batches).item()
-        self.log("evaluation/pseudo_perplexity", ppl, prog_bar=True, logger=True, rank_zero_only=True, sync_dist=True)
+        self.log("evaluation/pseudo_perplexity", ppl, prog_bar=True, logger=True, rank_zero_only=False, sync_dist=True)
 
         print(f"Ending Pseudo-Perplexity Evaluation (PPL: {ppl}) (duration: {timedelta(seconds=time.time() - start)})")

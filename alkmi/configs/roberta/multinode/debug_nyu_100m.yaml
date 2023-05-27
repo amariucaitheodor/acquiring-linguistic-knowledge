@@ -8,10 +8,10 @@ training:
   lightning:
     max_steps: 450000
     accelerator: 'gpu'
-    num_nodes: 10  # use this for multinode runs
+    num_nodes: 2  # use this for multinode runs
     devices: 1
-    val_check_interval: 8000
-    limit_val_batches: 2000 # REQUIRED, otherwise the validation loop doesn't terminate
+    val_check_interval: 500
+    limit_val_batches: 500 # REQUIRED, otherwise the validation loop doesn't terminate
     precision: 16-mixed # 'bf16' not supported on either local or Euler GPU
     accumulate_grad_batches: 10 # ~1024 effective batch size for 10 GPUs
     num_sanity_val_steps: 0
@@ -22,7 +22,7 @@ training:
     filename: roberta-{epoch:02d}-{step}
   lightning_load_from_checkpoint: null
   seed: -1
-  batch_size: 10 # 13 samples / 11GB VRAM
+  batch_size: 10
   num_workers: 2
   use_wandb: true
   # https://huggingface.co/nyu-mll/roberta-base-100M-2, Table 9
