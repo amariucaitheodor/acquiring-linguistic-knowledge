@@ -14,11 +14,6 @@ command:
   - -m
   - train
   - config=configs/wit.yaml
-early_terminate: # We do want to early_terminate here because we're interested in the best configs.
-  type: hyperband
-  max_iter: 64
-  s: 4
-  eta: 2
 parameters:
   mlm_perc:
     distribution: categorical
