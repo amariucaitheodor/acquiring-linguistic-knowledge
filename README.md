@@ -45,20 +45,19 @@ bash run_sweep_on_cluster.sh NR_AGENTS SWEEP_ID
 ```bash
 # An already-running job
 srun --interactive --jobid JOBID --pty bash
-# Interactive GPU node (N.B. don't 'source init.sh' again!)
-srun --job-name "interactive" \
-    --time=4:00:00 \
-    --nodes=1 \
-    --ntasks-per-node=2 \
-    --cpus-per-task=2 \
-    --mem-per-cpu=8000 \
-    --gpus=2 \
-    --gres=gpumem:20g \
-    --pty \
-    --preserve-env \
-    $SHELL
+# Interactive node with 2 GPUs (20GBs VRAM each)
+srun --gpus=2 \
+  --gres=gpumem:20g \
+  --ntasks-per-node=2 \
+  --job-name "interactive" --cpus-per-task=2 --mem-per-cpu=8000 --nodes=1 --time=4:00:00 --pty --preserve-env $SHELL
+# Interactive node with 1 GPU (32GBs VRAM)
+srun --gpus=1 \
+  --gres=gpumem:32g \
+  --ntasks-per-node=1 \
+  --job-name "interactive" --cpus-per-task=2 --mem-per-cpu=8000 --nodes=1 --time=4:00:00 --pty --preserve-env $SHELL
 # Processing node
 srun --time=24:00:00 --ntasks-per-node=1 --cpus-per-task=16 --mem-per-cpu=16000 --nodes=1 --pty --preserve-env $SHELL
+
 ```
 
 ### Euler
