@@ -1,7 +1,7 @@
 import evaluate
 from datasets import load_dataset
 
-from alkmi.data.utils import WIT_ALT_TEXT_COLUMNS
+from alkmi.data.utils import WIT_OTHER_TEXT_COLUMNS
 from wit_processing.initial_setup import process_text
 
 dataset = load_dataset("facebook/pmd", "wit", split='train', use_auth_token=True, num_proc=48)
@@ -14,7 +14,7 @@ print(dataset.column_names)
 
 total_words = 0
 strings = []
-for column in ['text'] + WIT_ALT_TEXT_COLUMNS:
+for column in ['text'] + WIT_OTHER_TEXT_COLUMNS:
     wordcount = evaluate.load("word_count")
     text = list(filter(lambda item: item is not None, dataset[column]))
     results = wordcount.compute(data=text)

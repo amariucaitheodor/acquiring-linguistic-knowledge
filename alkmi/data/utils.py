@@ -44,15 +44,15 @@ def build_datasets_from_info(dataset_infos: List[HFDatasetInfo], split: str = "t
     return concatenate_datasets(dataset_list)
 
 
-WIT_ALT_TEXT_COLUMNS = ["context_page_description", "context_section_description",
-                        "caption_alt_text_description", "caption_attribution_description"]
+WIT_OTHER_TEXT_COLUMNS = ["context_page_description", "context_section_description",
+                          "caption_alt_text_description", "caption_attribution_description"]
 
 
 def collapse_wit_text(batch):
     # WARNING: This increases the disk space requirement by a factor of ~4
     original_len = len(batch["text"])
     for i in range(original_len):
-        for field in WIT_ALT_TEXT_COLUMNS:
+        for field in WIT_OTHER_TEXT_COLUMNS:
             if batch[field][i] is not None:
                 if "image" in batch:
                     batch["image"].append(batch["image"][i])
@@ -76,7 +76,7 @@ def collapse_text_columns(dataset: Dataset,
             batched=True,
             num_proc=num_proc,
             batch_size=batch_size,
-            remove_columns=WIT_ALT_TEXT_COLUMNS,
+            remove_columns=WIT_OTHER_TEXT_COLUMNS,
             load_from_cache_file=True,  # MUCH faster processing
             desc=f"Collapsing WiT text for {purpose_msg}",
         )

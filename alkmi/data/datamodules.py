@@ -80,8 +80,8 @@ class ImageDataModule(FlavaAblationDataModule):
     def setup(self, stage=None):
         super().setup(stage)
 
-        self.train_dataset = self.train_dataset.remove_columns(utils.WIT_ALT_TEXT_COLUMNS + ['text'])
-        self.val_dataset = self.val_dataset.remove_columns(utils.WIT_ALT_TEXT_COLUMNS + ['text'])
+        self.train_dataset = self.train_dataset.remove_columns(utils.WIT_OTHER_TEXT_COLUMNS + ['text'])
+        self.val_dataset = self.val_dataset.remove_columns(utils.WIT_OTHER_TEXT_COLUMNS + ['text'])
 
 
 class MLMDataModule(FlavaAblationDataModule):

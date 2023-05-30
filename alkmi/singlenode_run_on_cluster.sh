@@ -5,7 +5,7 @@ VRAM_PER_GPU=${3-20g}
 echo "Selected configuration: $1, GPUs: $NUM_GPUS, $VRAM_PER_GPU VRAM/GPU"
 
 # --mail-type=END,FAIL uncomment to get email notifications
-sbatch --job-name="multimodal" \
+sbatch --job-name="singlenode-mm" \
   --time=5-00:00:00 \
   --nodes=1 \
   --ntasks-per-node="$NUM_GPUS" \

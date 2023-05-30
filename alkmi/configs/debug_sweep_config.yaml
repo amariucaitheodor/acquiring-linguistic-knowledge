@@ -1,7 +1,7 @@
 program: train.py
-name: flava-textvision-wit_mini-debug
+name: flava-textvision-wit_tiny-debug
 description: Miniature FLAVA (fewer weights) text-vision sweep run on the WiT-mini (1k samples) dataset.
-project: alkmi-wit_mini
+project: alkmi-wit_tiny
 run_cap: 100
 entity: rycolab
 method: bayes # uses probability of improvement (PI) to select the next hyperparameter configuration

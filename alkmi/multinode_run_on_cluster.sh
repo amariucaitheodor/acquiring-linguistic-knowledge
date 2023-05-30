@@ -7,7 +7,7 @@ echo "Selected configuration: $1, nodes: $NODES (1 GPU/node, $VRAM_PER_GPU VRAM/
 # --mail-type=END,FAIL uncomment to get email notifications
 # --nodes needs to match Trainer(num_nodes=...)
 # --ntasks-per-node needs to match Trainer(devices=...)
-sbatch --job-name="multimodal" \
+sbatch --job-name="multinode-mm" \
   --time=5-00:00:00 \
   --nodes="$NODES" \
   --ntasks="$NODES" \

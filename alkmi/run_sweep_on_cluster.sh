@@ -7,7 +7,7 @@ echo "Number of agents: $1, GPUs per agent: 1, sweep name: $2, $VRAM_PER_GPU VRA
 # Submit job
 for ((i = 1; i <= $1; i++)); do
   NR=$i
-  sbatch --job-name="multimodal" \
+  sbatch --job-name="sweep-mm" \
     --time=5-00:00:00 \
     --nodes=1 \
     --ntasks-per-node=1 \
