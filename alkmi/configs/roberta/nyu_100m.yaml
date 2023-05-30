@@ -11,8 +11,8 @@ training:
     devices: -1
     val_check_interval: 8000
     limit_val_batches: 2000 # REQUIRED, otherwise the validation loop doesn't terminate
-    precision: bf16 # this or 32 is REQUIRED to avoid exploding gradients and get the best perplexity
-    accumulate_grad_batches: 32
+    precision: bf16-mixed # this or 32 is REQUIRED to avoid exploding gradients and get the best perplexity
+    accumulate_grad_batches: 24
     num_sanity_val_steps: 0
     strategy: ddp
     enable_progress_bar: false
@@ -21,7 +21,7 @@ training:
     filename: roberta-{epoch:02d}-{step}
   lightning_load_from_checkpoint: null
   seed: -1
-  batch_size: 40
+  batch_size: 44
   num_workers: 2
   use_wandb: true
   # https://huggingface.co/nyu-mll/roberta-base-100M-2, Table 9

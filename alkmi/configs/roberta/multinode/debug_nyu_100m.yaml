@@ -12,8 +12,8 @@ training:
     devices: 1
     val_check_interval: 500
     limit_val_batches: 500 # REQUIRED, otherwise the validation loop doesn't terminate
-    precision: 16-mixed # 'bf16' not supported on either local or Euler GPU
-    accumulate_grad_batches: 10 # ~1024 effective batch size for 10 GPUs
+    precision: 32 # this or 32 is REQUIRED to avoid exploding gradients and get the best perplexity
+    accumulate_grad_batches: 8
     num_sanity_val_steps: 0
     strategy: ddp
     enable_progress_bar: false
@@ -22,7 +22,7 @@ training:
     filename: roberta-{epoch:02d}-{step}
   lightning_load_from_checkpoint: null
   seed: -1
-  batch_size: 10
+  batch_size: 6
   num_workers: 2
   use_wandb: true
   # https://huggingface.co/nyu-mll/roberta-base-100M-2, Table 9

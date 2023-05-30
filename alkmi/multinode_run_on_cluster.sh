@@ -13,7 +13,6 @@ sbatch --job-name="multinode-mm" \
   --ntasks-per-node=1 \
   --gpus-per-node=1 \
   --cpus-per-task=2 \
-  --tmp=100G \
   --mem-per-cpu=8000 \
   --gres=gpumem:"$VRAM_PER_GPU" \
   -o "multinode_run_$(date "+%F-%T").results" \
