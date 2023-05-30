@@ -14,7 +14,7 @@ training:
     precision: 16-mixed # 'bf16' not supported on either local or Euler GPU
     accumulate_grad_batches: 1
     num_sanity_val_steps: 0
-    strategy: ddp_find_unused_parameters_true # ddp for BERT, RoBERTa
+    strategy: ddp_find_unused_parameters_true
     enable_progress_bar: true
   lightning_checkpoint:
     dirpath: "./alkmi-debug"

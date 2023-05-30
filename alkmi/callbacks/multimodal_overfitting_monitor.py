@@ -248,12 +248,11 @@ class MultimodalOverfittingMonitor(Callback):
                 case "validation/losses/mim_loss":
                     self._set_sampling_weight_for_modality("vision", trainer=trainer, type="zero")
 
-            multimodal_tasks_weights = [pl_module.model.itm_weight,
-                                        pl_module.model.global_contrastive_weight,
-                                        pl_module.model.mmm_image_weight,
-                                        pl_module.model.mmm_text_weight]
-            if all([w == 0. for w in multimodal_tasks_weights]):
-                self._set_sampling_weight_for_modality("multimodal", trainer=trainer, type="zero")
+            if hasattr(pl_module.model, 'mmm_text_weight'):
+                multimodal_tasks_weights = [pl_module.model.itm_weight, pl_module.model.global_contrastive_weight,
+                                            pl_module.model.mmm_image_weight, pl_module.model.mmm_text_weight]
+                if all([w == 0. for w in multimodal_tasks_weights]):
+                    self._set_sampling_weight_for_modality("multimodal", trainer=trainer, type="zero")
 
         if reason and self.verbose:
             self._log_info(trainer, reason, self.log_rank_zero_only)

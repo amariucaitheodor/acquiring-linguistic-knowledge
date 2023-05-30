@@ -45,6 +45,7 @@ class PseudoPerplexityCallback(Callback):
             idx_end = (trainer.global_rank + 1) * self.limit_val_batches
 
         print(f"Starting Pseudo-Perplexity Evaluation (from index {idx_start} to {idx_end})")
+        model_device = next(pl_module.model.parameters()).device
         start = time.time()
 
         vram_gb = round(torch.cuda.mem_get_info()[1] / (1024 ** 3), 2)
@@ -66,12 +67,12 @@ class PseudoPerplexityCallback(Callback):
             labels = repeat_input.masked_fill(masked_input != tokenizer.mask_token_id, -100)
             with torch.no_grad():
                 if type(pl_module.model) in [BertForMaskedLM, RobertaForMaskedLM]:
-                    mlm_loss = pl_module.model(input_ids=masked_input.to("cuda:0"),
-                                               labels=labels.to("cuda:0"),
+                    mlm_loss = pl_module.model(input_ids=masked_input.to(model_device),
+                                               labels=labels.to(model_device),
                                                return_dict=True).loss
                 elif type(pl_module.model) == FlavaForPreTraining:
-                    mlm_loss = pl_module.model(input_ids_masked=masked_input.to("cuda:0"),
-                                               mlm_labels=labels.to("cuda:0"),
+                    mlm_loss = pl_module.model(input_ids_masked=masked_input.to(model_device),
+                                               mlm_labels=labels.to(model_device),
                                                return_dict=True,
                                                return_loss=True).loss_info.mlm
                 else:
@@ -79,6 +80,6 @@ class PseudoPerplexityCallback(Callback):
             total_mlm_loss += mlm_loss.item()
 
         ppl = torch.exp(total_mlm_loss / self.limit_val_batches).item()
-        self.log("evaluation/pseudo_perplexity", ppl, prog_bar=True, logger=True, rank_zero_only=False, sync_dist=True)
+        self.log("evaluation/pseudo_perplexity", ppl, prog_bar=True, logger=True, rank_zero_only=False, sync_dist=False)
 
         print(f"Ending Pseudo-Perplexity Evaluation (PPL: {ppl}) (duration: {timedelta(seconds=time.time() - start)})")
