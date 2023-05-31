@@ -34,15 +34,9 @@ class PseudoPerplexityCallback(Callback):
 
         References: Section 2.3 of https://arxiv.org/pdf/1910.14659.pdf
         """
-        if trainer.global_rank == 0 and trainer.world_size > 1:
-            print(f"Rank {trainer.global_rank}/{trainer.world_size} will skip PPL evaluation as it's doing BLiMP.")
-            return
-        elif trainer.world_size > 1:  # global_rank != 0
-            idx_start = (trainer.global_rank - 1) * self.limit_val_batches
-            idx_end = trainer.global_rank * self.limit_val_batches
-        else:  # global_rank is 0, world_size is 1
-            idx_start = trainer.global_rank * self.limit_val_batches
-            idx_end = (trainer.global_rank + 1) * self.limit_val_batches
+        # I tried a different logic here, but could only get rank 0 to log metrics so I switched back
+        idx_start = trainer.global_rank * self.limit_val_batches
+        idx_end = (trainer.global_rank + 1) * self.limit_val_batches
 
         print(f"Starting Pseudo-Perplexity Evaluation (from index {idx_start} to {idx_end})")
         model_device = next(pl_module.model.parameters()).device
@@ -80,6 +74,6 @@ class PseudoPerplexityCallback(Callback):
             total_mlm_loss += mlm_loss.item()
 
         ppl = torch.exp(total_mlm_loss / self.limit_val_batches).item()
-        self.log("evaluation/pseudo_perplexity", ppl, prog_bar=True, logger=True, rank_zero_only=False, sync_dist=False)
+        self.log("evaluation/pseudo_perplexity", ppl, prog_bar=True, logger=True, rank_zero_only=False, sync_dist=True)
 
         print(f"Ending Pseudo-Perplexity Evaluation (PPL: {ppl}) (duration: {timedelta(seconds=time.time() - start)})")
