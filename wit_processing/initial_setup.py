@@ -5,8 +5,11 @@ from concurrent.futures import ThreadPoolExecutor
 
 import PIL.Image
 import datasets
+from PIL import PngImagePlugin
 from datasets import Image
 from datasets.utils.file_utils import get_datasets_user_agent
+from transformers.image_transforms import resize
+from transformers.image_utils import PILImageResampling
 
 from alkmi.data.utils import WIT_OTHER_TEXT_COLUMNS
 
@@ -33,6 +36,8 @@ def fetch_single_image(image_url, timeout=None, retries: int = 3):
             )
             with urllib.request.urlopen(request, timeout=timeout) as req:
                 image = PIL.Image.open(io.BytesIO(req.read()))
+                flava_image_size = (224, 224)
+                image = resize(image, size=flava_image_size, resample=PILImageResampling.BICUBIC)
             break
         except Exception:
             image = None
@@ -85,6 +90,8 @@ if __name__ == "__main__":
         STAGE = 1
         SAVE_DISK_SHARD_SIZE, UPLOAD_SHARD_SIZE, SAVE_NUM_PROC = "10GB", "500MB", 32
         SCRATCH_PATH, FINAL_PATH = '/cluster/scratch/tamariucai', '/cluster/work/cotterell/tamariucai'
+        PngImagePlugin.MAX_TEXT_CHUNK = 100 * (1024 ** 2)
+        Image.MAX_IMAGE_PIXELS = None
 
         if STAGE in [1, 0]:
             print(f"Running STEP 1: get WiT, process the images and save to disk")
@@ -92,7 +99,7 @@ if __name__ == "__main__":
             dataset = dataset.map(fetch_images,
                                   fn_kwargs={"num_threads": NUM_THREADS},
                                   batched=True,
-                                  batch_size=15,
+                                  batch_size=20,
                                   num_proc=16,
                                   remove_columns=["image_url"])
             dataset.save_to_disk(f'{FINAL_PATH}/wit_images/', max_shard_size=SAVE_DISK_SHARD_SIZE,

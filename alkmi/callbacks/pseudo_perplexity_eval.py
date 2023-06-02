@@ -34,7 +34,7 @@ class PseudoPerplexityCallback(Callback):
 
         References: Section 2.3 of https://arxiv.org/pdf/1910.14659.pdf
         """
-        # I tried a different logic here, but could only get rank 0 to log metrics so I switched back
+        # I tried a different logic here, but could only get rank 0 to log metrics, so I switched back
         idx_start = trainer.global_rank * self.limit_val_batches
         idx_end = (trainer.global_rank + 1) * self.limit_val_batches
 
