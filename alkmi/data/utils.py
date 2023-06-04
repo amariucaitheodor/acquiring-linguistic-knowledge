@@ -44,8 +44,8 @@ def build_datasets_from_info(dataset_infos: List[HFDatasetInfo], split: str = "t
     return concatenate_datasets(dataset_list)
 
 
-WIT_OTHER_TEXT_COLUMNS = ["context_page_description", "context_section_description",
-                          "caption_alt_text_description", "caption_attribution_description"]
+# "caption_attribution_description" is not used because of its multilingual nature
+WIT_OTHER_TEXT_COLUMNS = ["context_page_description", "context_section_description", "caption_alt_text_description"]
 
 
 def collapse_wit_text(batch):

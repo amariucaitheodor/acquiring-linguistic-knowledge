@@ -62,7 +62,7 @@ class FlavaAblationDataModule(LightningDataModule):
     def _build_collator(self, inputs: List[Dict[str, Any]]):
         return self.processor(
             text=[i['text'] for i in inputs] if 'text' in inputs[0] else None,
-            images=[i['image'].convert('RGB') for i in inputs] if 'image' in inputs[0] else None,
+            images=[i['image'] for i in inputs] if 'image' in inputs[0] else None,
             return_tensors="pt",
             padding="max_length",
             add_special_tokens=True,

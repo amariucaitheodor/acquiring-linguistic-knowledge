@@ -10,13 +10,19 @@ from datasets import Image
 from datasets.utils.file_utils import get_datasets_user_agent
 from transformers.image_transforms import resize
 from transformers.image_utils import PILImageResampling
+import numpy as np
 
 from alkmi.data.utils import WIT_OTHER_TEXT_COLUMNS
 
 USER_AGENT = get_datasets_user_agent()
 
+FLAVA_IMAGE_SIZE = (224, 224)
+NUM_THREADS = 3
+MINI_VERSION = False
+
 
 def fetch_single_image(image_url, timeout=None, retries: int = 3):
+    orig_image_url = image_url
     for _ in range(retries + 1):
         try:
             # "Wikimedia commons" down-sampling URL technique...
@@ -29,17 +35,22 @@ def fetch_single_image(image_url, timeout=None, retries: int = 3):
                     file_name = image_url.split('/')[-1]
                     image_url = f'{prefix}thumb/{suffix}/{size}px-{file_name}.png'
                     break
-            request = urllib.request.Request(
-                image_url,
-                data=None,
-                headers={"user-agent": USER_AGENT},
-            )
+            request = urllib.request.Request(image_url, data=None, headers={"user-agent": USER_AGENT})
             with urllib.request.urlopen(request, timeout=timeout) as req:
                 image = PIL.Image.open(io.BytesIO(req.read()))
-                flava_image_size = (224, 224)
-                image = resize(image, size=flava_image_size, resample=PILImageResampling.BICUBIC)
+                if image.mode != 'RGB':
+                    image = image.convert("RGBA")
+                    white_fill_color = (255, 255, 255)
+                    background = PIL.Image.new(image.mode[:-1], image.size, white_fill_color)
+                    background.paste(image, image.split()[-1])  # omit transparency
+                    image = background
+                    image.convert("RGB")
+                image = np.array(image)
+                image = resize(image, size=FLAVA_IMAGE_SIZE, resample=PILImageResampling.BICUBIC, return_numpy=False)
             break
-        except Exception:
+        except Exception as e:
+            if not e.__str__().startswith("HTTP Error 404"):
+                print(f"Error fetching image (other than 404): {e} ({image_url}, {orig_image_url})")
             image = None
     return image
 
@@ -62,16 +73,14 @@ text_and_image_both_present = lambda examples: [text is not None and image is no
                                                 zip(examples["text"], examples["image"])]
 
 if __name__ == "__main__":
-    NUM_THREADS = 64
-    MINI_VERSION = False
-
     if MINI_VERSION:
         dataset = datasets.load_dataset("facebook/pmd", "wit", split='train', use_auth_token=True, num_proc=48) \
             .select(list(range(1000)))
         dataset = dataset.map(fetch_images,
                               fn_kwargs={"num_threads": NUM_THREADS},
-                              batched=True, batch_size=50,
-                              num_proc=16, remove_columns=["image_url"])
+                              batched=True,
+                              batch_size=20,
+                              num_proc=20)
         dataset = dataset.filter(
             text_and_image_both_present,
             batched=True,
@@ -82,12 +91,15 @@ if __name__ == "__main__":
         dataset = dataset.train_test_split(test_size=0.1, train_size=0.9)  # First split, then collapse text
         for split in ['train', 'test']:
             print("Processing split", split)
-            dataset[split] = dataset[split].map(process_text, batched=True, num_proc=24, batch_size=100,
-                                                fn_kwargs={"num_threads": NUM_THREADS},
+            dataset[split] = dataset[split].map(process_text,
+                                                batched=True,
+                                                num_proc=24,
+                                                batch_size=100,
+                                                fn_kwargs={"num_threads": NUM_THREADS * 2},
                                                 remove_columns=["meta", "source"])
-        dataset.push_to_hub(f"theodor1289/wit", max_shard_size="500MB", private=False)
+        dataset.push_to_hub(f"theodor1289/wit_tiny", max_shard_size="500MB", private=False)
     else:
-        STAGE = 1
+        STAGE = 0
         SAVE_DISK_SHARD_SIZE, UPLOAD_SHARD_SIZE, SAVE_NUM_PROC = "10GB", "500MB", 32
         SCRATCH_PATH, FINAL_PATH = '/cluster/scratch/tamariucai', '/cluster/work/cotterell/tamariucai'
         PngImagePlugin.MAX_TEXT_CHUNK = 100 * (1024 ** 2)
@@ -100,8 +112,8 @@ if __name__ == "__main__":
                                   fn_kwargs={"num_threads": NUM_THREADS},
                                   batched=True,
                                   batch_size=20,
-                                  num_proc=16,
-                                  remove_columns=["image_url"])
+                                  num_proc=20,
+                                  desc=f"Downloading the images from facebook/pmd")
             dataset.save_to_disk(f'{FINAL_PATH}/wit_images/', max_shard_size=SAVE_DISK_SHARD_SIZE,
                                  num_proc=SAVE_NUM_PROC)
             print(f"dataset.cleanup_cache_files(): {dataset.cleanup_cache_files()}")
@@ -129,9 +141,13 @@ if __name__ == "__main__":
             print(f"Midpoint STEP 3: processing the text AFTER splitting the dataset...")
             for split in ['train', 'test']:
                 print("Processing split", split)
-                dataset[split] = dataset[split].map(process_text, batched=True, num_proc=24, batch_size=100,
-                                                    fn_kwargs={"num_threads": NUM_THREADS},
-                                                    remove_columns=["meta", "source"])
+                dataset[split] = dataset[split].map(process_text,
+                                                    batched=True,
+                                                    num_proc=24,
+                                                    batch_size=100,
+                                                    fn_kwargs={"num_threads": NUM_THREADS * 2},
+                                                    remove_columns=["meta", "source"],
+                                                    desc=f"Processing the text for split '{split}'")
 
             print(f'Final STEP 3: saving to disk at {FINAL_PATH}/wit/')
             dataset.save_to_disk(f'{FINAL_PATH}/wit/', max_shard_size=SAVE_DISK_SHARD_SIZE, num_proc=SAVE_NUM_PROC)
