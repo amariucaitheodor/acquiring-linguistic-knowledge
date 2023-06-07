@@ -1,5 +1,6 @@
 import io
 import json
+import time
 import urllib
 from concurrent.futures import ThreadPoolExecutor
 
@@ -17,11 +18,11 @@ from alkmi.data.utils import WIT_OTHER_TEXT_COLUMNS
 USER_AGENT = get_datasets_user_agent()
 
 FLAVA_IMAGE_SIZE = (224, 224)
-NUM_THREADS = 3
+NUM_THREADS = 1
 MINI_VERSION = False
 
 
-def fetch_single_image(image_url, timeout=None, retries: int = 3):
+def fetch_single_image(image_url, timeout=None, retries: int = 2):
     orig_image_url = image_url
     for _ in range(retries + 1):
         try:
@@ -50,7 +51,11 @@ def fetch_single_image(image_url, timeout=None, retries: int = 3):
             break
         except Exception as e:
             if not e.__str__().startswith("HTTP Error 404"):
-                print(f"Error fetching image (other than 404): {e} ({image_url}, {orig_image_url})")
+                if e.__str__().startswith("HTTP Error 429"):
+                    print("Sleeping for 10 seconds... (Too Many Requests)")
+                    time.sleep(10)
+                else:
+                    print(f"Error fetching image (other than 404): {e} ({image_url}, {orig_image_url})")
             image = None
     return image
 
