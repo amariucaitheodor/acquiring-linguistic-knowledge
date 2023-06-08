@@ -74,7 +74,7 @@ def main():
         model = RobertaPreTrainingLightningModule(**build_model_kwargs(config.training, config.model))
         model = torch.compile(model)
     elif config.model.name == 'flava':
-        print(f"Enabling TensorFloat32 tensor cores for float32 matrix multiplication (FLAVA on NVIDIA A100-PCIE-40GB)")
+        print(f"Enabling TensorFloat32 tensor cores for float32 matrix multiplication")
         torch.set_float32_matmul_precision('medium')
         model = FlavaPreTrainingLightningModule(**build_model_kwargs(config.training, config.model))
     else:
