@@ -76,7 +76,7 @@ def collapse_text_columns(dataset: Dataset,
             batched=True,
             num_proc=num_proc,
             batch_size=batch_size,
-            remove_columns=WIT_OTHER_TEXT_COLUMNS,
+            remove_columns=WIT_OTHER_TEXT_COLUMNS + ["caption_attribution_description", "image_url"],
             load_from_cache_file=True,  # MUCH faster processing
             desc=f"Collapsing WiT text for {purpose_msg}",
         )

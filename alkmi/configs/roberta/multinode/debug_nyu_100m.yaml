@@ -12,7 +12,7 @@ training:
     devices: 1
     val_check_interval: 500
     limit_val_batches: 500 # REQUIRED, otherwise the validation loop doesn't terminate
-    precision: 32 # this or 32 is REQUIRED to avoid exploding gradients and get the best perplexity
+    precision: 32 # this or bf16-mixed is REQUIRED to avoid exploding gradients overflow and get the best perplexity
     accumulate_grad_batches: 8
     num_sanity_val_steps: 0
     strategy: ddp

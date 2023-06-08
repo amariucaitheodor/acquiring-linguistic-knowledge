@@ -8,12 +8,12 @@ training:
   lightning:
     max_steps: 450000
     accelerator: 'gpu'
-    num_nodes: 2  # use this for multinode runs
+    num_nodes: 8  # use this for multinode runs
     devices: 1
     val_check_interval: 8000
     limit_val_batches: 2000 # REQUIRED, otherwise the validation loop doesn't terminate
-    precision: bf16-mixed # this or 32 is REQUIRED to avoid exploding gradients and get the best perplexity
-    accumulate_grad_batches: 24
+    precision: 32 # this or bf16-mixed is REQUIRED to avoid exploding gradients and get the best perplexity
+    accumulate_grad_batches: 6
     num_sanity_val_steps: 0
     strategy: ddp
     enable_progress_bar: false
@@ -22,11 +22,11 @@ training:
     filename: roberta-{epoch:02d}-{step}
   lightning_load_from_checkpoint: null
   seed: -1
-  batch_size: 44
+  batch_size: 5
   num_workers: 2
   use_wandb: true
   # https://huggingface.co/nyu-mll/roberta-base-100M-2, Table 9
-  learning_rate: 5e-4
+  learning_rate: 1e-4 # or 5e-4 for batch size 2048 (https://github.com/facebookresearch/fairseq/blob/main/examples/roberta/README.pretraining.md)
   adam_eps: 1e-6
   adam_weight_decay: 1e-2
   adam_betas: [ 0.9, 0.98 ]

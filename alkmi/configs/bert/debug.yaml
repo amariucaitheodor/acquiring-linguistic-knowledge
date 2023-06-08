@@ -11,7 +11,7 @@ training:
     devices: -1
     val_check_interval: 200
     limit_val_batches: 200 # REQUIRED, otherwise the validation loop doesn't terminate
-    precision: 16-mixed # 'bf16' not supported on either local or Euler GPU
+    precision: bf16-mixed # this or 32 is REQUIRED to avoid exploding gradients overflow and get the best perplexity
     accumulate_grad_batches: 1
     num_sanity_val_steps: 0
     strategy: ddp

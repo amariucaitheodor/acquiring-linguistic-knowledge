@@ -73,6 +73,8 @@ def main():
         model = RobertaPreTrainingLightningModule(**build_model_kwargs(config.training, config.model))
         model = torch.compile(model)
     elif config.model.name == 'flava':
+        print(f"Enabling TensorFloat32 tensor cores for float32 matrix multiplication (FLAVA on NVIDIA A100-PCIE-40GB)")
+        torch.set_float32_matmul_precision('medium')
         model = FlavaPreTrainingLightningModule(**build_model_kwargs(config.training, config.model))
     else:
         raise ValueError(f"Unknown model name: {config.model.name}")
@@ -92,7 +94,7 @@ def main():
                 train_time_interval=timedelta(hours=3),
                 monitor='evaluation/pseudo_perplexity',
                 mode='min',
-                save_top_k=1,
+                save_top_k=-1,  # keep all checkpoints for later evaluation(s)
                 save_last=True,
                 verbose=True,
             )
