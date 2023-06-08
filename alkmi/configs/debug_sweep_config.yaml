@@ -1,6 +1,6 @@
 program: train.py
 name: flava-textvision-wit_tiny-debug
-description: Miniature FLAVA (fewer weights) text-vision sweep run on the WiT-mini (1k samples) dataset.
+description: Miniature FLAVA (fewer weights) text-vision sweep run on the WiT tiny (1k samples) dataset.
 project: alkmi-wit_tiny
 run_cap: 100
 entity: rycolab

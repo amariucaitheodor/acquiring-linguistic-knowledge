@@ -11,7 +11,7 @@ for ((i = 1; i <= $1; i++)); do
     --time=5-00:00:00 \
     --nodes=1 \
     --ntasks-per-node=1 \
-    --gpus=1 \
+    --gpus=a100-pcie-40gb:1 \
     --cpus-per-task=2 \
     --mem-per-cpu=8000 \
     --gres=gpumem:"$VRAM_PER_GPU" \

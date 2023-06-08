@@ -1,7 +1,7 @@
 program: train.py
-name: flava-textvision-wit_tiny-hyperparameters
+name: flava-textvision-wit_medium-hyperparameters
 description: Hyperparameter sweep search for FLAVA (text-vision) on the tiny WiT dataset.
-project: alkmi-wit
+project: alkmi-wit_medium
 run_cap: 100
 entity: rycolab
 method: bayes # uses probability of improvement (PI) to select the next hyperparameter configuration
@@ -13,7 +13,7 @@ command:
   - ${interpreter} # makes sure the right interpreter is used on Euler (3.10 req. for BLiMP)
   - -m
   - train
-  - config=configs/wit_tiny/wit_tiny.yaml
+  - config=configs/wit_medium/wit_medium.yaml
 early_terminate: # We do want to early_terminate here because we're interested in the best configs.
   type: hyperband
   max_iter: 64
@@ -22,7 +22,7 @@ early_terminate: # We do want to early_terminate here because we're interested i
 parameters:
   accumulate_grad_batches:
     distribution: categorical
-    values: [ 1, 16, 32, 64 ]
+    values: [ 8, 16, 32, 64 ]
   warmup_steps:
     distribution: categorical
     values: [ 2000, 10000 ]

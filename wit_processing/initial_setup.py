@@ -19,7 +19,8 @@ USER_AGENT = get_datasets_user_agent()
 
 FLAVA_IMAGE_SIZE = (224, 224)
 NUM_THREADS = 1
-MINI_VERSION = False
+VERSION_ROWS = {"tiny": 1_000, "medium": 38_200, "full": -1}
+VERSION = "full"
 
 
 def fetch_single_image(image_url, timeout=None, retries: int = 2):
@@ -78,9 +79,9 @@ text_and_image_both_present = lambda examples: [text is not None and image is no
                                                 zip(examples["text"], examples["image"])]
 
 if __name__ == "__main__":
-    if MINI_VERSION:
+    if VERSION != "full":
         dataset = datasets.load_dataset("facebook/pmd", "wit", split='train', use_auth_token=True, num_proc=48) \
-            .select(list(range(1000)))
+            .select(list(range(VERSION_ROWS[VERSION])))
         dataset = dataset.map(fetch_images,
                               fn_kwargs={"num_threads": NUM_THREADS},
                               batched=True,
@@ -91,7 +92,7 @@ if __name__ == "__main__":
             batched=True,
             num_proc=6,
             batch_size=25,
-            desc=f"Filtering out data with missing content from wit_tiny"
+            desc=f"Filtering out data with missing content from wit_{VERSION}"
         )
         dataset = dataset.train_test_split(test_size=0.1, train_size=0.9)  # First split, then collapse text
         for split in ['train', 'test']:
@@ -102,7 +103,7 @@ if __name__ == "__main__":
                                                 batch_size=100,
                                                 fn_kwargs={"num_threads": NUM_THREADS * 2},
                                                 remove_columns=["meta", "source"])
-        dataset.push_to_hub(f"theodor1289/wit_tiny", max_shard_size="500MB", private=False)
+        dataset.push_to_hub(f"theodor1289/wit_{VERSION}", max_shard_size="500MB", private=False)
     else:
         STAGE = 0
         SAVE_DISK_SHARD_SIZE, UPLOAD_SHARD_SIZE, SAVE_NUM_PROC = "10GB", "500MB", 32
