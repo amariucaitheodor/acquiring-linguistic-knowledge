@@ -1,6 +1,6 @@
 program: train.py
-name: flava-textvision-wit-hyperparameters
-description: Hyperparameter sweep search for FLAVA (text-vision) on the WiT dataset.
+name: flava-textvision-wit_tiny-hyperparameters
+description: Hyperparameter sweep search for FLAVA (text-vision) on the tiny WiT dataset.
 project: alkmi-wit
 run_cap: 100
 entity: rycolab
@@ -13,7 +13,7 @@ command:
   - ${interpreter} # makes sure the right interpreter is used on Euler (3.10 req. for BLiMP)
   - -m
   - train
-  - config=configs/wit.yaml
+  - config=configs/wit_tiny/wit_tiny.yaml
 early_terminate: # We do want to early_terminate here because we're interested in the best configs.
   type: hyperband
   max_iter: 64

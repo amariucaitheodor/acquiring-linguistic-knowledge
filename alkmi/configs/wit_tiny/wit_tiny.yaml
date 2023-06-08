@@ -1,0 +1,56 @@
+_target_: alkmi.definitions.AblationArguments
+
+text_perc: 100
+vision_perc: 100
+
+training:
+  _target_: alkmi.definitions.TrainingArguments
+  lightning:
+    max_steps: 450000
+    accelerator: 'gpu'
+    devices: -1
+    val_check_interval: 8000
+    limit_val_batches: 2000 # REQUIRED, otherwise the validation loop doesn't terminate
+    precision: bf16-mixed # this or 32 is REQUIRED to avoid exploding gradients overflow and get the best perplexity
+    accumulate_grad_batches: 32
+    num_sanity_val_steps: 0
+    strategy: ddp_find_unused_parameters_true
+    enable_progress_bar: false
+  lightning_checkpoint:
+    dirpath: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/flava-wit_tiny/"
+    filename: flava-{epoch:02d}-{step}
+  lightning_load_from_checkpoint: null
+  seed: -1
+  batch_size: 32
+  num_workers: 2
+  use_wandb: true
+  # https://arxiv.org/pdf/2112.04482.pdf, A. Hyperparameters and details of FLAVA
+  learning_rate: 1e-3
+  learning_rate_text_submodel: 5e-4  # N.B. FLAVA pretrains unimodally on text with 5e-4
+  adam_eps: 1e-8
+  adam_weight_decay: 1e-1
+  adam_betas: [ 0.9, 0.999 ]
+  warmup_steps: 2000
+
+datasets:
+  _target_: alkmi.definitions.TrainingDatasetsInfo
+  ablation:
+    # For VLDataModule, column "image" either needs to have an image (not the case for "facebook/pmd", "wit"), or be missing
+    _target_: alkmi.definitions.TrainingSingleDatasetInfo
+    train:
+      - _target_: alkmi.definitions.HFDatasetInfo
+        key: theodor1289/wit_tiny
+        split_key_mapping:
+          validation: test # 'validation' split does not exist for wit
+    val:
+      - _target_: alkmi.definitions.HFDatasetInfo
+        key: theodor1289/wit_tiny
+        split_key_mapping:
+          validation: test # 'validation' split does not exist for wit
+    datamodule_extra_kwargs: # This key is used in the MLMDataModule
+      text_columns: [ "text" ]
+
+model:
+  _target_: alkmi.definitions.ModelArguments
+  pretrained: null
+  name: flava

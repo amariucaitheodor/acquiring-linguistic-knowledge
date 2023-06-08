@@ -41,7 +41,8 @@ def main():
         overwrite_config(struct=config.model, params=["mlm_perc"])
         overwrite_config(struct=config, params=["text_perc", "vision_perc"])
         overwrite_config(struct=config.training.lightning, params=["accumulate_grad_batches"])
-        overwrite_config(struct=config.training, params=["learning_rate", "warmup_steps", "seed"])
+        overwrite_config(struct=config.training, params=["learning_rate", "learning_rate_text_submodel",
+                                                         "warmup_steps", "seed"])
         overwrite_config(struct=config.datasets, params=["sampling_temperature"])
         update_ckt_dir_and_batch_size(config)
 
