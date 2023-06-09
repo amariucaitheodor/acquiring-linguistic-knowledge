@@ -76,7 +76,9 @@ class LMEvalHarnessCallback(Callback):
 
                 accuracies.append(round(task_accuracy * 100, 2))
                 self.log_metric(name=f"evaluation/{group_title}/{metric_name}", value=accuracies[-1])
+                print(f"evaluation/{group_title}/{metric_name}: {accuracies[-1]}")
 
             self.log_metric(name=f"evaluation/{group_title}_average", value=sum(accuracies) / len(accuracies))
+            print(f"evaluation/{group_title}_average: {sum(accuracies) / len(accuracies)}")
 
         print(f"Ending LM Evaluation Harness (duration: {timedelta(seconds=time.time() - start)})")

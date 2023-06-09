@@ -40,13 +40,14 @@ class PseudoPerplexityCallback(Callback):
         idx_start = trainer.global_rank * self.limit_val_batches
         idx_end = (trainer.global_rank + 1) * self.limit_val_batches
 
-        print(f"Starting Pseudo-Perplexity Evaluation (from index {idx_start} to {idx_end})")
+        print(f"[PPL Evaluation] Starting from index {idx_start} to index {idx_end}.")
         model_device = next(pl_module.model.parameters()).device
         start = time.time()
 
         vram_gb = round(torch.cuda.mem_get_info()[1] / (1024 ** 3), 2)
         max_phrase_length = 200 if vram_gb > 20 else (300 if vram_gb > 30 else 100)
-        print(f"Based on the available VRAM ({vram_gb}GBs), we will use a max phrase length of {max_phrase_length}")
+        print(f"[PPL Evaluation] Based on the available VRAM ({vram_gb}GBs), "
+              f"we will use a max phrase length of {max_phrase_length}.")
 
         text = self.dataset[idx_start:idx_end]["text"]
         tokenizer = get_corresponding_tokenizer_for_model(pl_module.model)
@@ -73,11 +74,16 @@ class PseudoPerplexityCallback(Callback):
                                                return_dict=True,
                                                return_loss=True).loss_info.mlm
                 else:
-                    raise ValueError(f"Model {type(pl_module.model)} not supported for pseudo-perplexity evaluation")
-            total_mlm_loss += mlm_loss.item()
+                    raise ValueError(f"[PPL Evaluation] Model {type(pl_module.model)} not supported.")
 
-        print(f"PPL computation: e^({total_mlm_loss} / {self.limit_val_batches})")
+            if torch.isnan(mlm_loss):
+                print(f"[PPL Evaluation] WARNING: MLM loss is NaN for phrase '{phrase}', masked_input {masked_input}. "
+                      f"Skipping it.")
+            else:
+                total_mlm_loss += mlm_loss.item()
+
+        print(f"[PPL Evaluation] Computing e^({total_mlm_loss} / {self.limit_val_batches})")
         ppl = torch.exp(total_mlm_loss / self.limit_val_batches).item()
 
         self.log("evaluation/pseudo_perplexity", ppl, prog_bar=True, logger=True, rank_zero_only=False, sync_dist=True)
-        print(f"Ending Pseudo-Perplexity Evaluation (PPL: {ppl}) (duration: {timedelta(seconds=time.time() - start)})")
+        print(f"[PPL Evaluation] Ending with PPL={ppl} (duration: {timedelta(seconds=time.time() - start)})")

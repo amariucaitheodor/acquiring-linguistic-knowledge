@@ -56,16 +56,14 @@ def collapse_wit_text(batch):
             if batch[field][i] is not None:
                 if "image" in batch:
                     batch["image"].append(batch["image"][i])
-                batch["text"].append(
-                    batch[field][i].split("English: ")[1] if batch[field][i].startswith("English: ")
-                    else batch[field][i])
+                batch["text"].append(batch[field][i])
     return batch
 
 
 def collapse_text_columns(dataset: Dataset,
                           need_images: bool,
                           purpose_msg: str,
-                          num_proc: int = 16,
+                          num_proc: int = 1,
                           batch_size: int = 100
                           ):
     if len(dataset.column_names) > 1:

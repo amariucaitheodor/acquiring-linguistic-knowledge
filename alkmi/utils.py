@@ -53,10 +53,6 @@ def build_config():
     cli_conf.pop("config")
     config: AblationArguments = OmegaConf.merge(conf, cli_conf)
 
-    assert (
-            "max_steps" in config.training.lightning
-    ), "lightning config must specify 'max_steps'"
-
     assert 0 <= config.text_perc <= 100, "'text_perc' ablation study percentage must be between 0 and 100"
     assert 0 <= config.vision_perc <= 100, "'vision_perc' ablation study percentage must be between 0 and 100"
 
