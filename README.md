@@ -54,7 +54,7 @@ srun --gpus=2 \
 srun --gpus=1 \
   --gres=gpumem:20g \
   --ntasks-per-node=1 \
-  --job-name "interactive" --cpus-per-task=4 --mem-per-cpu=16000 --nodes=1 --time=4:00:00 --pty --preserve-env $SHELL
+  --job-name "interactive" --cpus-per-task=2 --mem-per-cpu=16000 --nodes=1 --time=4:00:00 --pty --preserve-env $SHELL
 # Processing node
 srun --time=24:00:00 --ntasks-per-node=1 --cpus-per-task=16 --mem-per-cpu=16000 --nodes=1 --pty --preserve-env $SHELL
 
