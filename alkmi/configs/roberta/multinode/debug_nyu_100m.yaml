@@ -6,15 +6,12 @@ vision_perc: 0
 training:
   _target_: alkmi.definitions.TrainingArguments
   lightning:
-    max_steps: 450000
-    accelerator: 'gpu'
     num_nodes: 2  # use this for multinode runs
     devices: 1
     val_check_interval: 500
     limit_val_batches: 500 # REQUIRED, otherwise the validation loop doesn't terminate
     precision: 32 # this or bf16-mixed is REQUIRED to avoid exploding gradients overflow and get the best perplexity
     accumulate_grad_batches: 8
-    num_sanity_val_steps: 0
     strategy: ddp
     enable_progress_bar: false
   lightning_checkpoint:

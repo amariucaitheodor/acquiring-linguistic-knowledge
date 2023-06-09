@@ -126,7 +126,14 @@ def main():
         **OmegaConf.to_container(config.training.lightning),
         callbacks=callbacks,
         logger=wandb_logger if config.training.use_wandb else True,
-        inference_mode=False
+        gradient_clip_val=1.0,  # little effect on learning, but a "bad minibatch" could cause gradients to explode and
+        # clipping prevents that iteration from disrupting the model
+        max_time=timedelta(days=5),
+        max_steps=450_000,
+        num_sanity_val_steps=0,
+        accelerator='gpu',
+        precision="16-mixed",
+        inference_mode=False  # conflicts with 2.0-compiled models
     )
 
     if config.training.use_wandb and trainer.global_rank == 0:
