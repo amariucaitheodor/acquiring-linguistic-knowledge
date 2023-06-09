@@ -22,7 +22,7 @@ early_terminate: # We do want to early_terminate here because we're interested i
 parameters:
   accumulate_grad_batches:
     distribution: categorical
-    values: [ 8, 16, 32, 64 ]
+    values: [ 16, 32, 64 ]
   warmup_steps:
     distribution: categorical
     values: [ 2000, 10000 ]
