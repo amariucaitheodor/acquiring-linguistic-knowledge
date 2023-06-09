@@ -12,8 +12,8 @@ for ((i = 1; i <= $1; i++)); do
     --nodes=1 \
     --ntasks-per-node=1 \
     --gpus=a100-pcie-40gb:1 \
-    --cpus-per-task=2 \
-    --mem-per-cpu=8000 \
+    --cpus-per-task=4 \
+    --mem-per-cpu=14000 \
     --gres=gpumem:"$VRAM_PER_GPU" \
     -o "sweep_run_($2)_#${NR}_($(date "+%F-%T")).results" \
     --wrap="WANDB__SERVICE_WAIT=300 NUMEXPR_MAX_THREADS=64 wandb agent $2"

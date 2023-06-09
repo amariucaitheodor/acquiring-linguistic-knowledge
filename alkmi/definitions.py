@@ -63,7 +63,7 @@ class TrainingArguments:
     lightning_load_from_checkpoint: Optional[str] = None
     seed: int = -1
     batch_size: int = 8
-    num_workers: int = 2
+    num_workers: int = 4  # empirically best for FLAVA w/ WiT
     learning_rate: float = 0.003
     learning_rate_text_submodel: float = 0.0005
     adam_eps: float = 1e-08

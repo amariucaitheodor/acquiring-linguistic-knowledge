@@ -83,7 +83,7 @@ class PseudoPerplexityCallback(Callback):
                 total_mlm_loss += mlm_loss.item()
 
         print(f"[PPL Evaluation] Computing e^({total_mlm_loss} / {self.limit_val_batches})")
-        ppl = torch.exp(total_mlm_loss / self.limit_val_batches).item()
+        ppl = torch.exp(total_mlm_loss.item() / self.limit_val_batches).item()
 
         self.log("evaluation/pseudo_perplexity", ppl, prog_bar=True, logger=True, rank_zero_only=False, sync_dist=True)
         print(f"[PPL Evaluation] Ending with PPL={ppl} (duration: {timedelta(seconds=time.time() - start)})")

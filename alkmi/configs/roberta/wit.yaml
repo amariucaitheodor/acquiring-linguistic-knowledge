@@ -16,9 +16,7 @@ training:
     dirpath: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/roberta-wit/"
     filename: roberta-{epoch:02d}-{step}
   lightning_load_from_checkpoint: null
-  seed: -1
   batch_size: 26
-  num_workers: 2
   use_wandb: true
   # https://huggingface.co/nyu-mll/roberta-base-100M-2, Table 9
   learning_rate: 5e-4

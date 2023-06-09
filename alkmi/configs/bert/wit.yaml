@@ -16,9 +16,7 @@ training:
     dirpath: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/bert-wit/"
     filename: bert-{epoch:02d}-{step}
   lightning_load_from_checkpoint: null
-  seed: -1
   batch_size: 24
-  num_workers: 2
   use_wandb: true
   # https://arxiv.org/pdf/1810.04805.pdf, A.2 Pre-training Procedure
   learning_rate: 1e-4

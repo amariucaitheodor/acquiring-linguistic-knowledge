@@ -19,6 +19,16 @@ class FlavaPreTrainingLightningModule(LightningModule):
         else:
             self.model = FlavaForPreTraining(FlavaConfig(compile_submodels=True))
 
+        # We downscale the loss as patience exhausts, so we need to readjust for logging
+        self.original_weights = {
+            "global_contrastive": self.model.global_contrastive_weight,
+            "mmm_image": self.model.mmm_image_weight,
+            "mmm_text": self.model.mmm_text_weight,
+            "mlm": self.model.mlm_weight,
+            "mim": self.model.mim_weight,
+            "itm": self.model.itm_weight,
+        }
+
         if 'learning_rate_text_submodel' in kwargs:
             text_lr = kwargs.pop('learning_rate_text_submodel')
 
@@ -43,14 +53,18 @@ class FlavaPreTrainingLightningModule(LightningModule):
         total_loss = 0
         for key in losses:
             total_loss += losses[key]
-            self.log(f"train/losses/{key}_loss", losses[key], prog_bar=True, logger=True, sync_dist=True)
+            upscale_factor = self.original_weights[key] / self.model.__getattribute__(f"{key}_weight")
+            self.log(f"train/losses/{key}_loss", losses[key] * upscale_factor,
+                     prog_bar=True, logger=True, sync_dist=True)
         return total_loss
 
     def validation_step(self, batch, batch_idx):
         output = self._step(batch)
         losses = output.loss_info
         for key in losses:
-            self.log(f"validation/losses/{key}_loss", losses[key], prog_bar=True, logger=True, sync_dist=True)
+            upscale_factor = self.original_weights[key] / self.model.__getattribute__(f"{key}_weight")
+            self.log(f"validation/losses/{key}_loss", losses[key] * upscale_factor,
+                     prog_bar=True, logger=True, sync_dist=True)
         return output.loss  # total loss
 
     def _step(self, batch) -> FlavaForPreTrainingOutput:

@@ -49,12 +49,12 @@ srun --interactive --jobid JOBID --pty bash
 srun --gpus=2 \
   --gres=gpumem:20g \
   --ntasks-per-node=2 \
-  --job-name "interactive" --cpus-per-task=2 --mem-per-cpu=8000 --nodes=1 --time=4:00:00 --pty --preserve-env $SHELL
+  --job-name "interactive" --cpus-per-task=4 --mem-per-cpu=8000 --nodes=1 --time=4:00:00 --pty --preserve-env $SHELL
 # Interactive node with 1 GPU and a lot of RAM for the (initial) WiT collapsing
 srun --gpus=1 \
   --gres=gpumem:20g \
   --ntasks-per-node=1 \
-  --job-name "interactive" --cpus-per-task=2 --mem-per-cpu=16000 --nodes=1 --time=4:00:00 --pty --preserve-env $SHELL
+  --job-name "interactive" --cpus-per-task=4 --mem-per-cpu=14000 --nodes=1 --time=4:00:00 --pty --preserve-env $SHELL
 # Processing node
 srun --time=24:00:00 --ntasks-per-node=1 --cpus-per-task=16 --mem-per-cpu=16000 --nodes=1 --pty --preserve-env $SHELL
 
@@ -73,6 +73,7 @@ du -h -d 2 /cluster/work/cotterell/tamariucai/ | sort -h # work directory
 
 ```bash
 env2lmod
+module purge
 module load eth_proxy gcc/8.2.0 python_gpu/3.10.4
 export PATH="$HOME/.local/bin:$PATH"
 export HF_DATASETS_CACHE="/cluster/scratch/tamariucai/HuggingfaceDatasets"
