@@ -81,8 +81,9 @@ export HF_HOME="/cluster/work/cotterell/tamariucai/HuggingfaceHome"
 export WANDB_CACHE_DIR="/cluster/scratch/tamariucai/WandbCache"
 export WANDB_DIR="/cluster/work/cotterell/tamariucai/WandbDir"
 export PYTHONPATH=/cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/:/cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/alkmi/callbacks/lm-evaluation-harness
-cd /cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/alkmi/
+cd /cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge
 poetry shell
+cd alkmi
 ```
 
 ### Submodules
