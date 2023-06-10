@@ -9,6 +9,8 @@ from alkmi.models.flava import FlavaProcessor
 
 processor = FlavaProcessor.from_pretrained("facebook/flava-full")
 
+BATCH_SIZE = 16
+
 
 def _build_collator(inputs: List[Dict[str, Any]]):
     return processor(
@@ -30,7 +32,7 @@ def _build_collator(inputs: List[Dict[str, Any]]):
 for num_workers in [1] + list(range(2, 16, 2)):
     dataset = load_dataset("theodor1289/wit_tiny", split='train', use_auth_token=True)
     train_loader = DataLoader(dataset, shuffle=True, num_workers=num_workers,
-                              batch_size=16, sampler=None, drop_last=True,
+                              batch_size=BATCH_SIZE, sampler=None, drop_last=True,
                               collate_fn=_build_collator)
     times = []
     for j in range(3):
@@ -43,6 +45,7 @@ for num_workers in [1] + list(range(2, 16, 2)):
     print(f"Finish with:{round(sum(times) / len(times), 2)}s avg., min={min(times)}, max={max(times)}, "
           f"num_workers={num_workers}")
 
+# BATCH_SIZE = 16
 # Finish with:10.38 avg., min=9.49, max=12.04, num_workers=1
 # Finish with:5.04 avg., min=4.95, max=5.09, num_workers=2
 # Finish with:3.01 avg., min=2.97, max=3.06, num_workers=4 -> good option!
@@ -51,3 +54,13 @@ for num_workers in [1] + list(range(2, 16, 2)):
 # Finish with:2.60 avg., min=2.46, max=2.68, num_workers=10
 # Finish with:2.86 avg., min=2.81, max=2.94, num_workers=12
 # Finish with:3.13 avg., min=3.13, max=3.14, num_workers=14
+
+# BATCH_SIZE = 8
+# Finish with:12.08s avg., min=11.22, max=13.74, num_workers=1
+# Finish with:5.99s avg., min=5.87, max=6.10, num_workers=2
+# Finish with:3.45s avg., min=3.35, max=3.53, num_workers=4 -> good option!
+# Finish with:2.83s avg., min=2.78, max=2.88, num_workers=6
+# Finish with:2.63s avg., min=2.56, max=2.75, num_workers=8
+# Finish with:2.9s avg., min=2.86, max=2.92, num_workers=10
+# Finish with:3.05s avg., min=2.97, max=3.09, num_workers=12
+# Finish with:3.23s avg., min=3.15, max=3.27, num_workers=14

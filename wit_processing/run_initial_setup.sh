@@ -2,8 +2,8 @@
 
 # Job details
 TIME=5-00:00:00 # HH:MM:SS (default: 04:00, max: 240:00)
-NUM_CPUS=16   # Number of cores (default: 1)
-CPU_RAM=16000  # LESS THAN THIS MIGHT OOM_KILL THE JOB! RAM for each core (default: 1024)
+NUM_CPUS=8   # Number of cores (default: 1)
+CPU_RAM=64000  # LESS THAN THIS MIGHT OOM_KILL THE JOB! RAM for each core (default: 1024)
 
 # Load modules (might want to run 'env2lmod' prior to this)
 module load eth_proxy

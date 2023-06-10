@@ -24,19 +24,8 @@ VERSION = "full"
 
 
 def fetch_single_image(image_url, timeout=None, retries: int = 2):
-    orig_image_url = image_url
     for _ in range(retries + 1):
         try:
-            # "Wikimedia commons" down-sampling URL technique...
-            # https://stackoverflow.com/questions/72544973/how-to-get-a-lower-resolution-version-of-an-image-from-wikimedia
-            size = 512
-            url = 'upload.wikimedia.org/wikipedia/commons/'
-            for prefix in [f'https://{url}', f'http://{url}']:
-                if image_url.startswith(prefix):
-                    suffix = image_url.split(prefix)[1]
-                    file_name = image_url.split('/')[-1]
-                    image_url = f'{prefix}thumb/{suffix}/{size}px-{file_name}.png'
-                    break
             request = urllib.request.Request(image_url, data=None, headers={"user-agent": USER_AGENT})
             with urllib.request.urlopen(request, timeout=timeout) as req:
                 image = PIL.Image.open(io.BytesIO(req.read()))
@@ -51,12 +40,17 @@ def fetch_single_image(image_url, timeout=None, retries: int = 2):
                 image = resize(image, size=FLAVA_IMAGE_SIZE, resample=PILImageResampling.BICUBIC, return_numpy=False)
             break
         except Exception as e:
-            if not e.__str__().startswith("HTTP Error 404"):
-                if e.__str__().startswith("HTTP Error 429"):
+            exception_string = e.__str__()
+            if not exception_string.startswith("HTTP Error 404"):
+                if exception_string.__contains__("HTTP Error 429"):
                     print("Sleeping for 10 seconds... (Too Many Requests)")
                     time.sleep(10)
+                elif exception_string.__contains__("[Errno 110] Connection timed out") \
+                        or exception_string.__contains__("[Errno 104] Connection reset by peer"):
+                    print("Sleeping for 5 seconds... (Connection Trouble)")
+                    time.sleep(5)
                 else:
-                    print(f"Error fetching image (other than 404): {e} ({image_url}, {orig_image_url})")
+                    print(f"Error fetching image (other than 404): {e} ({image_url})")
             image = None
     return image
 
