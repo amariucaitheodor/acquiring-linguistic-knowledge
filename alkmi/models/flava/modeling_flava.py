@@ -1798,6 +1798,8 @@ class FlavaForPreTraining(FlavaPreTrainedModel):
         return_loss: Optional[bool] = None,
     ) -> Union[Tuple[torch.Tensor], FlavaForPreTrainingOutput]:
         """
+        bool_masked_pos: Boolean masked positions. Indicates which patches are masked (1) and which aren’t (0).
+
         Examples:
         ```python
         >>> from PIL import Image
@@ -1901,6 +1903,7 @@ class FlavaForPreTraining(FlavaPreTrainedModel):
                         "Call `AutoProcessor` with `return_codebook_pixels` set to True"
                     )
                 mim_labels = self.image_codebook.get_codebook_indices(codebook_pixel_values)
+
         # Unimodal MIM Loss
         # If multimodal embeddings are present, we will calculate MMM loss
         if self.mim_weight > 0 and image_masked_embeddings is not None and multimodal_masked_embeddings is None:
@@ -1908,6 +1911,8 @@ class FlavaForPreTraining(FlavaPreTrainedModel):
 
             if mim_labels is not None:
                 mim_labels = self._resize_to_2d(mim_labels)
+
+                # Masking the image patches on the spot...
                 bool_masked_pos = self._resize_to_2d(bool_masked_pos)
                 mim_labels[bool_masked_pos.ne(True)] = self.ce_ignore_index
 
@@ -1929,6 +1934,7 @@ class FlavaForPreTraining(FlavaPreTrainedModel):
             sequence_for_text = text_masked_embeddings
             if mlm_labels is not None:
                 mlm_labels = self._resize_to_2d(mlm_labels)
+
                 sequence_for_text = sequence_for_text[:, -mlm_labels.size(1) :, :]
                 masked_tokens = mlm_labels.ne(self.ce_ignore_index)
                 mlm_labels_filtered = mlm_labels[masked_tokens]
@@ -1953,8 +1959,7 @@ class FlavaForPreTraining(FlavaPreTrainedModel):
                     itm_loss = nn.functional.cross_entropy(itm_logits, itm_labels)
                     itm_loss *= self.itm_weight
 
-                if multimodal_masked_embeddings is not None:
-                    multimodal_masked_embeddings = multimodal_masked_embeddings[pos_mask]
+                multimodal_masked_embeddings = multimodal_masked_embeddings[pos_mask]
 
                 if mlm_labels is not None:
                     mlm_labels = mlm_labels[pos_mask]
@@ -1962,18 +1967,19 @@ class FlavaForPreTraining(FlavaPreTrainedModel):
                 if mim_labels is not None:
                     mim_labels = mim_labels[pos_mask]
 
+                if bool_masked_pos is not None:
+                    bool_masked_pos = bool_masked_pos[pos_mask]
+
         # MMM Image Loss
         if multimodal_masked_embeddings is not None and self.mmm_image_weight > 0:
             sequence_for_image = multimodal_masked_embeddings
-            end_index = image_masked_embeddings.size(1) - 1
-            sequence_for_image = sequence_for_image[:, 2 : 2 + end_index, :]
+            sequence_for_image = sequence_for_image[:, 2 : 2 + image_masked_embeddings.size(1) - 1, :]
 
-            if pos_mask is not None and sequence_for_image.size(0) == pos_mask.size(0):
-                sequence_for_image = sequence_for_image[pos_mask]
             if mim_labels is not None:
                 mim_labels = self._resize_to_2d(mim_labels)
+
+                # Masking the image patches (for the utilized, ITM=1, images) on the spot...
                 bool_masked_pos = self._resize_to_2d(bool_masked_pos)
-                bool_masked_pos = bool_masked_pos[pos_mask]
                 mim_labels[bool_masked_pos.ne(True)] = self.ce_ignore_index
 
                 masked_tokens = mim_labels.ne(self.ce_ignore_index)
@@ -1992,8 +1998,6 @@ class FlavaForPreTraining(FlavaPreTrainedModel):
         if multimodal_masked_embeddings is not None and self.mmm_text_weight > 0:
             sequence_for_text = multimodal_masked_embeddings
             sequence_for_text = sequence_for_text[:, -text_masked_embeddings.size(1) :, :]
-            if pos_mask is not None and sequence_for_text.size(0) == pos_mask.size(0):
-                sequence_for_text = sequence_for_text[pos_mask]
 
             if mlm_labels is not None:
                 mlm_labels = self._resize_to_2d(mlm_labels)

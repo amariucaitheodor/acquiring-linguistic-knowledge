@@ -12,7 +12,7 @@ sbatch --job-name="bash" \
   --ntasks-per-node="$NUM_GPUS" \
   --gpus="$NUM_GPUS" \
   --cpus-per-task=4 \
-  --mem-per-cpu=7000 \
+  --mem-per-cpu=10000 \
   --gres=gpumem:"$VRAM_PER_GPU" \
   -o "singlenode_run_$(date "+%F-%T").results" \
   --wrap="WANDB_RUN_GROUP=DDP-$(date "+%F-%T") WANDB__SERVICE_WAIT=300 NUMEXPR_MAX_THREADS=64 python -m train config=$1"
