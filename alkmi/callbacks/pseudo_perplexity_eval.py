@@ -42,6 +42,7 @@ class PseudoPerplexityCallback(Callback):
 
         print(f"[PPL Evaluation] Starting from index {idx_start} to index {idx_end}.")
         model_device = next(pl_module.model.parameters()).device
+        pl_module.model.eval()
         start = time.time()
 
         vram_gb = round(torch.cuda.mem_get_info()[1] / (1024 ** 3), 2)
@@ -86,4 +87,5 @@ class PseudoPerplexityCallback(Callback):
         ppl = torch.exp(total_mlm_loss / self.limit_val_batches).item()
 
         self.log("evaluation/pseudo_perplexity", ppl, prog_bar=True, logger=True, rank_zero_only=False, sync_dist=True)
+        pl_module.model.train()
         print(f"[PPL Evaluation] Ending with PPL={ppl} (duration: {timedelta(seconds=time.time() - start)})")

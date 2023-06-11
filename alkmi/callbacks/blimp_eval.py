@@ -29,13 +29,14 @@ class LMEvalHarnessCallback(Callback):
         self.enable_progress_bar = enable_progress_bar
 
     def log_metric(self, name: str, value):
-        self.log(name, value, prog_bar=True, logger=True, rank_zero_only=True, sync_dist=False)
+        self.log(name, value, prog_bar=True, logger=True, rank_zero_only=True, sync_dist=True)
 
     @torch.no_grad()
     @rank_zero_only
     def on_validation_start(self, trainer, pl_module) -> None:
         print("Starting LM Evaluation Harness")
         start = time.time()
+        pl_module.model.eval()
 
         if type(pl_module.model) in [BertForMaskedLM, RobertaForMaskedLM]:
             eval_model = TextLM(model=pl_module.model,
@@ -81,4 +82,5 @@ class LMEvalHarnessCallback(Callback):
             self.log_metric(name=f"evaluation/{group_title}_average", value=sum(accuracies) / len(accuracies))
             print(f"evaluation/{group_title}_average: {sum(accuracies) / len(accuracies)}")
 
+        pl_module.model.train()
         print(f"Ending LM Evaluation Harness (duration: {timedelta(seconds=time.time() - start)})")
