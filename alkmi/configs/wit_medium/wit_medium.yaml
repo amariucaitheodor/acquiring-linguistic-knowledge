@@ -10,13 +10,12 @@ training:
     val_check_interval: 8000
     limit_val_batches: 2000 # REQUIRED, otherwise the validation loop doesn't terminate
     accumulate_grad_batches: 32
-    strategy: ddp_find_unused_parameters_true
     enable_progress_bar: false
   lightning_checkpoint:
     dirpath: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/flava-wit_medium/"
     filename: flava-{epoch:02d}-{step}
   lightning_load_from_checkpoint: null
-  batch_size: 15
+  batch_size: 10
   use_wandb: true
   # https://arxiv.org/pdf/2112.04482.pdf, A. Hyperparameters and details of FLAVA
   learning_rate: 1e-3

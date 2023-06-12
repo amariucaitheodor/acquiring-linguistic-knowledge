@@ -15,7 +15,7 @@ training:
     dirpath: "./alkmi-debug"
     filename: flava-{epoch:02d}-{step}
   lightning_load_from_checkpoint: null
-  batch_size: 15
+  batch_size: 10
   use_wandb: true
   # https://arxiv.org/pdf/2112.04482.pdf, A. Hyperparameters and details of FLAVA
   learning_rate: 1e-3
