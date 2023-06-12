@@ -121,9 +121,9 @@ def main():
 
     print(f"Callbacks registered: {[type(c).__name__ for c in callbacks]}")
 
-    print("Initializing trainer")
     trainer = Trainer(
         **OmegaConf.to_container(config.training.lightning),
+        strategy="auto",
         accelerator='gpu',
         max_time=timedelta(days=5),
         max_steps=450_000,
@@ -135,6 +135,7 @@ def main():
         callbacks=callbacks,
         logger=wandb_logger if config.training.use_wandb else True,
     )
+    print(f"Trainer successfully initialized (strategy={type(trainer.strategy).__name__})")
 
     if config.training.use_wandb and trainer.global_rank == 0:
         wandb_logger.experiment.config.update(config)

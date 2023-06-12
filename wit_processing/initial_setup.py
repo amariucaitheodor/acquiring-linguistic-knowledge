@@ -99,7 +99,7 @@ if __name__ == "__main__":
                                                 remove_columns=["meta", "source"])
         dataset.push_to_hub(f"theodor1289/wit_{VERSION}", max_shard_size="500MB", private=False)
     else:
-        STAGE = 0
+        STAGE = 4
         SAVE_DISK_SHARD_SIZE, UPLOAD_SHARD_SIZE, SAVE_NUM_PROC = "10GB", "500MB", 32
         SCRATCH_PATH, FINAL_PATH = '/cluster/scratch/tamariucai', '/cluster/work/cotterell/tamariucai'
         PngImagePlugin.MAX_TEXT_CHUNK = 100 * (1024 ** 2)

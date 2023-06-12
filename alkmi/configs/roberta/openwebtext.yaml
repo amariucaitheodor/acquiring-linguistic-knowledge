@@ -10,7 +10,6 @@ training:
     val_check_interval: 8000
     limit_val_batches: 2000 # REQUIRED, otherwise the validation loop doesn't terminate
     accumulate_grad_batches: 32
-    strategy: ddp
     enable_progress_bar: false
   lightning_checkpoint:
     dirpath: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/roberta-openwebtext/"
