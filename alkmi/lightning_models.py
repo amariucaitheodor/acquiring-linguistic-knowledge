@@ -20,7 +20,7 @@ class FlavaPreTrainingLightningModule(LightningModule):
             text_config = {
                 "position_embedding_type": "relative_key_query",
                 "hidden_size": 960,  # multiple of the number of attention heads (16)
-                "num_hidden_layers": 16,
+                "num_hidden_layers": 12,
                 "num_attention_heads": 16,
             }
             multimodal_config = {
@@ -68,13 +68,11 @@ class FlavaPreTrainingLightningModule(LightningModule):
     def training_step(self, batch, batch_idx):
         output = self._step(batch)
         losses = output.loss_info
-        total_loss = 0
         for key in losses:
-            total_loss += losses[key]
             upscale_factor = self.original_weights[key] / self.model.__getattribute__(f"{key}_weight")
             self.log(f"train/losses/{key}_loss", losses[key] * upscale_factor,
                      prog_bar=True, logger=True, sync_dist=True)
-        return total_loss
+        return output.loss  # total loss
 
     def validation_step(self, batch, batch_idx):
         output = self._step(batch)
