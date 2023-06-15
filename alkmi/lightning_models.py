@@ -1,5 +1,6 @@
 from typing import Tuple, Any, Iterator
 
+import warnings
 import torch
 from pytorch_lightning import LightningModule
 from torch.nn import Parameter
@@ -47,7 +48,9 @@ class FlavaPreTrainingLightningModule(LightningModule):
             "itm": self.model.itm_weight,
         }
 
-        if 'learning_rate_text_submodel' in kwargs:
+        if 'learning_rate_text_submodel' in kwargs and kwargs['learning_rate_text_submodel']:
+            warnings.warn("Precision 16-mixed doesn't work well with LR parameter sets! Make sure you're using 32 or don't set a text submodel LR.")
+
             text_lr = kwargs.pop('learning_rate_text_submodel')
 
             print(f"FLAVA will use a different learning rate for its text submodel "

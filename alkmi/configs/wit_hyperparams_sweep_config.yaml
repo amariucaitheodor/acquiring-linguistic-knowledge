@@ -24,9 +24,6 @@ parameters:
   learning_rate:
     distribution: categorical
     values: [ 0.002, 0.001 ]
-  learning_rate_text_submodel:
-    distribution: categorical
-    values: [ 0.0005, 0.0001 ]
   seed:
     distribution: categorical
     values: [ 1472111, 2550093, 5501650, 1930309, 7865220, 5974287, 7203693, 887373, 814622, 100000 ]

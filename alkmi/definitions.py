@@ -65,7 +65,7 @@ class TrainingArguments:
     batch_size: int = 8
     num_workers: int = 4  # empirically best for FLAVA w/ WiT
     learning_rate: float = 0.003
-    learning_rate_text_submodel: float = 0.0005
+    learning_rate_text_submodel: Optional[float] = None
     adam_eps: float = 1e-08
     adam_weight_decay: float = 0.01
     adam_betas: Tuple[float, float] = field(default_factory=lambda: (0.9, 0.999))
