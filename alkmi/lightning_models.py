@@ -18,25 +18,26 @@ class FlavaPreTrainingLightningModule(LightningModule):
         if 'pretrained' in kwargs and kwargs['pretrained']:
             self.model = FlavaForPreTraining.from_pretrained(kwargs['pretrained'])
         else:
-            text_config = {
-                "position_embedding_type": "relative_key_query",
-                "hidden_size": 960,  # multiple of the number of attention heads (16)
-                "num_hidden_layers": 12,
-                "num_attention_heads": 16,
-            }
-            multimodal_config = {
-                "position_embedding_type": "relative_key_query",
-                "hidden_size": 960,  # multiple of the number of attention heads (12)
-            }
-            image_config = {
-                "position_embedding_type": "relative_key_query",
-                "hidden_size": 960,  # multiple of the number of attention heads (12)
-            }
-            self.model = FlavaForPreTraining(FlavaConfig(compile_submodels=True,
-                                                         hidden_size=960,
-                                                         image_config=image_config,
-                                                         text_config=text_config,
-                                                         multimodal_config=multimodal_config))
+            # Configs below might hurt performance:
+            # text_config = {
+            #     "position_embedding_type": "relative_key_query",
+            #     "hidden_size": 960,  # multiple of the number of attention heads (16)
+            #     "num_hidden_layers": 12,
+            #     "num_attention_heads": 16,
+            # }
+            # multimodal_config = {
+            #     "position_embedding_type": "relative_key_query",
+            #     "hidden_size": 960,  # multiple of the number of attention heads (12)
+            # }
+            # image_config = {
+            #     "position_embedding_type": "relative_key_query",
+            #     "hidden_size": 960,  # multiple of the number of attention heads (12)
+            # }
+            self.model = FlavaForPreTraining(FlavaConfig(compile_submodels=True))
+                                                        #  hidden_size=960,
+                                                        #  image_config=image_config,
+                                                        #  text_config=text_config,
+                                                        #  multimodal_config=multimodal_config))
 
         # We downscale the loss as patience exhausts, so we need to readjust for logging
         self.original_weights = {

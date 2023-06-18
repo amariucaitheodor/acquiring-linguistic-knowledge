@@ -278,6 +278,9 @@ class MultimodalOverfittingMonitor(Callback):
                 self.datamodule.update_sampling_function_and_weights([weights[0], new_value, weights[2]])
             else:
                 raise ValueError(f"Modality {modality} not recognized.")
+        
+            if all([x==0. for x in self.datamodule.sampling_weights]):
+                self._stop_training(trainer)
 
     def _evaluate_stopping_criteria(self, current: Tensor) -> Tuple[bool, Optional[str], bool]:
         should_stop = False
