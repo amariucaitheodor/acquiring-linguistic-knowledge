@@ -2,7 +2,7 @@ program: train.py
 name: flava-textvision-wit
 description: FLAVA (text-vision) sweep run on the WiT dataset for the final ablation study.
 project: alkmi-wit
-run_cap: 200
+run_cap: 100
 entity: rycolab
 method: grid
 metric:

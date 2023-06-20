@@ -61,6 +61,7 @@ class TrainingArguments:
     lightning: Dict[str, Any] = field(default=dict)
     lightning_checkpoint: Optional[Dict[str, Any]] = None
     lightning_load_from_checkpoint: Optional[str] = None
+    precision: str = "16-mixed"
     seed: int = -1
     batch_size: int = 8
     num_workers: int = 4  # empirically best for FLAVA w/ WiT

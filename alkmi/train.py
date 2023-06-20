@@ -127,7 +127,6 @@ def main():
         accelerator='gpu',
         max_time=timedelta(days=5),
         max_steps=450_000,
-        precision="16-mixed",
         num_sanity_val_steps=0,  # the cache is hit differently when starting without eval, so VRAM OOM is avoided
         inference_mode=False,  # conflicts with 2.0-compiled models
         gradient_clip_val=1.0,  # little effect on learning, but a "bad minibatch" could cause gradients to explode and
