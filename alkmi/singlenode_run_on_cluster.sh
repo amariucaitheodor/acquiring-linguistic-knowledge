@@ -2,6 +2,7 @@
 
 NUM_GPUS=${2-1}
 VRAM_PER_GPU=${3-20g}
+GPU_TYPE=${4-}  # a100-pcie-40gb
 echo "Selected configuration: $1, GPUs: $NUM_GPUS, $VRAM_PER_GPU VRAM/GPU"
 
 # N.B. If you set the job name to `bash` or `interactive`, Lightning’s SLURM auto-detection
@@ -10,7 +11,7 @@ sbatch --job-name="bash" \
   --time=5-00:00:00 \
   --nodes=1 \
   --ntasks-per-node="$NUM_GPUS" \
-  --gpus="$NUM_GPUS" \
+  --gpus="$GPU_TYPE":"$NUM_GPUS" \
   --cpus-per-task=4 \
   --mem-per-cpu=15000 \
   --gres=gpumem:"$VRAM_PER_GPU" \
