@@ -6,11 +6,11 @@ vision_perc: 100
 training:
   _target_: alkmi.definitions.TrainingArguments
   lightning:
-    devices: 2
+    devices: -1
     val_check_interval: 8000
     limit_val_batches: 2000 # REQUIRED, otherwise the validation loop doesn't terminate
     precision: bf16-mixed
-    accumulate_grad_batches: 128
+    accumulate_grad_batches: 128 # designed for 2 GPUs, 32 batch size => 8192 simulated batch size
     enable_progress_bar: false
   lightning_checkpoint:
     dirpath: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/flava-wit/"

@@ -1,17 +1,20 @@
+import io
 from functools import partial
 from typing import Any, Dict, List, Optional
 
 import torch
+from PIL import Image
 from pytorch_lightning import LightningDataModule
 from transformers import (
     DataCollatorForLanguageModeling,
-    FlavaProcessor, PreTrainedTokenizerFast,
+    PreTrainedTokenizerFast,
 )
 
 from alkmi.data import utils
 from alkmi.data.transforms import ITMTransform
 from alkmi.data.utils import build_datasets_from_info, collapse_text_columns, count_words
 from alkmi.definitions import HFDatasetInfo, TEXT_MAX_LENGTH_DEFAULT, VL_MAX_LENGTH_DEFAULT
+from models.flava import FlavaProcessor
 
 
 class FlavaAblationDataModule(LightningDataModule):
@@ -60,9 +63,16 @@ class FlavaAblationDataModule(LightningDataModule):
         )
 
     def _build_collator(self, inputs: List[Dict[str, Any]]):
+        images = None
+        if 'image' in inputs[0]:
+            if type(inputs[0]['image']) == dict:
+                images = [Image.open(io.BytesIO(i['image']['bytes'])) for i in inputs]
+            else:
+                images = [i['image'] for i in inputs]
+
         return self.processor(
             text=[i['text'] for i in inputs] if 'text' in inputs[0] else None,
-            images=[i['image'] for i in inputs] if 'image' in inputs[0] else None,
+            images=images,
             return_tensors="pt",
             padding="max_length",
             add_special_tokens=True,
