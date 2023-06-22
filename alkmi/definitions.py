@@ -61,6 +61,7 @@ class TrainingArguments:
     lightning: Dict[str, Any] = field(default=dict)
     lightning_checkpoint: Optional[Dict[str, Any]] = None
     lightning_load_from_checkpoint: Optional[str] = None
+    strategy: str = "auto"
     precision: str = "16-mixed"
     seed: int = -1
     batch_size: int = 8

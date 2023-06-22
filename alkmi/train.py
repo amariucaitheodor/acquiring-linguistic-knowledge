@@ -123,7 +123,8 @@ def main():
 
     trainer = Trainer(
         **OmegaConf.to_container(config.training.lightning),
-        strategy="auto",
+        strategy=config.training.strategy,
+        precision=config.training.precision,
         accelerator='gpu',
         max_time=timedelta(days=5),
         max_steps=450_000,
