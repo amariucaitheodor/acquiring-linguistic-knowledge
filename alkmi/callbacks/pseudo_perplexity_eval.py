@@ -8,7 +8,7 @@ from tqdm import tqdm
 from transformers import BertForMaskedLM, RobertaForMaskedLM
 
 from callbacks.utils import get_corresponding_tokenizer_for_model
-from data.utils import collapse_text_columns
+from data.utils import process_dataset
 from models.flava import FlavaForPreTraining
 
 
@@ -23,7 +23,8 @@ class PseudoPerplexityCallback(Callback):
 
         print(f"[PPL Evaluation] Loading dataset '{key}' with split '{split}'")
         self.dataset = load_dataset(key, split=split, use_auth_token=True, num_proc=16)
-        self.dataset = collapse_text_columns(self.dataset, purpose_msg="PPL Evaluation", need_images=False)
+        self.dataset = self.dataset.remove_columns(['image'])
+        self.dataset = process_dataset(self.dataset, purpose_msg_id="ppl_evaluation")
         print(f"[PPL Evaluation] Length of the dataset is {len(self.dataset)}")
         self.limit_val_batches = limit_val_batches
         self.enable_progress_bar = enable_progress_bar
