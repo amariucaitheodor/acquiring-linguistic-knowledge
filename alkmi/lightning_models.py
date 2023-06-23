@@ -18,26 +18,7 @@ class FlavaPreTrainingLightningModule(LightningModule):
         if 'pretrained' in kwargs and kwargs['pretrained']:
             self.model = FlavaForPreTraining.from_pretrained(kwargs['pretrained'])
         else:
-            # Configs below might hurt performance:
-            # text_config = {
-            #     "position_embedding_type": "relative_key_query",
-            #     "hidden_size": 960,  # multiple of the number of attention heads (16)
-            #     "num_hidden_layers": 12,
-            #     "num_attention_heads": 16,
-            # }
-            # multimodal_config = {
-            #     "position_embedding_type": "relative_key_query",
-            #     "hidden_size": 960,  # multiple of the number of attention heads (12)
-            # }
-            # image_config = {
-            #     "position_embedding_type": "relative_key_query",
-            #     "hidden_size": 960,  # multiple of the number of attention heads (12)
-            # }
             self.model = FlavaForPreTraining(FlavaConfig(compile_submodels=True))
-                                                        #  hidden_size=960,
-                                                        #  image_config=image_config,
-                                                        #  text_config=text_config,
-                                                        #  multimodal_config=multimodal_config))
 
         # We downscale the loss as patience exhausts, so we need to readjust for logging
         self.original_weights = {
@@ -50,21 +31,24 @@ class FlavaPreTrainingLightningModule(LightningModule):
         }
 
         if 'learning_rate_text_submodel' in kwargs and kwargs['learning_rate_text_submodel']:
-            warnings.warn("Precision 16-mixed doesn't work well with LR parameter sets! Make sure you're using 32 or don't set a text submodel LR.")
+            if 'precision' in kwargs and kwargs['precision'] == "16-mixed":
+                warnings.warn("Precision 16-mixed doesn't work well with LR parameter sets! Reverting...")
+                print(f"FLAVA will use a global learning rate of {kwargs['learning_rate']}")
+                self.optimizers = configure_default_optimizers(parameters=self.model.parameters(), **kwargs)
+            else:
+                text_lr = kwargs.pop('learning_rate_text_submodel')
 
-            text_lr = kwargs.pop('learning_rate_text_submodel')
+                print(f"FLAVA will use a different learning rate for its text submodel "
+                      f"({text_lr}) compared to its other submodels "
+                      f"({kwargs['learning_rate']})")
 
-            print(f"FLAVA will use a different learning rate for its text submodel "
-                  f"({text_lr}) compared to its other submodels "
-                  f"({kwargs['learning_rate']})")
+                for n, _ in self.model.flava.text_model.named_parameters():
+                    n += 'text_model.'
 
-            for n, _ in self.model.flava.text_model.named_parameters():
-                n += 'text_model.'
-
-            self.optimizers = configure_default_optimizers(parameters=[
-                {'params': [p for n, p in self.model.named_parameters() if 'text_model' not in n]},
-                {'params': self.model.flava.text_model.parameters(), 'lr': text_lr}
-            ], **kwargs)
+                self.optimizers = configure_default_optimizers(parameters=[
+                    {'params': [p for n, p in self.model.named_parameters() if 'text_model' not in n]},
+                    {'params': self.model.flava.text_model.parameters(), 'lr': text_lr}
+                ], **kwargs)
         else:
             print(f"FLAVA will use a global learning rate of {kwargs['learning_rate']}")
             self.optimizers = configure_default_optimizers(parameters=self.model.parameters(), **kwargs)
