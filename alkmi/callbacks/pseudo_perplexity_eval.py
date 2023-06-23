@@ -23,7 +23,8 @@ class PseudoPerplexityCallback(Callback):
 
         print(f"[PPL Evaluation] Loading dataset '{key}' with split '{split}'")
         self.dataset = load_dataset(key, split=split, use_auth_token=True, num_proc=16)
-        self.dataset = collapse_text_columns(self.dataset, purpose_msg="PPL Evaluation", need_images=False)
+        self.dataset = self.dataset.remove_columns(['image'])
+        self.dataset = collapse_text_columns(self.dataset, purpose_msg="ppl_evaluation", need_images=False)
         print(f"[PPL Evaluation] Length of the dataset is {len(self.dataset)}")
         self.limit_val_batches = limit_val_batches
         self.enable_progress_bar = enable_progress_bar

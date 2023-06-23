@@ -66,7 +66,7 @@ def collapse_text_columns(dataset: Dataset,
                           need_images: bool,
                           purpose_msg: str,
                           num_proc: int = 1,
-                          batch_size: int = 100
+                          batch_size: int = 150
                           ):
     if len(dataset.column_names) > 1:
         if 'image' in dataset.column_names:

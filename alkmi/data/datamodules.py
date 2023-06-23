@@ -3,6 +3,7 @@ from functools import partial
 from typing import Any, Dict, List, Optional
 
 import torch
+from torch.utils.data import DataLoader
 from PIL import Image
 from pytorch_lightning import LightningDataModule
 from transformers import (
@@ -48,10 +49,11 @@ class FlavaAblationDataModule(LightningDataModule):
         return self._build_dataloader(self.val_dataset, shuffle=False)
 
     def _build_dataloader(self, dataset, shuffle: bool):
-        return torch.utils.data.DataLoader(
+        return DataLoader(
             dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
+            persistent_workers=True,
             sampler=None,
             shuffle=shuffle,
             collate_fn=self._build_collator,
@@ -127,8 +129,8 @@ class MLMDataModule(FlavaAblationDataModule):
         if should_count_words:
             count_words(self.train_dataset, self.train_dataset_infos, self.val_dataset, self.val_dataset_infos, False)
 
-        self.train_dataset = collapse_text_columns(self.train_dataset, need_images=False, purpose_msg="MLM training")
-        self.val_dataset = collapse_text_columns(self.val_dataset, need_images=False, purpose_msg="MLM validation")
+        self.train_dataset = collapse_text_columns(self.train_dataset, need_images=False, purpose_msg="mlm_training")
+        self.val_dataset = collapse_text_columns(self.val_dataset, need_images=False, purpose_msg="mlm_validation")
 
         if should_count_words:
             count_words(self.train_dataset, self.train_dataset_infos, self.val_dataset, self.val_dataset_infos, True)
@@ -186,17 +188,17 @@ class VLDataModule(FlavaAblationDataModule):
             dataset=dataset.filter(
                 lambda examples: [True] * len(examples["text"]),  # or "image" ...
                 batched=True,
-                num_proc=32,
+                num_proc=16,
                 batch_size=100,
                 desc="Creating a copy of the dataset (to be ITM-transformed)..."
             ),
             itm_probability=self.itm_probability,
         )
 
-        self.train_dataset = collapse_text_columns(self.train_dataset, need_images=True, purpose_msg="VL training")
+        self.train_dataset = collapse_text_columns(self.train_dataset, need_images=True, purpose_msg="vl_training")
         self.train_dataset.set_transform(vl_transform(self.train_dataset))
 
-        self.val_dataset = collapse_text_columns(self.val_dataset, need_images=True, purpose_msg="VL validation")
+        self.val_dataset = collapse_text_columns(self.val_dataset, need_images=True, purpose_msg="vl_validation")
         self.val_dataset.set_transform(vl_transform(self.val_dataset))
 
         # https://discuss.huggingface.co/t/use-existing-dataset-with-a-generator/36219/4
