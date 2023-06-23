@@ -13,17 +13,17 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-# Fixed versions (for compatibility reasons)
+# Frozen versions (for compatibility reasons)
 torch = "2.0.0"  # Euler
 transformers = "4.29.2"  # Euler
+requests = "2.27.1" # https://stackoverflow.com/questions/75110981/sslerror-httpsconnectionpoolhost-huggingface-co-port-443-max-retries-exce
 # Upgradable versions
 python = "^3.10"
 wandb = "^0.15.4"
 omegaconf = "^2.3.0"
-pytorch-lightning = "^2.0.3"
-datasets = "^2.12.0"
+pytorch-lightning = "^2.0.4"
+datasets = "^2.13.1"
 hydra-core = "^1.3.2"
-requests = "^2.31.0"
 DALL-E = "^0.1"
 pycocotools = "^2.0.6"
 Pillow = "^9.5.0"

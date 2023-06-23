@@ -5,10 +5,12 @@ NUM_GPUS=${4-1}
 echo "Number of agents: $1, GPUs per agent: $NUM_GPUS, sweep name: $2, $VRAM_PER_GPU VRAM/GPU"
 
 # --mail-type=END,FAIL uncomment to get email notifications
-# Submit job
+
+# N.B. If you set the job name to `bash` or `interactive`, Lightning’s SLURM auto-detection
+# will get bypassed and it can launch processes normally. This is apparently needed for single node multi-GPU runs...
 for ((i = 1; i <= $1; i++)); do
   NR=$i
-  sbatch --job-name="sweep-mm" \
+  sbatch --job-name="bash" \
     --time=5-00:00:00 \
     --nodes=1 \
     --ntasks-per-node="$NUM_GPUS" \
