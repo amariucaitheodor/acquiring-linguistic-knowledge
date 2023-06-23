@@ -16,8 +16,8 @@ classifiers = [
 # Frozen versions (for compatibility reasons)
 torch = "2.0.0"  # Euler
 transformers = "4.29.2"  # Euler
-requests = "2.27.1" # https://stackoverflow.com/questions/75110981/sslerror-httpsconnectionpoolhost-huggingface-co-port-443-max-retries-exce
 # Upgradable versions
+requests = "^2.31.0"
 python = "^3.10"
 wandb = "^0.15.4"
 omegaconf = "^2.3.0"

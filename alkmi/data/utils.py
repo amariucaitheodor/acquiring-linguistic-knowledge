@@ -1,7 +1,7 @@
 from typing import List
 
 import evaluate
-from datasets import concatenate_datasets, load_dataset, Image, Dataset
+from datasets import concatenate_datasets, load_dataset, Image, Dataset, DownloadMode
 from datasets.utils.file_utils import get_datasets_user_agent
 
 from alkmi.definitions import HFDatasetInfo
@@ -29,6 +29,8 @@ def build_datasets_from_info(dataset_infos: List[HFDatasetInfo], split: str = "t
             split=dataset_info.split_key_mapping[split],
             use_auth_token=True,
             num_proc=32,
+            download_mode=DownloadMode.REUSE_DATASET_IF_EXISTS,
+            save_infos=True,
             **dataset_info.extra_kwargs,
         )
 
@@ -76,6 +78,9 @@ def collapse_text_columns(dataset: Dataset,
             batch_size=batch_size,
             remove_columns=WIT_OTHER_TEXT_COLUMNS + ["image_url"],
             load_from_cache_file=True,  # MUCH faster processing
+            cache_file_name=purpose_msg,
+            new_fingerprint=purpose_msg,
+            writer_batch_size=3000,
             desc=f"Collapsing WiT text for {purpose_msg}",
         )
         if 'image' in dataset.column_names and need_images:
