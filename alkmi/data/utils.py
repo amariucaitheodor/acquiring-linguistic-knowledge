@@ -9,14 +9,12 @@ from alkmi.definitions import HFDatasetInfo
 DATASETS_USER_AGENT = get_datasets_user_agent()
 
 
-def count_words(train, train_infos, validation, validation_infos, after: bool):
-    for dataset, split in [(train, train_infos[0].split_key_mapping['train']),
-                           (validation, validation_infos[0].split_key_mapping['validation'])]:
+def count_words(train, train_split_name: str, validation, validation_split_name: str, after: bool):
+    for dataset, split in [(train, train_split_name), (validation, validation_split_name)]:
         wordcount = evaluate.load("word_count")
         results = wordcount.compute(data=dataset["text"])
         print(f"Split {'after' if after else 'before'} collapsing: {split} ----> "
               f"Total words: {results['total_word_count']}, "
-              f"No. of duplicates: {results['total_word_count'] - results['unique_words']}, "
               f"No. of unique: {results['unique_words']}")
 
 

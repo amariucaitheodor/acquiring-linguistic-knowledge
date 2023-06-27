@@ -123,17 +123,21 @@ class MLMDataModule(FlavaAblationDataModule):
         )
         self.text_columns = text_columns
 
-    def setup(self, stage=None, should_count_words: bool = False):
+    def setup(self, stage=None, should_count_words: bool = True):
         super().setup(stage)
 
         if should_count_words:
-            count_words(self.train_dataset, self.train_dataset_infos, self.val_dataset, self.val_dataset_infos, False)
+            count_words(self.train_dataset, self.train_dataset_infos[0].split_key_mapping['train'],
+                        self.val_dataset, self.val_dataset_infos[0].split_key_mapping['validation'],
+                        after=False)
 
         self.train_dataset = collapse_text_columns(self.train_dataset, need_images=False, purpose_msg="mlm_training")
         self.val_dataset = collapse_text_columns(self.val_dataset, need_images=False, purpose_msg="mlm_validation")
 
         if should_count_words:
-            count_words(self.train_dataset, self.train_dataset_infos, self.val_dataset, self.val_dataset_infos, True)
+            count_words(self.train_dataset, self.train_dataset_infos[0].split_key_mapping['train'],
+                        self.val_dataset, self.val_dataset_infos[0].split_key_mapping['validation'],
+                        after=True)
 
     def _build_collator(self, inputs: List[Dict[str, Any]]):
         text_to_process = []
@@ -180,7 +184,7 @@ class VLDataModule(FlavaAblationDataModule):
         )
         self.itm_probability = itm_probability
 
-    def setup(self, stage=None):
+    def setup(self, stage=None, should_count_words: bool = True):
         super().setup(stage)
 
         vl_transform = lambda dataset: partial(
@@ -195,10 +199,20 @@ class VLDataModule(FlavaAblationDataModule):
             itm_probability=self.itm_probability,
         )
 
-        self.train_dataset = collapse_text_columns(self.train_dataset, need_images=True, purpose_msg="vl_training")
-        self.train_dataset.set_transform(vl_transform(self.train_dataset))
+        if should_count_words:
+            count_words(self.train_dataset, self.train_dataset_infos[0].split_key_mapping['train'],
+                        self.val_dataset, self.val_dataset_infos[0].split_key_mapping['validation'],
+                        after=False)
 
+        self.train_dataset = collapse_text_columns(self.train_dataset, need_images=True, purpose_msg="vl_training")
         self.val_dataset = collapse_text_columns(self.val_dataset, need_images=True, purpose_msg="vl_validation")
+
+        if should_count_words:
+            count_words(self.train_dataset, self.train_dataset_infos[0].split_key_mapping['train'],
+                        self.val_dataset, self.val_dataset_infos[0].split_key_mapping['validation'],
+                        after=True)
+
+        self.train_dataset.set_transform(vl_transform(self.train_dataset))
         self.val_dataset.set_transform(vl_transform(self.val_dataset))
 
         # https://discuss.huggingface.co/t/use-existing-dataset-with-a-generator/36219/4

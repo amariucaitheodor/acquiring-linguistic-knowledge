@@ -16,5 +16,5 @@ sbatch --mail-type=END,FAIL \
   --cpus-per-task=$NUM_CPUS \
   --tmp=650G \
   --mem-per-cpu=$CPU_RAM \
-  -o "process_run_$(date "+%F-%T").results" \
+  -o "initial_setup_$(date "+%F-%T").log" \
   --wrap="NUMEXPR_MAX_THREADS=164 python initial_setup.py"

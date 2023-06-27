@@ -16,5 +16,5 @@ sbatch --mail-type=END,FAIL \
   --cpus-per-task=$NUM_CPUS \
   --tmp=650G \
   --mem-per-cpu=$CPU_RAM \
-  -o "run_word_counter_wit_$(date "+%F-%T").results" \
+  -o "word_counter_$(date "+%F-%T").log" \
   --wrap="NUMEXPR_MAX_THREADS=164 python word_counter.py"
