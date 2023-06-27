@@ -22,10 +22,10 @@ class PseudoPerplexityCallback(Callback):
         super().__init__()
 
         print(f"[PPL Evaluation] Loading dataset '{key}' with split '{split}'")
-        self.dataset = load_dataset(key, split=split, use_auth_token=True, num_proc=16)
-        self.dataset = self.dataset.remove_columns(['image'])
-        self.dataset = collapse_text_columns(self.dataset, purpose_msg="ppl_evaluation", need_images=False)
-        print(f"[PPL Evaluation] Length of the dataset is {len(self.dataset)}")
+        self.ppl_dataset = load_dataset(key, split=split, use_auth_token=True, num_proc=16)
+        self.ppl_dataset = self.ppl_dataset.remove_columns(['image'])
+        self.ppl_dataset = collapse_text_columns(self.ppl_dataset, need_images=False)
+        print(f"[PPL Evaluation] Length of the dataset is {len(self.ppl_dataset)}")
         self.limit_val_batches = limit_val_batches
         self.enable_progress_bar = enable_progress_bar
 
@@ -51,7 +51,7 @@ class PseudoPerplexityCallback(Callback):
         print(f"[PPL Evaluation] Based on the available VRAM ({vram_gb}GBs), "
               f"we will use a max phrase length of {max_phrase_length}.")
 
-        text = self.dataset[idx_start:idx_end]["text"]
+        text = self.ppl_dataset[idx_start:idx_end]["text"]
         tokenizer = get_corresponding_tokenizer_for_model(pl_module.model)
         total_mlm_loss = torch.zeros(1, dtype=torch.float64)
         for phrase in tqdm(text,

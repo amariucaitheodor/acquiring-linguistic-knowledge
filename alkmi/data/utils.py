@@ -9,39 +9,40 @@ from alkmi.definitions import HFDatasetInfo
 DATASETS_USER_AGENT = get_datasets_user_agent()
 
 
-def count_words(train, train_split_name: str, validation, validation_split_name: str, after: bool):
-    for dataset, split in [(train, train_split_name), (validation, validation_split_name)]:
+def count_words(train: Dataset, validation: Dataset, after: bool):
+    for dataset in [train, validation]:
+        print(f"Counting words for split {dataset.split} {'after' if after else 'before (i.e. captions only)'} "
+              f"collapsing...")
         wordcount = evaluate.load("word_count")
         results = wordcount.compute(data=dataset["text"])
-        print(f"Split {'after' if after else 'before'} collapsing: {split} ----> "
+        print(f"Split {'after' if after else 'before (i.e. captions only)'} collapsing: {dataset.split} ----> "
               f"Total words: {results['total_word_count']}, "
               f"No. of unique: {results['unique_words']}")
 
 
-def build_datasets_from_info(dataset_infos: List[HFDatasetInfo], split: str = "train"):
-    dataset_list = []
-    for dataset_info in dataset_infos:
-        current_dataset = load_dataset(
-            dataset_info.key,
-            dataset_info.subset,
-            split=dataset_info.split_key_mapping[split],
-            use_auth_token=True,
-            num_proc=32,
-            download_mode=DownloadMode.REUSE_DATASET_IF_EXISTS,
-            save_infos=True,
-            **dataset_info.extra_kwargs,
-        )
+def build_datasets_from_info(dataset_infos: List[HFDatasetInfo], split: str) -> Dataset:
+    assert len(dataset_infos) == 1, "Only one dataset supported for now"
 
-        if dataset_info.remove_columns is not None:
-            current_dataset = current_dataset.remove_columns(dataset_info.remove_columns)
+    dataset_info = dataset_infos[0]
+    current_dataset = load_dataset(
+        dataset_info.key,
+        dataset_info.subset,
+        split=dataset_info.split_key_mapping[split],
+        use_auth_token=True,
+        num_proc=32,
+        download_mode=DownloadMode.REUSE_DATASET_IF_EXISTS,
+        save_infos=True,
+        **dataset_info.extra_kwargs,
+    )
 
-        if dataset_info.rename_columns is not None:
-            for rename in dataset_info.rename_columns:
-                current_dataset = current_dataset.rename_column(rename[0], rename[1])
+    if dataset_info.remove_columns is not None:
+        current_dataset = current_dataset.remove_columns(dataset_info.remove_columns)
 
-        dataset_list.append(current_dataset)
+    if dataset_info.rename_columns is not None:
+        for rename in dataset_info.rename_columns:
+            current_dataset = current_dataset.rename_column(rename[0], rename[1])
 
-    return concatenate_datasets(dataset_list)
+    return current_dataset
 
 
 # "caption_attribution_description" is not used because of its multilingual nature
@@ -60,12 +61,7 @@ def collapse_wit_text(batch):
     return batch
 
 
-def collapse_text_columns(dataset: Dataset,
-                          need_images: bool,
-                          purpose_msg: str,
-                          num_proc: int = 1,
-                          batch_size: int = 150
-                          ):
+def collapse_text_columns(dataset: Dataset, need_images: bool, num_proc: int = 1, batch_size: int = 200):
     if len(dataset.column_names) > 1:
         if 'image' in dataset.column_names:
             dataset = dataset.cast_column("image", Image(decode=False))  # MUCH faster processing
@@ -76,11 +72,14 @@ def collapse_text_columns(dataset: Dataset,
             batch_size=batch_size,
             remove_columns=WIT_OTHER_TEXT_COLUMNS + ["image_url"],
             load_from_cache_file=True,  # MUCH faster processing
-            cache_file_name=purpose_msg,
-            new_fingerprint=purpose_msg,
+            cache_file_name=dataset.split,
+            new_fingerprint=dataset.split,
             writer_batch_size=3000,
-            desc=f"Collapsing WiT text for {purpose_msg}",
+            desc=f"Collapsing WiT text for split {dataset.split} of {dataset.info.config_name}",
         )
-        if 'image' in dataset.column_names and need_images:
-            dataset = dataset.cast_column("image", Image(decode=True))
+        if 'image' in dataset.column_names:
+            if need_images:
+                dataset = dataset.cast_column("image", Image(decode=True))
+            else:
+                dataset = dataset.remove_columns("image")
     return dataset

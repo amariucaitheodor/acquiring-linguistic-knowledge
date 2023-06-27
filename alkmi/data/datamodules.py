@@ -3,6 +3,7 @@ from functools import partial
 from typing import Any, Dict, List, Optional
 
 import torch
+from datasets import Dataset
 from torch.utils.data import DataLoader
 from PIL import Image
 from pytorch_lightning import LightningDataModule
@@ -39,8 +40,8 @@ class FlavaAblationDataModule(LightningDataModule):
         print(f"{self.name}: batch_size is {batch_size}, num_workers is {num_workers}")
 
     def setup(self, stage=None):
-        self.train_dataset = build_datasets_from_info(self.train_dataset_infos, split="train")
-        self.val_dataset = build_datasets_from_info(self.val_dataset_infos, split="validation")
+        self.train_dataset: Dataset = build_datasets_from_info(self.train_dataset_infos, split="train")
+        self.val_dataset: Dataset = build_datasets_from_info(self.val_dataset_infos, split="validation")
 
     def train_dataloader(self):
         return self._build_dataloader(self.train_dataset, shuffle=True)
@@ -92,8 +93,8 @@ class ImageDataModule(FlavaAblationDataModule):
     def setup(self, stage=None):
         super().setup(stage)
 
-        self.train_dataset = self.train_dataset.remove_columns(utils.WIT_OTHER_TEXT_COLUMNS + ['text'])
-        self.val_dataset = self.val_dataset.remove_columns(utils.WIT_OTHER_TEXT_COLUMNS + ['text'])
+        self.train_dataset: Dataset = self.train_dataset.remove_columns(utils.WIT_OTHER_TEXT_COLUMNS + ['text'])
+        self.val_dataset: Dataset = self.val_dataset.remove_columns(utils.WIT_OTHER_TEXT_COLUMNS + ['text'])
 
 
 class MLMDataModule(FlavaAblationDataModule):
@@ -127,17 +128,13 @@ class MLMDataModule(FlavaAblationDataModule):
         super().setup(stage)
 
         if should_count_words:
-            count_words(self.train_dataset, self.train_dataset_infos[0].split_key_mapping['train'],
-                        self.val_dataset, self.val_dataset_infos[0].split_key_mapping['validation'],
-                        after=False)
+            count_words(self.train_dataset, self.val_dataset, after=False)
 
-        self.train_dataset = collapse_text_columns(self.train_dataset, need_images=False, purpose_msg="mlm_training")
-        self.val_dataset = collapse_text_columns(self.val_dataset, need_images=False, purpose_msg="mlm_validation")
+        self.train_dataset = collapse_text_columns(self.train_dataset, need_images=False)
+        self.val_dataset = collapse_text_columns(self.val_dataset, need_images=False)
 
         if should_count_words:
-            count_words(self.train_dataset, self.train_dataset_infos[0].split_key_mapping['train'],
-                        self.val_dataset, self.val_dataset_infos[0].split_key_mapping['validation'],
-                        after=True)
+            count_words(self.train_dataset, self.val_dataset, after=True)
 
     def _build_collator(self, inputs: List[Dict[str, Any]]):
         text_to_process = []
@@ -200,17 +197,13 @@ class VLDataModule(FlavaAblationDataModule):
         )
 
         if should_count_words:
-            count_words(self.train_dataset, self.train_dataset_infos[0].split_key_mapping['train'],
-                        self.val_dataset, self.val_dataset_infos[0].split_key_mapping['validation'],
-                        after=False)
+            count_words(self.train_dataset, self.val_dataset, after=False)
 
-        self.train_dataset = collapse_text_columns(self.train_dataset, need_images=True, purpose_msg="vl_training")
-        self.val_dataset = collapse_text_columns(self.val_dataset, need_images=True, purpose_msg="vl_validation")
+        self.train_dataset = collapse_text_columns(self.train_dataset, need_images=True)
+        self.val_dataset = collapse_text_columns(self.val_dataset, need_images=True)
 
         if should_count_words:
-            count_words(self.train_dataset, self.train_dataset_infos[0].split_key_mapping['train'],
-                        self.val_dataset, self.val_dataset_infos[0].split_key_mapping['validation'],
-                        after=True)
+            count_words(self.train_dataset, self.val_dataset, after=True)
 
         self.train_dataset.set_transform(vl_transform(self.train_dataset))
         self.val_dataset.set_transform(vl_transform(self.val_dataset))
