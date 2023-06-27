@@ -2,7 +2,7 @@ import time
 from datetime import timedelta
 
 import torch
-from datasets import load_dataset
+from datasets import load_dataset, DownloadMode
 from pytorch_lightning import Callback, Trainer
 from tqdm import tqdm
 from transformers import BertForMaskedLM, RobertaForMaskedLM
@@ -22,8 +22,12 @@ class PseudoPerplexityCallback(Callback):
         super().__init__()
 
         print(f"[PPL Evaluation] Loading dataset '{key}' with split '{split}'")
-        self.ppl_dataset = load_dataset(key, split=split, use_auth_token=True, num_proc=16)
-        self.ppl_dataset = self.ppl_dataset.remove_columns(['image'])
+        self.ppl_dataset = load_dataset(key,
+                                        split=split,
+                                        use_auth_token=True,
+                                        num_proc=32,
+                                        download_mode=DownloadMode.REUSE_DATASET_IF_EXISTS,
+                                        save_infos=True)
         self.ppl_dataset = collapse_text_columns(self.ppl_dataset, need_images=False)
         print(f"[PPL Evaluation] Length of the dataset is {len(self.ppl_dataset)}")
         self.limit_val_batches = limit_val_batches

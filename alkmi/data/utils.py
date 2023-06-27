@@ -72,10 +72,10 @@ def collapse_text_columns(dataset: Dataset, need_images: bool, num_proc: int = 1
             batch_size=batch_size,
             remove_columns=WIT_OTHER_TEXT_COLUMNS + ["image_url"],
             load_from_cache_file=True,  # MUCH faster processing
-            cache_file_name=dataset.split,
-            new_fingerprint=dataset.split,
+            cache_file_name=dataset.split.__str__().replace(':', ''),
+            new_fingerprint=dataset.split.__str__().replace(':', ''),
             writer_batch_size=3000,
-            desc=f"Collapsing WiT text for split {dataset.split} of {dataset.info.config_name}",
+            desc=f"Collapsing WiT text for split {dataset.split} of {dataset.info.builder_name}",
         )
         if 'image' in dataset.column_names:
             if need_images:
