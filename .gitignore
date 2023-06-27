@@ -1,6 +1,10 @@
 wandb/
 lightning_logs/
 
+# Cached datasets
+cache-*
+ppl_evaluation
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -8,12 +8,13 @@ echo "Selected configuration: $1, GPUs: $NUM_GPUS, $VRAM_PER_GPU VRAM/GPU (type 
 # N.B. If you set the job name to `bash` or `interactive`, Lightning’s SLURM auto-detection
 # will get bypassed and it can launch processes normally. This is apparently needed for single node multi-GPU runs...
 sbatch --job-name="bash" \
-  --time=5-00:00:00 \
+  --time=10-00:00:00 \
   --nodes=1 \
   --ntasks-per-node="$NUM_GPUS" \
   --gpus="$GPU_TYPE":"$NUM_GPUS" \
   --cpus-per-task=4 \
   --mem-per-cpu=15000 \
   --gres=gpumem:"$VRAM_PER_GPU" \
-  -o "singlenode_run_$(date "+%F-%T").results" \
+  --output "singlenode_run_$(date "+%F-%T").log" \
+  --error "singlenode_run_$(date "+%F-%T").error" \
   --wrap="WANDB_RUN_GROUP=DDP-$(date "+%F-%T") WANDB__SERVICE_WAIT=300 NUMEXPR_MAX_THREADS=64 python -m train config=$1"
