@@ -5,10 +5,12 @@ VRAM_PER_GPU=${3-20g}
 GPU_TYPE=${4-} # a100-pcie-40gb
 echo "Selected configuration: $1, GPUs: $NUM_GPUS, $VRAM_PER_GPU VRAM/GPU (type selected: $GPU_TYPE)"
 
+# 5 days is the upper limit on Euler (before PartitionTimeLimit kicks in)
+
 # N.B. If you set the job name to `bash` or `interactive`, Lightning’s SLURM auto-detection
 # will get bypassed and it can launch processes normally. This is apparently needed for single node multi-GPU runs...
 sbatch --job-name="bash" \
-  --time=10-00:00:00 \
+  --time=5-00:00:00 \
   --nodes=1 \
   --ntasks-per-node="$NUM_GPUS" \
   --gpus="$GPU_TYPE":"$NUM_GPUS" \

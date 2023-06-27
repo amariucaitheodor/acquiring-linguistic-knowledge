@@ -126,7 +126,7 @@ def main():
         strategy=config.training.strategy,
         precision=config.training.precision,
         accelerator='gpu',
-        max_time=timedelta(days=10),
+        max_time=timedelta(days=5),
         max_steps=450_000,
         num_sanity_val_steps=0,  # the cache is hit differently when starting without eval, so VRAM OOM is avoided
         inference_mode=False,  # conflicts with 2.0-compiled models
