@@ -1,3 +1,4 @@
+import os
 import time
 from datetime import timedelta
 
@@ -44,6 +45,8 @@ class PseudoPerplexityCallback(Callback):
         # I tried a different logic here, but could only get rank 0 to log metrics, so I switched back
         idx_start = trainer.global_rank * self.limit_val_batches
         idx_end = (trainer.global_rank + 1) * self.limit_val_batches
+
+        os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
 
         print(f"[PPL Evaluation] Starting from index {idx_start} to index {idx_end}.")
         model_device = next(pl_module.model.parameters()).device

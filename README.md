@@ -75,6 +75,7 @@ du -h -d 2 /cluster/work/cotterell/tamariucai/ | sort -h # work directory
 env2lmod
 module purge
 module load eth_proxy gcc/8.2.0 python_gpu/3.10.4
+export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:256
 export PATH="$HOME/.local/bin:$PATH"
 export HF_DATASETS_CACHE="/cluster/scratch/tamariucai/HuggingfaceDatasets"
 export HF_HOME="/cluster/work/cotterell/tamariucai/HuggingfaceHome"
