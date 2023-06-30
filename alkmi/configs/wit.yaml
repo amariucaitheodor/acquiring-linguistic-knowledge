@@ -9,7 +9,7 @@ training:
     devices: -1
     val_check_interval: 8000
     limit_val_batches: 2000 # REQUIRED, otherwise the validation loop doesn't terminate
-    accumulate_grad_batches: 64 # designed for 2 GPUs, 32 batch size => 4096 simulated batch size
+    accumulate_grad_batches: 64 # designed for 4 GPUs, 32 batch size => 8192 simulated batch size
     enable_progress_bar: false
   lightning_checkpoint:
     dirpath: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/flava-wit/"
