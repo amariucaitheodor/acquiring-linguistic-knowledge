@@ -17,7 +17,7 @@ training:
   lightning_load_from_checkpoint: null
   strategy: ddp_find_unused_parameters_true
   batch_size: 10
-  use_wandb: true
+  use_wandb: false
   # https://arxiv.org/pdf/2112.04482.pdf, A. Hyperparameters and details of FLAVA
   learning_rate: 1e-3  # N.B. FLAVA pretrains unimodally on text with 5e-4
   adam_eps: 1e-8

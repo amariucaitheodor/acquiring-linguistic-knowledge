@@ -2,17 +2,16 @@ import importlib
 from itertools import chain
 
 import torch
-from transformers.models.flava.modeling_flava import FlavaForPreTrainingOutput
 
 from alkmi.definitions import TEXT_MAX_LENGTH_DEFAULT
-from models.flava import FlavaForPreTraining
+from models.flava import FlavaForPreTraining, FlavaProcessor
+from models.flava.modeling_flava import FlavaForPreTrainingOutput
 
 lm_eval = importlib.import_module(name="lm_eval", package="lm-evaluation-harness")
 
 from lm_eval.api import utils
 from lm_eval.models.huggingface import AutoMaskedLM
 from tqdm import tqdm
-from transformers import FlavaProcessor
 from typing import List, Optional, Tuple, Union
 
 
@@ -50,7 +49,7 @@ class FlavaLM(AutoMaskedLM):
         Returns *pseudo*-loglikelihoods, as described in Salazar et al. (2020).
         """
         scores = []
-        for chunk in utils.chunks(tqdm(requests, disable=not self.enable_progress_bar), self.batch_size):
+        for chunk in utils.chunks(tqdm(requests, disable=not self.enable_progress_bar), self._batch_size):
             _, continuation = zip(*chunk)
 
             tokenized = self._prepare_text(continuation)

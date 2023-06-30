@@ -1,4 +1,5 @@
 import logging
+import os
 import time
 from datetime import timedelta
 
@@ -37,6 +38,8 @@ class LMEvalHarnessCallback(Callback):
         print("Starting LM Evaluation Harness")
         start = time.time()
         pl_module.model.eval()
+
+        os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
 
         if type(pl_module.model) in [BertForMaskedLM, RobertaForMaskedLM]:
             eval_model = TextLM(model=pl_module.model,

@@ -49,7 +49,7 @@ class TextLM(AutoMaskedLM):
         Returns *pseudo*-loglikelihoods, as described in Salazar et al. (2020).
         """
         scores = []
-        for chunk in utils.chunks(tqdm(requests, disable=not self.enable_progress_bar), self.batch_size):
+        for chunk in utils.chunks(tqdm(requests, disable=not self.enable_progress_bar), self._batch_size):
             _, continuation = zip(*chunk)
 
             tokenized = self._prepare_text(continuation)

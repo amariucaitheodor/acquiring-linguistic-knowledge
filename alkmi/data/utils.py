@@ -1,7 +1,7 @@
 from typing import List
 
 import evaluate
-from datasets import concatenate_datasets, load_dataset, Image, Dataset, DownloadMode
+from datasets import load_dataset, Image, Dataset, DownloadMode
 from datasets.utils.file_utils import get_datasets_user_agent
 
 from alkmi.definitions import HFDatasetInfo
@@ -34,6 +34,8 @@ def build_datasets_from_info(dataset_infos: List[HFDatasetInfo], split: str) -> 
         save_infos=True,
         **dataset_info.extra_kwargs,
     )
+    current_dataset.__setattr__("collapse_id",
+                                f"{dataset_info.key}-{dataset_info.split_key_mapping[split]}".replace(":", "").replace("/", ""))
 
     if dataset_info.remove_columns is not None:
         current_dataset = current_dataset.remove_columns(dataset_info.remove_columns)
@@ -72,8 +74,8 @@ def collapse_text_columns(dataset: Dataset, need_images: bool, num_proc: int = 1
             batch_size=batch_size,
             remove_columns=WIT_OTHER_TEXT_COLUMNS + ["image_url"],
             load_from_cache_file=True,  # MUCH faster processing
-            cache_file_name=dataset.split.__str__().replace(':', ''),
-            new_fingerprint=dataset.split.__str__().replace(':', ''),
+            cache_file_name=dataset.__getattribute__("collapse_id"),
+            new_fingerprint=dataset.__getattribute__("collapse_id"),
             writer_batch_size=3000,
             desc=f"Collapsing WiT text for split {dataset.split} of {dataset.info.builder_name}",
         )

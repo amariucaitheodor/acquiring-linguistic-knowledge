@@ -1,3 +1,4 @@
+import os
 from datetime import timedelta
 
 import torch
@@ -19,6 +20,8 @@ from utils import build_config, update_ckt_dir_and_batch_size, assign_huggingfac
 
 
 def main():
+    os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
+
     config: AblationArguments = build_config()
 
     if config.training.use_wandb:
@@ -79,11 +82,11 @@ def main():
 
     print("Registering basic callbacks")
     callbacks = [LearningRateMonitor(logging_interval="step"),
-                 LMEvalHarnessCallback(enable_progress_bar=config.training.lightning['enable_progress_bar']),
                  PseudoPerplexityCallback(key=config.datasets.ablation.val[0].key,
                                           split=config.datasets.ablation.val[0].split_key_mapping['validation'],
                                           limit_val_batches=config.training.lightning['limit_val_batches'],
-                                          enable_progress_bar=config.training.lightning['enable_progress_bar'])]
+                                          enable_progress_bar=config.training.lightning['enable_progress_bar']),
+                 LMEvalHarnessCallback(enable_progress_bar=config.training.lightning['enable_progress_bar'])]
 
     if config.training.lightning_checkpoint is not None:
         callbacks.append(
