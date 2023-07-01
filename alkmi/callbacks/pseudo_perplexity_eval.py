@@ -9,7 +9,7 @@ from pytorch_lightning import Callback, Trainer
 from tqdm import tqdm
 from transformers import BertForMaskedLM, RobertaForMaskedLM
 
-from callbacks.utils import get_corresponding_tokenizer_for_model
+from callbacks.utils import get_corresponding_tokenizer_for_model, replace_flava_submodel_with_orig_for_eval
 from data.utils import collapse_text_columns
 from definitions import TEXT_MAX_LENGTH_DEFAULT
 from models.flava import FlavaForPreTraining
@@ -54,6 +54,8 @@ class PseudoPerplexityCallback(Callback):
         batch_size = trainer.val_dataloaders.loaders[0].batch_size
 
         print(f"[PPL Evaluation] Starting from index {idx_start} to index {idx_end}.")
+        if type(pl_module.model) == FlavaForPreTraining:
+            optimized_text_model = replace_flava_submodel_with_orig_for_eval(pl_module.model)
         pl_module.model.eval()
         start = time.time()
 
@@ -114,8 +116,10 @@ class PseudoPerplexityCallback(Callback):
         print(f"[PPL Evaluation {datetime.now()}] "
               f"Computing e^({total_mlm_loss} / {self.total_phrases})")
         ppl = torch.exp(total_mlm_loss / self.total_phrases).item()
-
         self.log("evaluation/pseudo_perplexity", ppl, prog_bar=True, logger=True, rank_zero_only=False, sync_dist=True)
+
+        if type(pl_module.model) == FlavaForPreTraining:
+            pl_module.model.flava.text_model = optimized_text_model
         pl_module.model.train()
         print(f"[PPL Evaluation {datetime.now()}] "
               f"Ending with PPL={ppl} (duration: {timedelta(seconds=time.time() - start)})")

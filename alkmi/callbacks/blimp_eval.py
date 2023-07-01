@@ -7,6 +7,7 @@ from transformers import BertForMaskedLM, RobertaForMaskedLM
 
 from alkmi.callbacks.text_lm import TextLM
 from alkmi.callbacks.flava_lm import FlavaLM
+from callbacks.utils import replace_flava_submodel_with_orig_for_eval
 from models.flava import FlavaForPreTraining
 
 import torch
@@ -42,6 +43,7 @@ class LMEvalHarnessCallback(Callback):
                                 batch_size=trainer.val_dataloaders.loaders[0].batch_size,
                                 enable_progress_bar=self.enable_progress_bar)
         elif type(pl_module.model) == FlavaForPreTraining:
+            optimized_text_model = replace_flava_submodel_with_orig_for_eval(pl_module.model)
             eval_model = FlavaLM(model=pl_module.model,
                                  batch_size=trainer.val_dataloaders.loaders[0].batch_size,
                                  enable_progress_bar=self.enable_progress_bar)
@@ -81,5 +83,7 @@ class LMEvalHarnessCallback(Callback):
             self.log_metric(name=f"evaluation/{group_title}_average", value=sum(accuracies) / len(accuracies))
             print(f"evaluation/{group_title}_average: {sum(accuracies) / len(accuracies)}")
 
+        if type(pl_module.model) == FlavaForPreTraining:
+            pl_module.model.flava.text_model = optimized_text_model
         pl_module.model.train()
         print(f"Ending LM Evaluation Harness (duration: {timedelta(seconds=time.time() - start)})")

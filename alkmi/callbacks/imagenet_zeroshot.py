@@ -17,6 +17,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from callbacks.imagenet_zeroshot_data import imagenet_classnames, openai_imagenet_template
+from callbacks.utils import replace_flava_submodel_with_orig_for_eval
 from definitions import VL_MAX_LENGTH_DEFAULT
 from models.flava import FlavaForPreTraining, FlavaProcessor
 
@@ -61,7 +62,7 @@ class ImageNetZeroshotCallback(Callback):
             texts = self._vl_processor(inputs=[{"text": template(classname)} for template in openai_imagenet_template])
             texts = texts.to(device)
 
-            class_embeddings = model.flava(**texts, return_dict=True).text_embeddings
+            class_embeddings = model.flava.get_text_features(**texts)
             class_embeddings = model.flava.text_projection(class_embeddings[:, 0, :])
             class_embeddings = nn.functional.normalize(class_embeddings, dim=-1)
 
@@ -75,6 +76,7 @@ class ImageNetZeroshotCallback(Callback):
     @rank_zero_only
     def on_validation_start(self, trainer, pl_module, **kwargs) -> None:
         print(f"[ImageNet Zero-Shot Evaluation] Starting...")
+        optimized_text_model = replace_flava_submodel_with_orig_for_eval(pl_module.model)
         pl_module.model.eval()
         start = time.time()
 
@@ -108,7 +110,7 @@ class ImageNetZeroshotCallback(Callback):
             labels = batch.pop("label")
             total_samples += labels.size(0)
 
-            image_features = pl_module.model.flava(**batch, return_dict=True).image_embeddings
+            image_features = pl_module.model.flava.get_image_features(**batch)
             image_features = pl_module.model.flava.image_projection(image_features[:, 0, :])
             image_features = nn.functional.normalize(image_features, dim=-1)
 
@@ -124,6 +126,7 @@ class ImageNetZeroshotCallback(Callback):
                      prog_bar=True, logger=True, rank_zero_only=True, sync_dist=True)
 
         torch.backends.cudnn.benchmark = True
+        pl_module.model.flava.text_model = optimized_text_model
         pl_module.model.train()
         print(f"[ImageNet Zero-Shot Evaluation {datetime.now()}] "
               f"Ending with top5={top5 / total_samples} (duration: {timedelta(seconds=time.time() - start)})")

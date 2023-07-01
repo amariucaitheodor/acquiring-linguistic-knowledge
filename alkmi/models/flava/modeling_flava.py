@@ -1220,7 +1220,8 @@ class FlavaModel(FlavaPreTrainedModel):
 
         self.text_model = FlavaTextModel(text_config)
         if config.compile_submodels:
-            print("NOT compiling FLAVA's text model because input dimensions vary a lot, triggering recompilations...")
+            print("Compiling FLAVA's text model...")
+            self.text_model = torch.compile(self.text_model)
 
         self.image_model = FlavaImageModel(image_config)
         if config.compile_submodels:
