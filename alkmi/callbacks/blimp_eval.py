@@ -9,10 +9,6 @@ from alkmi.callbacks.text_lm import TextLM
 from alkmi.callbacks.flava_lm import FlavaLM
 from models.flava import FlavaForPreTraining
 
-logger = logging.getLogger(__name__)
-
-logging.basicConfig(level=logging.WARNING)
-
 import torch
 
 from pytorch_lightning import Callback

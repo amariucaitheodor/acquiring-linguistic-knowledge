@@ -4,6 +4,7 @@ lightning_logs/
 # Cached datasets
 cache-*
 ppl_evaluation
+theodor1289wit*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

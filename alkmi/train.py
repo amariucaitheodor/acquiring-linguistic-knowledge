@@ -10,6 +10,7 @@ from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 
 from callbacks.blimp_eval import LMEvalHarnessCallback
+from callbacks.imagenet_zeroshot import ImageNetZeroshotCallback
 from callbacks.multimodal_overfitting_monitor import MultimodalOverfittingMonitor
 from callbacks.pseudo_perplexity_eval import PseudoPerplexityCallback
 from definitions import AblationArguments
@@ -66,6 +67,14 @@ def main():
     print("Assigning HuggingFace RAM")
     assign_huggingface_ram()
 
+    print("Registering basic callbacks")
+    callbacks = [LearningRateMonitor(logging_interval="step"),
+                 PseudoPerplexityCallback(key=config.datasets.ablation.val[0].key,
+                                          split=config.datasets.ablation.val[0].split_key_mapping['validation'],
+                                          limit_val_batches=config.training.lightning['limit_val_batches'],
+                                          enable_progress_bar=config.training.lightning['enable_progress_bar']),
+                 LMEvalHarnessCallback(enable_progress_bar=config.training.lightning['enable_progress_bar'])]
+
     print(f"Building model '{config.model.name}'")
     if config.model.name == 'bert':
         model = BERTPreTrainingLightningModule(**build_model_kwargs(config.training, config.model))
@@ -75,18 +84,13 @@ def main():
         model = torch.compile(model)
     elif config.model.name == 'flava':
         print(f"Enabling TensorFloat32 tensor cores for float32 matrix multiplication")
-        torch.set_float32_matmul_precision('medium')
+        torch.set_float32_matmul_precision('high')
         model = FlavaPreTrainingLightningModule(**build_model_kwargs(config.training, config.model))
+        callbacks.append(
+            ImageNetZeroshotCallback(enable_progress_bar=config.training.lightning['enable_progress_bar'])
+        )
     else:
         raise ValueError(f"Unknown model name: {config.model.name}")
-
-    print("Registering basic callbacks")
-    callbacks = [LearningRateMonitor(logging_interval="step"),
-                 PseudoPerplexityCallback(key=config.datasets.ablation.val[0].key,
-                                          split=config.datasets.ablation.val[0].split_key_mapping['validation'],
-                                          limit_val_batches=config.training.lightning['limit_val_batches'],
-                                          enable_progress_bar=config.training.lightning['enable_progress_bar']),
-                 LMEvalHarnessCallback(enable_progress_bar=config.training.lightning['enable_progress_bar'])]
 
     if config.training.lightning_checkpoint is not None:
         callbacks.append(
@@ -105,10 +109,10 @@ def main():
         print("Initializing datamodule")
         datamodule = initialize_multidatamodule(config)
 
-        def add_monitor(name: str):
+        def add_monitor(name: str, patience: int = 2):
             nonlocal callbacks
             callbacks.append(MultimodalOverfittingMonitor(monitor=f'validation/losses/{name}', datamodule=datamodule,
-                                                          patience=2, verbose=True, strict=False))
+                                                          patience=patience, verbose=True, strict=True))
 
         print("Registering multimodal callbacks (overfitting monitors)")
         if config.text_perc > 0:
@@ -117,7 +121,7 @@ def main():
             add_monitor(name="mim_loss")
         if config.text_perc > 0 and config.vision_perc > 0:
             for val_loss in ["itm_loss", "global_contrastive_loss", "mmm_image_loss", "mmm_text_loss"]:
-                add_monitor(name=val_loss)
+                add_monitor(name=val_loss, patience=4)  # shakier than the others - need higher patience
 
     print(f"Callbacks registered: {[type(c).__name__ for c in callbacks]}")
 

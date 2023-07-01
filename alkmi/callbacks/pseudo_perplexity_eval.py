@@ -24,6 +24,7 @@ class PseudoPerplexityCallback(Callback):
                  ):
         super().__init__()
 
+        self.tokenizer = None
         print(f"[PPL Evaluation] Loading dataset '{key}' with split '{split}'")
         self.ppl_dataset = load_dataset(key,
                                         split=split,
@@ -53,27 +54,27 @@ class PseudoPerplexityCallback(Callback):
         batch_size = trainer.val_dataloaders.loaders[0].batch_size
 
         print(f"[PPL Evaluation] Starting from index {idx_start} to index {idx_end}.")
-        model_device = next(pl_module.model.parameters()).device
         pl_module.model.eval()
         start = time.time()
 
+        if not self.tokenizer:
+            self.tokenizer = get_corresponding_tokenizer_for_model(pl_module.model)
         text = self.ppl_dataset[idx_start:idx_end]["text"]
-        tokenizer = get_corresponding_tokenizer_for_model(pl_module.model)
         total_mlm_loss = torch.zeros(1, dtype=torch.float64)
         for phrase in tqdm(text,
                            desc="Pseudo-Perplexity Evaluation",
                            total=self.total_phrases,
                            unit="phrase",
                            disable=not self.enable_progress_bar):
-            tensor_input = tokenizer(phrase,
-                                     truncation=True,
-                                     max_length=TEXT_MAX_LENGTH_DEFAULT,
-                                     return_tensors='pt')['input_ids']
+            tensor_input = self.tokenizer(phrase,
+                                          truncation=True,
+                                          max_length=TEXT_MAX_LENGTH_DEFAULT,
+                                          return_tensors='pt')['input_ids']
             repeat_input = tensor_input.repeat(tensor_input.size(-1) - 2, 1)
             mask = torch.ones(tensor_input.size(-1) - 1).diag(1)[:-2]
 
-            masked_input = repeat_input.masked_fill(mask == 1, tokenizer.mask_token_id)
-            labels = repeat_input.masked_fill(masked_input != tokenizer.mask_token_id, -100)
+            masked_input = repeat_input.masked_fill(mask == 1, self.tokenizer.mask_token_id)
+            labels = repeat_input.masked_fill(masked_input != self.tokenizer.mask_token_id, -100)
 
             phrase_unnormalized_loss = torch.zeros(1, dtype=torch.float64)
             phrase_length = masked_input.shape[0]
@@ -91,12 +92,12 @@ class PseudoPerplexityCallback(Callback):
                                        mode="constant", value=0)
 
                     if type(pl_module.model) in [BertForMaskedLM, RobertaForMaskedLM]:
-                        mlm_loss = pl_module.model(input_ids=masked_input.to(model_device),
-                                                   labels=labels.to(model_device),
+                        mlm_loss = pl_module.model(input_ids=masked_input.to(pl_module.device),
+                                                   labels=labels.to(pl_module.device),
                                                    return_dict=True).loss
                     elif type(pl_module.model) == FlavaForPreTraining:
-                        mlm_loss = pl_module.model(input_ids_masked=masked_input.to(model_device),
-                                                   mlm_labels=labels.to(model_device),
+                        mlm_loss = pl_module.model(input_ids_masked=masked_input.to(pl_module.device),
+                                                   mlm_labels=labels.to(pl_module.device),
                                                    return_dict=True,
                                                    return_loss=True).loss_info.mlm
                     else:
