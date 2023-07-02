@@ -51,7 +51,7 @@ class PseudoPerplexityCallback(Callback):
         idx_end = (trainer.global_rank + 1) * self.total_phrases
 
         os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
-        batch_size = trainer.val_dataloaders.loaders[0].batch_size
+        batch_size = trainer.val_dataloaders.loaders[0].batch_size // 2  # should prevent OOM
 
         print(f"[PPL Evaluation] Starting from index {idx_start} to index {idx_end}.")
         if type(pl_module.model) == FlavaForPreTraining:
@@ -70,7 +70,7 @@ class PseudoPerplexityCallback(Callback):
                            disable=not self.enable_progress_bar):
             tensor_input = self.tokenizer(phrase,
                                           truncation=True,
-                                          max_length=TEXT_MAX_LENGTH_DEFAULT,
+                                          max_length=int(TEXT_MAX_LENGTH_DEFAULT // 1.5),  # to prevent OOM
                                           return_tensors='pt')['input_ids']
             repeat_input = tensor_input.repeat(tensor_input.size(-1) - 2, 1)
             mask = torch.ones(tensor_input.size(-1) - 1).diag(1)[:-2]

@@ -1,8 +1,8 @@
 #!/bin/bash
 
-VRAM_PER_GPU=${3-20g}
-NUM_GPUS=${4-1}
-echo "Number of agents: $1, GPUs per agent: $NUM_GPUS, sweep name: $2, $VRAM_PER_GPU VRAM/GPU"
+NUM_GPUS=${3-4}
+VRAM_PER_GPU=${4-40g}
+echo "Number of agents: $1, sweep name: $2, GPUs per agent: $NUM_GPUS, $VRAM_PER_GPU VRAM/GPU"
 
 # 5 days is the upper limit on Euler (before PartitionTimeLimit kicks in)
 

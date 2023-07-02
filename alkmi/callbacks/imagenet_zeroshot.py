@@ -56,6 +56,16 @@ class ImageNetZeroshotCallback(Callback):
         return outputs
 
     def _build_zero_shot_classifier(self, model: FlavaForPreTraining, device) -> Tensor:
+        """
+        Builds a zero-shot classifier for ImageNet. First, every class is encoded using ~20+ similar templates
+        resembling a caption, e.g., for c="dog" we have "a cropped photo of a {c}", f"a plastic {c}, etc. Then, the
+        average of the embeddings is taken and normalized. This is the "expected caption embedding" for the class.
+        Finally, the embeddings are stacked in a matrix of hidden_size (usually 768) x 1000 (classes) and returned.
+
+        :param model: FLAVA model to use for encoding the templates.
+        :param device: Device to use for storing the classifier tensors.
+        :return: Tensor of hidden_size (usually 768) x 1000 (classes) containing the zero-shot classifier.
+        """
         zeroshot_weights = []
         for classname in tqdm(imagenet_classnames, desc="Building classifier", unit="classes",
                               disable=not self.enable_progress_bar):
@@ -115,8 +125,8 @@ class ImageNetZeroshotCallback(Callback):
             image_features = nn.functional.normalize(image_features, dim=-1)
 
             logits_per_image = 100.0 * image_features @ classifier
-            pred: Tensor = logits_per_image.topk(k=5, dim=1, largest=True, sorted=True)[1].t()
-            correct: Tensor = pred.eq(labels.view(1, -1).expand_as(pred)).float()
+            pred_indices: Tensor = logits_per_image.topk(k=5, dim=1, largest=True, sorted=True)[1].t()
+            correct: Tensor = pred_indices.eq(labels.view(1, -1).expand_as(pred_indices)).float()
 
             top1 += correct[:1].reshape(-1).sum(0, keepdim=True).item()  # accuracy for top1
             top5 += correct[:5].reshape(-1).sum(0, keepdim=True).item()  # accuracy for top5
