@@ -47,7 +47,7 @@ bash run_sweep_on_cluster.sh NR_AGENTS SWEEP_ID
 srun --interactive --jobid JOBID --pty bash
 # Interactive node with 2 GPUs (20GBs VRAM each)
 srun --gpus=2 \
-  --gres=gpumem:20g \
+  --gres=gpumem:40g \
   --ntasks-per-node=2 \
   --job-name "interactive" --cpus-per-task=4 --mem-per-cpu=15000 --nodes=1 --time=4:00:00 --pty --preserve-env $SHELL
 # Interactive node with 1 GPU and a lot of RAM for the (initial) WiT collapsing

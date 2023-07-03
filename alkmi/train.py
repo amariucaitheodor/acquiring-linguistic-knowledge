@@ -49,6 +49,10 @@ def main():
 
         wandb.run.tags += (f"{config.text_perc}% text",)
         wandb.run.tags += (f"{config.vision_perc}% vision",)
+        batch_size = config.training.batch_size * \
+                     config.training.lightning.get('accumulate_grad_batches') * \
+                     torch.cuda.device_count()
+        wandb.run.tags += (f"bs{batch_size}",)
         wandb.run.tags += (config.model.name,)
 
     if config.training.seed != -1:

@@ -98,7 +98,7 @@ class ImageNetZeroshotCallback(Callback):
         if not self.imagenet_val_dataloader:
             self.imagenet_val_dataloader = DataLoader(
                 self.val_dataset,
-                batch_size=trainer.val_dataloaders.loaders[0].batch_size,
+                batch_size=trainer.val_dataloaders.loaders[0].batch_size // 2,
                 num_workers=4,
                 shuffle=False,
                 # uneven batches can cause distributed issues,

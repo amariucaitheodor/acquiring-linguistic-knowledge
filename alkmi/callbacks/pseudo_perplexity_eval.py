@@ -70,7 +70,7 @@ class PseudoPerplexityCallback(Callback):
                            disable=not self.enable_progress_bar):
             tensor_input = self.tokenizer(phrase,
                                           truncation=True,
-                                          max_length=int(TEXT_MAX_LENGTH_DEFAULT // 1.5),  # to prevent OOM
+                                          max_length=300,  # to prevent OOM
                                           return_tensors='pt')['input_ids']
             repeat_input = tensor_input.repeat(tensor_input.size(-1) - 2, 1)
             mask = torch.ones(tensor_input.size(-1) - 1).diag(1)[:-2]
@@ -85,13 +85,6 @@ class PseudoPerplexityCallback(Callback):
             with torch.no_grad():
                 for batch in batched_phrase:
                     masked_input, labels = batch[0], batch[1]
-                    curr_batch_size = masked_input.shape[0]
-
-                    if curr_batch_size < batch_size:
-                        masked_input = F.pad(masked_input, pad=(0, 0, 0, batch_size - curr_batch_size),
-                                             mode="constant", value=0)
-                        labels = F.pad(labels, pad=(0, 0, 0, batch_size - curr_batch_size),
-                                       mode="constant", value=0)
 
                     if type(pl_module.model) in [BertForMaskedLM, RobertaForMaskedLM]:
                         mlm_loss = pl_module.model(input_ids=masked_input.to(pl_module.device),
@@ -109,7 +102,7 @@ class PseudoPerplexityCallback(Callback):
                         print(f"[PPL Evaluation] WARNING: MLM loss is NaN for phrase '{phrase}', "
                               f"masked_input {masked_input}. Skipping it.")
                     else:
-                        phrase_unnormalized_loss += mlm_loss.item() * curr_batch_size
+                        phrase_unnormalized_loss += mlm_loss.item() * masked_input.shape[0]
 
             total_mlm_loss += phrase_unnormalized_loss / phrase_length
 
