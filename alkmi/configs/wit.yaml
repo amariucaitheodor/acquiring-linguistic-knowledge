@@ -15,13 +15,13 @@ training:
     dirpath: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/flava-wit/"
     filename: flava-{epoch:02d}-{step}
   lightning_load_from_checkpoint: null
-  precision: bf16-mixed
+  precision: fp16-mixed
   strategy: ddp_find_unused_parameters_true
   batch_size: 32
   use_wandb: true
   # https://arxiv.org/pdf/2112.04482.pdf, A. Hyperparameters and details of FLAVA
   learning_rate: 1e-3
-  learning_rate_text_submodel: 7.5e-4  # N.B. FLAVA pretrains unimodally on text with 5e-4, but we choose a midpoint here
+#  learning_rate_text_submodel: 7.5e-4  # N.B. FLAVA pretrains unimodally on text with 5e-4, but we choose a midpoint here
   adam_eps: 1e-8
   adam_weight_decay: 1e-1
   adam_betas: [ 0.9, 0.999 ]

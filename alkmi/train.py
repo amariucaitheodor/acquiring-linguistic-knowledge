@@ -29,7 +29,6 @@ def main():
         wandb_logger = WandbLogger(
             project=f'alkmi-{config.datasets.ablation.train[0].key.split("/")[-1]}',
             log_model=False,  # set to "True" to also log checkpoints to WandB
-            tags=[config.model.pretrained if config.model.pretrained else "scratch"],
             magic=True,
             force=True,
             save_code=True,
@@ -53,7 +52,12 @@ def main():
                      config.training.lightning.get('accumulate_grad_batches') * \
                      torch.cuda.device_count()
         wandb.run.tags += (f"bs{batch_size}",)
-        wandb.run.tags += (config.model.name,)
+        wandb.run.tags += (f"seed{config.training.seed}",)
+        wandb.run.tags += (config.training.precision,)
+        if config.model.name != 'flava':
+            wandb.run.tags += (config.model.name,)  # not default for our studies
+        if config.model.pretrained:
+            wandb.run.tags += ("pretrained",)  # not default for our studies
 
     if config.training.seed != -1:
         seed_everything(config.training.seed, workers=True)
@@ -158,6 +162,8 @@ def main():
 
     print("Starting validation")
     trainer.validate(model, datamodule=datamodule)
+
+    wandb.run.tags += ("completed",)
 
     if config.training.use_wandb:
         wandb.finish()  # [optional] finish the wandb run, necessary in notebooks
