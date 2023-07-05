@@ -117,7 +117,7 @@ def main():
         print("Initializing datamodule")
         datamodule = initialize_multidatamodule(config)
 
-        def add_monitor(name: str, patience: int = 2):
+        def add_monitor(name: str, patience: int = 3):
             nonlocal callbacks
             callbacks.append(MultimodalOverfittingMonitor(monitor=f'validation/losses/{name}', datamodule=datamodule,
                                                           patience=patience, verbose=True, strict=True))
@@ -129,7 +129,7 @@ def main():
             add_monitor(name="mim_loss")
         if config.text_perc > 0 and config.vision_perc > 0:
             for val_loss in ["itm_loss", "global_contrastive_loss", "mmm_image_loss", "mmm_text_loss"]:
-                add_monitor(name=val_loss, patience=4)  # shakier than the others - need higher patience
+                add_monitor(name=val_loss, patience=5)  # shakier than the others - need higher patience
 
     print(f"Callbacks registered: {[type(c).__name__ for c in callbacks]}")
 
