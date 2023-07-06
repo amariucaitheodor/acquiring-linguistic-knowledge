@@ -11,7 +11,7 @@ from pytorch_lightning.loggers import WandbLogger
 from definitions import AblationArguments
 from lightning_models import BERTPreTrainingLightningModule, FlavaPreTrainingLightningModule, \
     RobertaPreTrainingLightningModule
-from utils import build_config, update_ckt_dir_and_batch_size, assign_huggingface_ram, \
+from utils import build_config, update_ckeckpoint_dir, assign_huggingface_ram, \
     initialize_multidatamodule, overwrite_config, build_model_kwargs
 
 
@@ -46,7 +46,12 @@ def main():
         overwrite_config(struct=config.training, params=["learning_rate", "learning_rate_text_submodel",
                                                          "warmup_steps", "seed"])
         overwrite_config(struct=config.datasets, params=["sampling_temperature"])
-        update_ckt_dir_and_batch_size(config)
+
+        batch_size = config.training.batch_size * \
+                     config.training.lightning.get('accumulate_grad_batches') * \
+                     torch.cuda.device_count()
+
+        update_ckeckpoint_dir(config, batch_size)
 
         wandb.run.tags += (f"{config.text_perc}% text",)
         wandb.run.tags += (f"{config.vision_perc}% vision",)

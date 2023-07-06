@@ -147,15 +147,17 @@ def overwrite_config(struct, params: List[str]):
                 assert struct[h] == wandb.config[h]
 
 
-def update_ckt_dir_and_batch_size(config):
+def update_ckeckpoint_dir(config, batch_size: int):
     ckt_dir = config.training.lightning_checkpoint["dirpath"]
     if "debug" not in ckt_dir:
-        timestamp = time.strftime("date(%Y-%m-%d)_time(%H:%M:%S)")
-        hparam_string = ""
-        for hparam, value in wandb.config.items():
-            hparam_string += f"{hparam}({value})-"
-        ckt_dir += f'{timestamp}/{hparam_string[:-1]}/'
-        print(f"Setting checkpoint dirpath to {ckt_dir}")
+        if len(wandb.config) > 1:
+            print("[update_ckeckpoint_dir] Detected hyperparameter run!")
+            hparam_string = "-".join([f"{hparam}({value})" for hparam, value in wandb.config.items()])
+            ckt_dir += f'{time.strftime("date(%Y-%m-%d)_time(%H:%M:%S)")}/{hparam_string[:-1]}/'
+        else:
+            ckt_dir += f'text{config.text_perc}-vision{config.vision_perc}/' \
+                       f'bs{batch_size}_seed{config.training.seed}_{config.training.precision}/'
+        print(f"[update_ckeckpoint_dir] Setting checkpoint dirpath to {ckt_dir}")
         config.training.lightning_checkpoint.__setattr__("dirpath", ckt_dir)
 
 

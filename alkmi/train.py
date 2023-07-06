@@ -16,7 +16,7 @@ from callbacks.pseudo_perplexity_eval import PseudoPerplexityCallback
 from definitions import AblationArguments
 from lightning_models import BERTPreTrainingLightningModule, FlavaPreTrainingLightningModule, \
     RobertaPreTrainingLightningModule
-from utils import build_config, update_ckt_dir_and_batch_size, assign_huggingface_ram, \
+from utils import build_config, update_ckeckpoint_dir, assign_huggingface_ram, \
     initialize_multidatamodule, overwrite_config, build_model_kwargs
 
 
@@ -44,13 +44,15 @@ def main():
         overwrite_config(struct=config.training, params=["learning_rate", "learning_rate_text_submodel",
                                                          "warmup_steps", "seed"])
         overwrite_config(struct=config.datasets, params=["sampling_temperature"])
-        update_ckt_dir_and_batch_size(config)
 
-        wandb.run.tags += (f"{config.text_perc}% text",)
-        wandb.run.tags += (f"{config.vision_perc}% vision",)
         batch_size = config.training.batch_size * \
                      config.training.lightning.get('accumulate_grad_batches') * \
                      torch.cuda.device_count()
+
+        update_ckeckpoint_dir(config, batch_size)
+
+        wandb.run.tags += (f"{config.text_perc}% text",)
+        wandb.run.tags += (f"{config.vision_perc}% vision",)
         wandb.run.tags += (f"bs{batch_size}",)
         wandb.run.tags += (f"seed{config.training.seed}",)
         wandb.run.tags += (config.training.precision,)
@@ -94,9 +96,6 @@ def main():
         print(f"Enabling TensorFloat32 tensor cores for float32 matrix multiplication")
         torch.set_float32_matmul_precision('high')
         model = FlavaPreTrainingLightningModule(**build_model_kwargs(config.training, config.model))
-        callbacks.append(
-            ImageNetZeroshotCallback(enable_progress_bar=config.training.lightning['enable_progress_bar'])
-        )
     else:
         raise ValueError(f"Unknown model name: {config.model.name}")
 
@@ -131,6 +130,11 @@ def main():
             for val_loss in ["itm_loss", "global_contrastive_loss", "mmm_image_loss", "mmm_text_loss"]:
                 add_monitor(name=val_loss, patience=5)  # shakier than the others - need higher patience
 
+            print("Adding ImageNet zeroshot callback")
+            callbacks.append(
+                ImageNetZeroshotCallback(enable_progress_bar=config.training.lightning['enable_progress_bar'])
+            )
+
     print(f"Callbacks registered: {[type(c).__name__ for c in callbacks]}")
 
     trainer = Trainer(
@@ -150,7 +154,8 @@ def main():
     print(f"Trainer successfully initialized (strategy={type(trainer.strategy).__name__})")
 
     if config.training.use_wandb and trainer.global_rank == 0:
-        wandb_logger.experiment.config.update(config)
+        should_allow_val_change = 'WANDB_RESUME' in os.environ and os.environ['WANDB_RESUME'] == 'must'
+        wandb_logger.experiment.config.update(config, allow_val_change=should_allow_val_change)
 
     if config.text_perc + config.vision_perc > 0:
         print("Starting training")
