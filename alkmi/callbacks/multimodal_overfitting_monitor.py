@@ -36,6 +36,8 @@ from data.multidata import MultiDataModule
 
 log = logging.getLogger(__name__)
 
+MMM_TEXT_THRESHOLD = 0.1  # insignificant enough
+
 
 class MultimodalOverfittingMonitor(Callback):
     r"""
@@ -243,7 +245,8 @@ class MultimodalOverfittingMonitor(Callback):
                         self._stop_training(trainer)  # With no MLM and MMM_text, stop training
                 case "validation/losses/mlm_loss":
                     self._set_sampling_weight_for_modality("text", trainer=trainer, type="zero")
-                    if hasattr(pl_module.model, 'mmm_text_weight') and pl_module.model.mmm_text_weight == 0.:
+                    if hasattr(pl_module.model, 'mmm_text_weight') and \
+                            pl_module.model.mmm_text_weight < MMM_TEXT_THRESHOLD:
                         self._stop_training(trainer)  # With no MLM and MMM_text, stop training
                 case "validation/losses/mim_loss":
                     self._set_sampling_weight_for_modality("vision", trainer=trainer, type="zero")
@@ -278,8 +281,8 @@ class MultimodalOverfittingMonitor(Callback):
                 self.datamodule.update_sampling_function_and_weights([weights[0], new_value, weights[2]])
             else:
                 raise ValueError(f"Modality {modality} not recognized.")
-        
-            if all([x==0. for x in self.datamodule.sampling_weights]):
+
+            if all([x == 0. for x in self.datamodule.sampling_weights]):
                 self._stop_training(trainer)
 
     def _evaluate_stopping_criteria(self, current: Tensor) -> Tuple[bool, Optional[str], bool]:

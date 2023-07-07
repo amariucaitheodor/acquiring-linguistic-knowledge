@@ -150,7 +150,7 @@ def overwrite_config(struct, params: List[str]):
 def update_ckeckpoint_dir(config, batch_size: int):
     ckt_dir = config.training.lightning_checkpoint["dirpath"]
     if "debug" not in ckt_dir:
-        if len(wandb.config) > 1:
+        if len(wandb.config.items()) > 1:
             print("[update_ckeckpoint_dir] Detected hyperparameter run!")
             hparam_string = "-".join([f"{hparam}({value})" for hparam, value in wandb.config.items()])
             ckt_dir += f'{time.strftime("date(%Y-%m-%d)_time(%H:%M:%S)")}/{hparam_string[:-1]}/'
