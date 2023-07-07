@@ -1,6 +1,6 @@
 import os
 from datetime import timedelta
-
+import socket
 import torch
 
 import wandb
@@ -22,6 +22,9 @@ from utils import build_config, update_ckeckpoint_dir, assign_huggingface_ram, \
 
 def main():
     os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
+
+    print(f"The current host is {socket.gethostname()}")
+    print(f"The current cuDNN version is {torch.backends.cudnn.version()}")
 
     config: AblationArguments = build_config()
 

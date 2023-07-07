@@ -4,7 +4,7 @@ NUM_GPUS=${1-4}
 VRAM_PER_GPU=${2-40g}
 RESUME_ID=${3-}
 WANDB_RUN_GROUP=${4-"text1-vision1"}
-echo "Selected configuration: configs/wit_resume_model.yaml, GPUs: $NUM_GPUS, $VRAM_PER_GPU VRAM/GPU, resuming run ID: $RESUME_ID"
+echo "Selected configuration: configs/wit_resume_model.yaml, GPUs: $NUM_GPUS, $VRAM_PER_GPU VRAM/GPU, resuming run $RESUME_ID (ID) in group '$WANDB_RUN_GROUP'"
 
 # 5 days is the upper limit on Euler (before PartitionTimeLimit kicks in)
 

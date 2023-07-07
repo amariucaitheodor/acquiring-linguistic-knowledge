@@ -1,7 +1,7 @@
 _target_: alkmi.definitions.AblationArguments
 
-text_perc: 1
-vision_perc: 1
+text_perc: 10 # CHANGE THIS
+vision_perc: 10 # CHANGE THIS
 
 training:
   _target_: alkmi.definitions.TrainingArguments
@@ -15,7 +15,8 @@ training:
   lightning_checkpoint:
     dirpath: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/flava-wit/"
     filename: flava-{epoch:02d}-{step}
-  lightning_load_from_checkpoint: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/flava-wit/date(2023-07-04)_time(00:27:21)/magic({'enable': True})/flava-epoch=00-step=3045.ckpt"
+  lightning_load_from_checkpoint: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/flava-wit/text10-vision10/bs4096_seed5501650_bf16-mixed/last.ckpt" # CHANGE THIS
+  seed: 5501650 # CHANGE THIS
   precision: bf16-mixed
   strategy: ddp_find_unused_parameters_true
   batch_size: 32
