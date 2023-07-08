@@ -19,7 +19,6 @@ Cancel Task
 Monitor a multimodal validation loss and set the task weight to 0 when it stops improving.
 
 """
-import logging
 from typing import Any, Callable, Dict, Optional, Tuple
 
 import numpy as np
@@ -33,8 +32,6 @@ from pytorch_lightning.utilities.rank_zero import rank_prefixed_message, rank_ze
 from torch import Tensor
 
 from data.multidata import MultiDataModule
-
-log = logging.getLogger(__name__)
 
 MMM_TEXT_THRESHOLD = 0.1  # insignificant enough
 
@@ -309,6 +306,11 @@ class MultimodalOverfittingMonitor(Callback):
                     f"Monitored metric {self.monitor} did not improve in the last {self.wait_count} records."
                     f" Best score: {self.best_score:.3f}. Signaling model to ignore task."
                 )
+            else:
+                reason = (
+                    f"Monitored metric {self.monitor} did not improve since the last {self.wait_count} records."
+                    f" Best score: {self.best_score:.3f}. Wait count has been increased from {self.wait_count - 1}."
+                )
 
         return should_stop, reason, wait_count_increased
 
@@ -332,4 +334,4 @@ class MultimodalOverfittingMonitor(Callback):
             rank = None
         message = rank_prefixed_message(message, rank)
         if rank is None or not log_rank_zero_only or rank == 0:
-            log.info(message)
+            print(message)

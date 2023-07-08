@@ -74,7 +74,7 @@ du -h -d 2 /cluster/work/cotterell/tamariucai/ | sort -h # work directory
 ```bash
 env2lmod
 module purge
-module load eth_proxy gcc/8.2.0 python_gpu/3.10.4 cudnn/8.8.1.3
+module load eth_proxy gcc/8.2.0 python_gpu/3.10.4 cuda/11.8.0 cudnn/8.8.1.3 # should move to python_gpu/3.11.2!
 export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:256
 export PATH="$HOME/.local/bin:$PATH"
 export HF_DATASETS_CACHE="/cluster/scratch/tamariucai/HuggingfaceDatasets"
@@ -85,6 +85,7 @@ export PYTHONPATH=/cluster/work/cotterell/tamariucai/acquiring-linguistic-knowle
 cd /cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge
 poetry shell
 cd alkmi
+
 ```
 
 ### Submodules

@@ -1,6 +1,8 @@
 import os
 from datetime import timedelta
 import socket
+from typing import List
+
 import torch
 
 import wandb
@@ -81,12 +83,12 @@ def main():
     assign_huggingface_ram()
 
     print("Registering basic callbacks")
-    callbacks = [LearningRateMonitor(logging_interval="step"),
-                 PseudoPerplexityCallback(key=config.datasets.ablation.val[0].key,
-                                          split=config.datasets.ablation.val[0].split_key_mapping['validation'],
-                                          limit_val_batches=config.training.lightning['limit_val_batches'],
-                                          enable_progress_bar=config.training.lightning['enable_progress_bar']),
-                 LMEvalHarnessCallback(enable_progress_bar=config.training.lightning['enable_progress_bar'])]
+    callbacks: List = [LearningRateMonitor(logging_interval="step"),
+                       PseudoPerplexityCallback(key=config.datasets.ablation.val[0].key,
+                                                split=config.datasets.ablation.val[0].split_key_mapping['validation'],
+                                                limit_val_batches=config.training.lightning['limit_val_batches'],
+                                                enable_progress_bar=config.training.lightning['enable_progress_bar']),
+                       LMEvalHarnessCallback(enable_progress_bar=config.training.lightning['enable_progress_bar'])]
 
     print(f"Building model '{config.model.name}'")
     if config.model.name == 'bert':
@@ -121,8 +123,10 @@ def main():
 
         def add_monitor(name: str, patience: int = 3):
             nonlocal callbacks
-            callbacks.append(MultimodalOverfittingMonitor(monitor=f'validation/losses/{name}', datamodule=datamodule,
-                                                          patience=patience, verbose=True, strict=True))
+            callbacks.append(
+                MultimodalOverfittingMonitor(monitor=f'validation/losses/{name}',
+                                             datamodule=datamodule, patience=patience, verbose=True)
+            )
 
         print("Registering multimodal callbacks (overfitting monitors)")
         if config.text_perc > 0:
@@ -168,12 +172,17 @@ def main():
         config.text_perc = 1
         datamodule = initialize_multidatamodule(config)
 
+    # Restore the original weights for evaluation (since no backprop, and it crashes if they're all 0).
+    # Should also do this for the other models...
+    if config.model.name == 'flava':
+        for key, val in model.original_weights:
+            model.__setattr__(f"{key}_weight", val)
+
     print("Starting validation")
     trainer.validate(model, datamodule=datamodule)
 
-    wandb.run.tags += ("completed",)
-
     if config.training.use_wandb:
+        wandb.run.tags += ("completed",)
         wandb.finish()  # [optional] finish the wandb run, necessary in notebooks
 
 

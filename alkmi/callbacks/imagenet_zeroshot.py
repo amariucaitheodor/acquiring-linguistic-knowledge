@@ -90,11 +90,6 @@ class ImageNetZeroshotCallback(Callback):
         pl_module.model.eval()
         start = time.time()
 
-        # Below prevents:
-        # F.conv2d(input, weight, bias, self.stride, [...])
-        # RuntimeError: cuDNN error: CUDNN_STATUS_INTERNAL_ERROR
-        torch.backends.cudnn.benchmark = False
-
         if not self.imagenet_val_dataloader:
             self.imagenet_val_dataloader = DataLoader(
                 self.val_dataset,
@@ -135,7 +130,6 @@ class ImageNetZeroshotCallback(Callback):
             self.log(f"evaluation/imagenet_zeroshot/{key}", value,
                      prog_bar=True, logger=True, rank_zero_only=True, sync_dist=True)
 
-        torch.backends.cudnn.benchmark = True
         pl_module.model.flava.text_model = optimized_text_model
         pl_module.model.train()
         print(f"[ImageNet Zero-Shot Evaluation {datetime.now()}] "
