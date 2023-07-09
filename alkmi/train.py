@@ -175,7 +175,7 @@ def main():
     # Restore the original weights for evaluation (since no backprop, and it crashes if they're all 0).
     # Should also do this for the other models...
     if config.model.name == 'flava':
-        for key, val in model.original_weights:
+        for key, val in model.original_weights.items():
             model.__setattr__(f"{key}_weight", val)
 
     print("Starting validation")
