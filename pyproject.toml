@@ -16,10 +16,10 @@ classifiers = [
 # Frozen versions (for compatibility reasons)
 torch = "2.0.0"  # Euler
 transformers = "4.29.2"  # Euler
+wandb = "0.15.4" # 0.15.5 gives TypeError: first argument must be callable or None (for config update)
 # Upgradable versions
 requests = "^2.31.0"
 python = "^3.10"
-wandb = "^0.15.5"
 omegaconf = "^2.3.0"
 pytorch-lightning = "^2.0.4"
 datasets = "^2.13.1"
