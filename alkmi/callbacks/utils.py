@@ -2,7 +2,7 @@ from torch._dynamo import OptimizedModule
 from transformers import PreTrainedModel, RobertaTokenizerFast, BertTokenizerFast, RobertaForMaskedLM, \
     PreTrainedTokenizerBase
 
-from models.flava import FlavaForPreTraining
+from alkmi.models.flava import FlavaForPreTraining
 
 
 def get_corresponding_tokenizer_for_model(model: PreTrainedModel) -> PreTrainedTokenizerBase:

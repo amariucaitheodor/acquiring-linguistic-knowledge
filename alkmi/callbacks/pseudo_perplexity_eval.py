@@ -3,7 +3,6 @@ import time
 from datetime import timedelta, datetime
 
 import torch
-import torch.nn.functional as F
 from datasets import load_dataset, DownloadMode
 from pytorch_lightning import Callback, Trainer
 from tqdm import tqdm
@@ -11,8 +10,7 @@ from transformers import BertForMaskedLM, RobertaForMaskedLM
 
 from callbacks.utils import get_corresponding_tokenizer_for_model, replace_flava_submodel_with_orig_for_eval
 from data.utils import collapse_text_columns
-from definitions import TEXT_MAX_LENGTH_DEFAULT
-from models.flava import FlavaForPreTraining
+from alkmi.models.flava import FlavaForPreTraining
 
 
 class PseudoPerplexityCallback(Callback):

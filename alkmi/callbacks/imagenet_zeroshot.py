@@ -19,7 +19,7 @@ from tqdm import tqdm
 from callbacks.imagenet_zeroshot_data import imagenet_classnames, openai_imagenet_template
 from callbacks.utils import replace_flava_submodel_with_orig_for_eval
 from definitions import VL_MAX_LENGTH_DEFAULT
-from models.flava import FlavaForPreTraining, FlavaProcessor
+from alkmi.models.flava import FlavaForPreTraining, FlavaProcessor
 
 
 class ImageNetZeroshotCallback(Callback):

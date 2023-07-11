@@ -16,7 +16,7 @@ from alkmi.data import utils
 from alkmi.data.transforms import ITMTransform
 from alkmi.data.utils import build_datasets_from_info, collapse_text_columns, count_words
 from alkmi.definitions import HFDatasetInfo, TEXT_MAX_LENGTH_DEFAULT, VL_MAX_LENGTH_DEFAULT
-from models.flava import FlavaProcessor
+from alkmi.models.flava import FlavaProcessor
 
 
 class FlavaAblationDataModule(LightningDataModule):

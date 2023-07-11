@@ -4,8 +4,8 @@ from itertools import chain
 import torch
 
 from alkmi.definitions import TEXT_MAX_LENGTH_DEFAULT
-from models.flava import FlavaForPreTraining, FlavaProcessor
-from models.flava.modeling_flava import FlavaForPreTrainingOutput
+from alkmi.models.flava import FlavaForPreTraining, FlavaProcessor
+from alkmi.models.flava.modeling_flava import FlavaForPreTrainingOutput
 
 lm_eval = importlib.import_module(name="lm_eval", package="lm-evaluation-harness")
 
