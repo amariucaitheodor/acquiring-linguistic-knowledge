@@ -144,7 +144,7 @@ def overwrite_config(struct, params: List[str]):
                 assert struct[h] == wandb.config[h]
 
 
-def update_ckeckpoint_dir(config, batch_size: int):
+def update_ckeckpoint_dir(config: AblationArguments, batch_size: int):
     ckt_dir = config.training.lightning_checkpoint["dirpath"]
     if "debug" not in ckt_dir:
         if len(wandb.config.items()) > 1:
@@ -152,8 +152,14 @@ def update_ckeckpoint_dir(config, batch_size: int):
             hparam_string = "-".join([f"{hparam}({value})" for hparam, value in wandb.config.items()])
             ckt_dir += f'{time.strftime("date(%Y-%m-%d)_time(%H:%M:%S)")}/{hparam_string[:-1]}/'
         else:
-            ckt_dir += f'text{config.text_perc}-vision{config.vision_perc}/' \
-                       f'bs{batch_size}_seed{config.training.seed}_{config.training.precision}/'
+            ckt_dir += f'text{config.text_perc}-vision{config.vision_perc}/'
+            ckt_dir += f'bs{batch_size}_seed{config.training.seed}_{config.training.precision}/'
+
+        if config.model.half_size:
+            print("[update_ckeckpoint_dir] Detected half-size run!")
+            model_name = ckt_dir.split("HuggingfaceCheckpoints/")[1].split("-")[0]
+            ckt_dir.replace(f"{model_name}-", f"{model_name}_half-")
+
         print(f"[update_ckeckpoint_dir] Setting checkpoint dirpath to {ckt_dir}")
         config.training.lightning_checkpoint.__setattr__("dirpath", ckt_dir)
 
