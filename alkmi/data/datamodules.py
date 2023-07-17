@@ -124,7 +124,7 @@ class MLMDataModule(FlavaAblationDataModule):
         )
         self.text_columns = text_columns
 
-    def setup(self, stage=None, should_count_words: bool = True):
+    def setup(self, stage=None, should_count_words: bool = False):
         super().setup(stage)
 
         if should_count_words:
@@ -181,7 +181,7 @@ class VLDataModule(FlavaAblationDataModule):
         )
         self.itm_probability = itm_probability
 
-    def setup(self, stage=None, should_count_words: bool = True):
+    def setup(self, stage=None, should_count_words: bool = False):
         super().setup(stage)
 
         vl_transform = lambda dataset: partial(
