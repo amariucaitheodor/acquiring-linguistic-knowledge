@@ -21,3 +21,6 @@ sbatch --job-name="bash" \
   --gres=gpumem:"$VRAM_PER_GPU" \
   --output "singlenode_$(date "+%F-%T").log" \
   --wrap="WANDB_RUN_GROUP=DDP-$(date "+%F-%T") WANDB__SERVICE_WAIT=300 NUMEXPR_MAX_THREADS=64 python -m train config=$1"
+
+# eu-a65-03 might have an issue
+# --nodelist=eu-a65-02,eu-a65-04,eu-a65-05,eu-a65-07 \

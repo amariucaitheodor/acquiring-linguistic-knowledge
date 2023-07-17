@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "alkmi"
 version = "0.1.0"
-description = "ETH Thesis - Acquiring Linguistic Knowledge from Multimodal Input"
+description = "ETH Thesis - Acquiring Linguistic Knowledge from Multimodal Input (ALKMI)"
 license = "BSD-3-Clause"
 authors = ["Theodor Amariucai <amariucaitheodor@protonmail.com>", "PyTorch Multimodal Team torchmultimodal@fb.com"]
 maintainers = ["Theodor Amariucai <amariucaitheodor@protonmail.com>"]

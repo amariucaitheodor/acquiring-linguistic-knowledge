@@ -42,6 +42,7 @@ for num_workers in [1] + list(range(2, 16, 2)):
                 pass
         end = time()
         times.append(end - start)
+
     print(f"Finish with:{round(sum(times) / len(times), 2)}s avg., min={min(times)}, max={max(times)}, "
           f"num_workers={num_workers}")
 

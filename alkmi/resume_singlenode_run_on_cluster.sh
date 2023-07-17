@@ -23,3 +23,6 @@ sbatch --job-name="bash" \
   --gres=gpumem:"$VRAM_PER_GPU" \
   --output "resume_singlenode_$(date "+%F-%T").log" \
   --wrap="WANDB_RUN_GROUP=$WANDB_RUN_GROUP WANDB__SERVICE_WAIT=300 WANDB_RESUME=must WANDB_RUN_ID=$RESUME_ID NUMEXPR_MAX_THREADS=64 python -m train config=configs/wit_resume_model.yaml"
+
+# eu-a65-03 might have an issue
+# --nodelist=eu-a65-02,eu-a65-04,eu-a65-05,eu-a65-07 \
