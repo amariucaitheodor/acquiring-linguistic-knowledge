@@ -13,9 +13,7 @@ from data.multidata import MultiDataModule
 from alkmi.definitions import TrainingSingleDatasetInfo, TrainingArguments, AblationArguments, ModelArguments
 
 
-def build_datamodule_kwargs(
-        dm_config: TrainingSingleDatasetInfo, training_config: TrainingArguments
-):
+def build_datamodule_kwargs(dm_config: TrainingSingleDatasetInfo, training_config: TrainingArguments):
     kwargs = {
         "train_infos": dm_config.train,
         "val_infos": dm_config.val,
@@ -27,9 +25,7 @@ def build_datamodule_kwargs(
     return kwargs
 
 
-def build_model_kwargs(
-        training_config: TrainingArguments, model_config: ModelArguments
-):
+def build_model_kwargs(training_config: TrainingArguments, model_config: ModelArguments):
     return {
         "pretrained": model_config.pretrained,
         "half_size": model_config.half_size,
@@ -160,26 +156,6 @@ def update_ckeckpoint_dir(config, batch_size: int):
                        f'bs{batch_size}_seed{config.training.seed}_{config.training.precision}/'
         print(f"[update_ckeckpoint_dir] Setting checkpoint dirpath to {ckt_dir}")
         config.training.lightning_checkpoint.__setattr__("dirpath", ckt_dir)
-
-
-def assign_huggingface_ram():
-    available_memory_gb = get_local_ram()
-    huggingface_threshold_gib = 5
-    if available_memory_gb > huggingface_threshold_gib:
-        datasets.config.IN_MEMORY_MAX_SIZE = huggingface_threshold_gib * 1_000_000_000
-        print(
-            f"Found {available_memory_gb}GBs of RAM available, "
-            f"assigning {huggingface_threshold_gib}GBs to HuggingFace datasets (currently {datasets.config.IN_MEMORY_MAX_SIZE} bytes).")
-    else:
-        print(
-            f"Found {available_memory_gb}GBs of RAM available (too little), "
-            f"leaving HuggingFace datasets unchanged ({datasets.config.IN_MEMORY_MAX_SIZE} bytes).")
-
-
-def get_local_ram():
-    available_memory_bytes = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')
-    available_memory_gb = round(available_memory_bytes / (1024. ** 3), 2)
-    return available_memory_gb
 
 
 def copy_dataset_config_with_training_subset(dataset_info: TrainingSingleDatasetInfo,

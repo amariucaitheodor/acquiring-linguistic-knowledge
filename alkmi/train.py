@@ -19,8 +19,7 @@ from definitions import AblationArguments
 from models.lightning_bert import BERTPreTrainingLightningModule
 from models.lightning_flava import FlavaPreTrainingLightningModule
 from models.lightning_roberta import RobertaPreTrainingLightningModule
-from utils import build_config, update_ckeckpoint_dir, assign_huggingface_ram, \
-    initialize_multidatamodule, overwrite_config, build_model_kwargs
+from utils import build_config, update_ckeckpoint_dir, initialize_multidatamodule, overwrite_config, build_model_kwargs
 
 
 def main():
@@ -80,9 +79,6 @@ def main():
         print(f"Text isn't the predominant modality ({config.text_perc} v.s. {config.vision_perc} vision), "
               f"will over-sample text (uniform rates) for better BLiMP performance.")
         config.datasets.sampling_temperature = 0.
-
-    print("Assigning HuggingFace RAM")
-    assign_huggingface_ram()
 
     print("Registering basic callbacks")
     callbacks: List = [LearningRateMonitor(logging_interval="step"),

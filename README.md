@@ -36,7 +36,8 @@ bash run_locally.sh configs/debug.yaml
 
 ```shell
 cd alkmi
-wandb sweep configs/wit_final_sweep_config.yaml
+wandb sweep configs/flava/wit_final_sweep_config.yaml
+cd scripts
 bash run_sweep_on_cluster.sh NR_AGENTS SWEEP_ID
 ```
 

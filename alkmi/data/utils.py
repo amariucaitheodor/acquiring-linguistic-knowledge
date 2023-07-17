@@ -51,19 +51,18 @@ def build_datasets_from_info(dataset_infos: List[HFDatasetInfo], split: str) -> 
 WIT_OTHER_TEXT_COLUMNS = ["context_page_description", "context_section_description", "caption_alt_text_description"]
 
 
-def collapse_wit_text(batch):
-    # WARNING: This increases the disk space requirement by a factor of ~4
-    original_len = len(batch["text"])
-    for i in range(original_len):
-        for field in WIT_OTHER_TEXT_COLUMNS:
-            if batch[field][i] is not None:
-                if "image" in batch:
-                    batch["image"].append(batch["image"][i])
-                batch["text"].append(batch[field][i])
-    return batch
-
-
 def collapse_text_columns(dataset: Dataset, need_images: bool, num_proc: int = 1, batch_size: int = 200):
+    def collapse_wit_text(batch):
+        # WARNING: This increases the disk space requirement by a factor of ~4
+        original_len = len(batch["text"])
+        for i in range(original_len):
+            for field in WIT_OTHER_TEXT_COLUMNS:
+                if batch[field][i] is not None:
+                    if "image" in batch:
+                        batch["image"].append(batch["image"][i])
+                    batch["text"].append(batch[field][i])
+        return batch
+
     if len(dataset.column_names) > 1:
         if 'image' in dataset.column_names:
             dataset = dataset.cast_column("image", Image(decode=False))  # MUCH faster processing
