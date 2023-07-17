@@ -17,13 +17,13 @@ command:
 parameters:
   accumulate_grad_batches:
     distribution: categorical
-    values: [ 1, 16, 32, 64 ]
-  warmup_steps:
-    distribution: categorical
-    values: [ 2000, 10000 ]
+    values: [ 8, 16, 32, 64 ]
   learning_rate:
     distribution: categorical
     values: [ 0.002, 0.001 ]
+  learning_rate_text_submodel:
+    distribution: categorical
+    values: [ 0.0005, 0.00075 ]
   seed:
     distribution: categorical
     values: [ 1472111, 2550093, 5501650, 1930309, 7865220, 5974287, 7203693, 887373, 814622, 100000 ]
