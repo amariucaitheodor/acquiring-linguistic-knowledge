@@ -13,7 +13,7 @@ command:
   - ${interpreter} # makes sure the right interpreter is used on Euler (3.10 req. for BLiMP)
   - -m
   - train
-  - config=configs/wit.yaml
+  - config=configs/flava/wit.yaml
 parameters:
   mlm_perc:
     distribution: categorical

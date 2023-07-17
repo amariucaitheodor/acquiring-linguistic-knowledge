@@ -46,5 +46,6 @@ datasets:
 model:
   _target_: alkmi.definitions.ModelArguments
   pretrained: null
+  half_size: true
   mlm_perc: 0.4
   name: flava

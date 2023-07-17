@@ -78,6 +78,7 @@ class TrainingArguments:
 @dataclass
 class ModelArguments:
     pretrained: Optional[str] = None
+    half_size: bool = False
     mlm_perc: float = 0.15
     name: str = 'flava'
 

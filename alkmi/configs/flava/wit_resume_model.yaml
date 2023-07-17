@@ -1,7 +1,7 @@
 _target_: alkmi.definitions.AblationArguments
 
-text_perc: 100
-vision_perc: 100
+text_perc: 10 # CHANGE THIS
+vision_perc: 100 # CHANGE THIS
 
 training:
   _target_: alkmi.definitions.TrainingArguments
@@ -9,19 +9,21 @@ training:
     devices: -1
     val_check_interval: 8000
     limit_val_batches: 2000 # REQUIRED, otherwise the validation loop doesn't terminate
-    accumulate_grad_batches: 64 # designed for 4 GPUs, 16 batch size => 4096 simulated batch size
-    # could also do 8 GPUs, 16 batch size, 8 batch size (11GB VRAM) => still 4096 simulated batch size
+    accumulate_grad_batches: 64 # designed for 2 GPUs, 32 batch size => 4096 simulated batch size
+    # could speed up training with 32 accumulation, 4 GPUs, 32 batch size => still 4096 simulated batch size
     enable_progress_bar: false
   lightning_checkpoint:
     dirpath: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/flava-wit/"
     filename: flava-{epoch:02d}-{step}
-  lightning_load_from_checkpoint: null
-  precision: 16-mixed
+  lightning_load_from_checkpoint: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/flava-wit/text10-vision100/bs4096_seed5501650_bf16-mixed/flava-epoch=00-step=7626.ckpt" # CHANGE THIS
+  seed: 5501650 # CHANGE THIS
+  precision: bf16-mixed
   strategy: ddp_find_unused_parameters_true
-  batch_size: 16
+  batch_size: 32
   use_wandb: true
   # https://arxiv.org/pdf/2112.04482.pdf, A. Hyperparameters and details of FLAVA
-  learning_rate: 1e-3 # N.B. FLAVA pretrains unimodally on text with 5e-4, but parameter sets don't work with fp16!
+  learning_rate: 1e-3
+  learning_rate_text_submodel: 7.5e-4  # N.B. FLAVA pretrains unimodally on text with 5e-4, but we choose a midpoint here
   adam_eps: 1e-8
   adam_weight_decay: 1e-1
   adam_betas: [ 0.9, 0.999 ]
@@ -48,5 +50,6 @@ datasets:
 model:
   _target_: alkmi.definitions.ModelArguments
   pretrained: null
+  half_size: true
   mlm_perc: 0.4
   name: flava

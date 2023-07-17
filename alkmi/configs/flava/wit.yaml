@@ -1,7 +1,7 @@
 _target_: alkmi.definitions.AblationArguments
 
-text_perc: 10 # CHANGE THIS
-vision_perc: 100 # CHANGE THIS
+text_perc: 100
+vision_perc: 100
 
 training:
   _target_: alkmi.definitions.TrainingArguments
@@ -15,8 +15,8 @@ training:
   lightning_checkpoint:
     dirpath: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/flava-wit/"
     filename: flava-{epoch:02d}-{step}
-  lightning_load_from_checkpoint: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/flava-wit/text10-vision100/bs4096_seed5501650_bf16-mixed/flava-epoch=00-step=7626.ckpt" # CHANGE THIS
-  seed: 5501650 # CHANGE THIS
+  lightning_load_from_checkpoint: null
+  seed: 5501650
   precision: bf16-mixed
   strategy: ddp_find_unused_parameters_true
   batch_size: 32
@@ -50,5 +50,6 @@ datasets:
 model:
   _target_: alkmi.definitions.ModelArguments
   pretrained: null
+  half_size: true
   mlm_perc: 0.4
   name: flava

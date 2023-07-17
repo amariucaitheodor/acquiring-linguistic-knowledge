@@ -13,7 +13,7 @@ command:
   - ${interpreter} # makes sure the right interpreter is used on Euler (3.10 req. for BLiMP)
   - -m
   - train
-  - config=configs/wit.yaml
+  - config=configs/flava/wit.yaml
 # We don't want to early_terminate here (across configs) because some configs will be naturally worse and that's okay.
 # What we do want is over-fitting detection, but that's done on the average validation loss using callbacks.
 parameters:

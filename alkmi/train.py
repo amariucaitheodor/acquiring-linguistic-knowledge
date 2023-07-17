@@ -16,8 +16,9 @@ from callbacks.imagenet_zeroshot import ImageNetZeroshotCallback
 from callbacks.multimodal_overfitting_monitor import MultimodalOverfittingMonitor
 from callbacks.pseudo_perplexity_eval import PseudoPerplexityCallback
 from definitions import AblationArguments
-from lightning_models import BERTPreTrainingLightningModule, FlavaPreTrainingLightningModule, \
-    RobertaPreTrainingLightningModule
+from models.lightning_bert import BERTPreTrainingLightningModule
+from models.lightning_flava import FlavaPreTrainingLightningModule
+from models.lightning_roberta import RobertaPreTrainingLightningModule
 from utils import build_config, update_ckeckpoint_dir, assign_huggingface_ram, \
     initialize_multidatamodule, overwrite_config, build_model_kwargs
 
@@ -56,6 +57,7 @@ def main():
 
         update_ckeckpoint_dir(config, batch_size)
 
+        wandb.run.tags += (f"{'half' if config.model.half_size else 'full'}-size",)
         wandb.run.tags += (f"{config.text_perc}% text",)
         wandb.run.tags += (f"{config.vision_perc}% vision",)
         wandb.run.tags += (f"bs{batch_size}",)

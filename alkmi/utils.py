@@ -32,6 +32,7 @@ def build_model_kwargs(
 ):
     return {
         "pretrained": model_config.pretrained,
+        "half_size": model_config.half_size,
         "precision": training_config.precision,  # needed for deciding whether to use parameter sets
         "learning_rate": training_config.learning_rate,
         "learning_rate_text_submodel": training_config.learning_rate_text_submodel,
