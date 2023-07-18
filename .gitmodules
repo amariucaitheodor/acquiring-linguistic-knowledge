@@ -1,3 +1,4 @@
 [submodule "alkmi/callbacks/evaluation-pipeline"]
 	path = alkmi/callbacks/evaluation-pipeline
 	url = https://github.com/amariucaitheodor/evaluation-pipeline.git
+    branch = main

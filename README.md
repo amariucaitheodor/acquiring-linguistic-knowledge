@@ -24,7 +24,7 @@ pip install -e ".[dev]"
 unzip filter-data.zip
 
 # Test run:
-bash run_locally.sh configs/debug.yaml
+bash run_locally.sh configs/flava/debug.yaml
 
 ```
 
