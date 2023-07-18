@@ -21,6 +21,7 @@ poetry shell
 
 cd alkmi/callbacks/evaluation-pipeline
 pip install -e ".[dev]"
+unzip filter-data.zip
 
 # Test run:
 bash run_locally.sh configs/debug.yaml
