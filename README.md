@@ -19,7 +19,7 @@ poetry build
 poetry install
 poetry shell
 
-cd alkmi/callbacks/lm-evaluation-harness
+cd alkmi/callbacks/evaluation-pipeline
 pip install -e ".[dev]"
 
 # Test run:
@@ -27,7 +27,7 @@ bash run_locally.sh configs/debug.yaml
 
 ```
 
-2. Evaluation involves the [lm-evaluation-harness](./lm-evaluation-harness/README.md) project
+2. Evaluation involves the [evaluation-pipeline](./evaluation-pipeline/README.md) project
    for [BLiMP](https://github.com/alexwarstadt/blimp). Note: this requires >=`python3.9`.
 
 ### Miscellaneous
@@ -81,7 +81,7 @@ export HF_DATASETS_CACHE="/cluster/scratch/tamariucai/HuggingfaceDatasets"
 export HF_HOME="/cluster/work/cotterell/tamariucai/HuggingfaceHome"
 export WANDB_CACHE_DIR="/cluster/scratch/tamariucai/WandbCache"
 export WANDB_DIR="/cluster/work/cotterell/tamariucai/WandbDir"
-export PYTHONPATH=/cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/:/cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/alkmi/callbacks/lm-evaluation-harness
+export PYTHONPATH=/cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/:/cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/alkmi/callbacks/evaluation-pipeline
 cd /cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge
 poetry shell
 cd alkmi

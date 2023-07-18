@@ -7,7 +7,7 @@ from alkmi.definitions import TEXT_MAX_LENGTH_DEFAULT
 from alkmi.models.flava import FlavaForPreTraining, FlavaProcessor
 from alkmi.models.flava.modeling_flava import FlavaForPreTrainingOutput
 
-lm_eval = importlib.import_module(name="lm_eval", package="lm-evaluation-harness")
+lm_eval = importlib.import_module(name="lm_eval", package="evaluation-pipeline")
 
 from lm_eval.api import utils
 from lm_eval.models.huggingface import AutoMaskedLM
@@ -18,7 +18,7 @@ from typing import List, Optional, Tuple, Union
 class FlavaLM(AutoMaskedLM):
     """Implements a language model interface for the FLAVA Huggingface model.
     See: https://huggingface.co/docs/transformers/model_doc/flava#transformers.FlavaForPreTraining and
-    https://github.com/aaronmueller/lm-evaluation-harness
+    https://github.com/babylm/evaluation-pipeline
     """
 
     def __init__(

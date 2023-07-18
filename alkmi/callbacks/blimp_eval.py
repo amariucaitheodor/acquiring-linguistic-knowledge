@@ -1,4 +1,3 @@
-import logging
 import os
 import time
 from datetime import timedelta
@@ -17,7 +16,7 @@ from pytorch_lightning.utilities import rank_zero_only
 
 import importlib
 
-lm_eval = importlib.import_module(name="lm_eval", package="lm-evaluation-harness")
+lm_eval = importlib.import_module(name="lm_eval", package="evaluation-pipeline")
 
 
 class LMEvalHarnessCallback(Callback):
@@ -68,9 +67,9 @@ class LMEvalHarnessCallback(Callback):
             accuracies = []
             for task in TASKS[group_title]:
                 # Setup
-                task_name = f"blimp_from_file:./callbacks/lm-evaluation-harness/filter-data/blimp_filtered/{task}" \
+                task_name = f"blimp_from_file:./callbacks/evaluation-pipeline/filter-data/blimp_filtered/{task}" \
                     if group_title == "blimp" else \
-                    f"{task}:../lm-evaluation-harness/filter-data/glue_filtered/{task if task != 'mnli_mismatched' else 'mnli'}"
+                    f"{task}:../evaluation-pipeline/filter-data/glue_filtered/{task if task != 'mnli_mismatched' else 'mnli'}"
                 template_name = "null_prompt" if group_title == "blimp" else lm_eval.list_templates(task)[0]
                 metric_name = task.split('.json')[0] if group_title == "blimp" else task
 

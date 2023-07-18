@@ -7,7 +7,7 @@ from transformers.modeling_outputs import MaskedLMOutput
 from callbacks.utils import get_corresponding_tokenizer_for_model
 from alkmi.definitions import TEXT_MAX_LENGTH_DEFAULT
 
-lm_eval = importlib.import_module(name="lm_eval", package="lm-evaluation-harness")
+lm_eval = importlib.import_module(name="lm_eval", package="evaluation-pipeline")
 
 from lm_eval.api import utils
 from lm_eval.models.huggingface import AutoMaskedLM
@@ -18,7 +18,7 @@ from typing import List, Optional, Tuple, Union
 
 class TextLM(AutoMaskedLM):
     """Implements a language model interface for the BERT/RoBERTa/etc. text PyTorch models.
-    See: https://github.com/aaronmueller/lm-evaluation-harness
+    See: https://github.com/aaronmueller/evaluation-pipeline
     """
 
     def __init__(

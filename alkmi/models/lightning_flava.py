@@ -33,6 +33,7 @@ class FlavaPreTrainingLightningModule(LightningModule):
                 }
                 self.model = FlavaForPreTraining(FlavaConfig(compile_submodels=True,
                                                              hidden_size=516,
+                                                             projection_dim=516,
                                                              image_config=image_config,
                                                              text_config=text_config,
                                                              multimodal_config=multimodal_config))
