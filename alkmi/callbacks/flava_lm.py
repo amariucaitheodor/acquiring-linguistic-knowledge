@@ -24,7 +24,7 @@ class FlavaLM(AutoMaskedLM):
     def __init__(
             self,
             model: FlavaForPreTraining,
-            enable_progress_bar: bool,
+            enable_progress_bar: bool = False,
             batch_size: Optional[int] = 1,
             max_length: Optional[int] = TEXT_MAX_LENGTH_DEFAULT,
             add_special_tokens: Optional[bool] = None,
@@ -39,6 +39,7 @@ class FlavaLM(AutoMaskedLM):
 
         self.model = model
         self._device = device
+        self.model.to(self._device)
 
         self.enable_progress_bar = enable_progress_bar
 

@@ -5,7 +5,7 @@ from pytorch_lightning import LightningModule
 
 from alkmi.models.flava.modeling_flava import FlavaForPreTrainingOutput
 from alkmi.models.flava import FlavaForPreTraining, FlavaConfig
-from models.utils import configure_default_optimizers
+from alkmi.models.utils import configure_default_optimizers
 
 
 class FlavaPreTrainingLightningModule(LightningModule):
