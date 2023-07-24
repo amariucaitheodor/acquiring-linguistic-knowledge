@@ -19,7 +19,8 @@ from definitions import AblationArguments
 from models.lightning_bert import BERTPreTrainingLightningModule
 from models.lightning_flava import FlavaPreTrainingLightningModule
 from models.lightning_roberta import RobertaPreTrainingLightningModule
-from utils import build_config, update_ckeckpoint_dir, initialize_multidatamodule, overwrite_config, build_model_kwargs
+from utils import build_config, update_ckeckpoint_dir, initialize_multidatamodule, overwrite_config, build_model_kwargs, \
+    using_single_large_gpu
 
 
 def main():
@@ -69,6 +70,16 @@ def main():
 
     if config.training.seed != -1:
         seed_everything(config.training.seed, workers=True)
+
+    if using_single_large_gpu(vram_threshold_gb=79):
+        # 40 GB is the expected VRAM amount, but if we have more, we can double the batch size
+        config.training.batch_size *= 2
+        print(f"Detected 80 GB of RAM, doubling batch size to {config.training.batch_size}.")
+
+        config.training.lightning.__setattr__("accumulate_grad_batches",
+                                              config.training.lightning.get('accumulate_grad_batches') // 2)
+        print(f"Detected 80 GB of RAM, halving gradient accumulation to "
+              f"{config.training.lightning.get('accumulate_grad_batches')}")
 
     # IMPORTANT KNOB!
     if config.text_perc >= config.vision_perc:

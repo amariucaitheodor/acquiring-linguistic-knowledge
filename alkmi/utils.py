@@ -1,8 +1,7 @@
-import os
 import time
 from typing import List
 
-import datasets
+import torch
 import wandb
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
@@ -11,6 +10,15 @@ from transformers import BertTokenizerFast, RobertaTokenizerFast
 from data.datamodules import MLMDataModule, ImageDataModule, VLDataModule
 from data.multidata import MultiDataModule
 from alkmi.definitions import TrainingSingleDatasetInfo, TrainingArguments, AblationArguments, ModelArguments
+
+
+def using_single_large_gpu(vram_threshold_gb: int):
+    if torch.cuda.device_count() != 1:
+        return False
+    _, total_gpu_memory = torch.cuda.mem_get_info()
+    total_gpu_memory = round(total_gpu_memory * 1e-9, 3)
+    print(f"Total GPU memory: {total_gpu_memory} GB")
+    return total_gpu_memory > vram_threshold_gb
 
 
 def build_datamodule_kwargs(dm_config: TrainingSingleDatasetInfo, training_config: TrainingArguments):
