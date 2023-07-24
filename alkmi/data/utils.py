@@ -21,7 +21,7 @@ def count_words(train: Dataset, validation: Dataset, after: bool):
 
 
 def build_datasets_from_info(dataset_infos: List[HFDatasetInfo], split: str) -> Dataset:
-    assert len(dataset_infos) == 1, "Only one dataset supported for now"
+    assert len(dataset_infos) == 1, "Only one dataset (at a time) supported for now"
 
     dataset_info = dataset_infos[0]
     current_dataset = load_dataset(

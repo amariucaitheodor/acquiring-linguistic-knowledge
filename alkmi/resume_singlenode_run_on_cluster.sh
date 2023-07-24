@@ -19,7 +19,7 @@ sbatch --job-name="bash" \
   --ntasks-per-node="$NUM_GPUS" \
   --gpus="$NUM_GPUS" \
   --cpus-per-task=4 \
-  --mem-per-cpu=15000 \
+  --mem-per-cpu=10000 \
   --gres=gpumem:"$VRAM_PER_GPU" \
   --output "resume_singlenode_$(date "+%F-%T").log" \
   --wrap="WANDB_RUN_GROUP=$WANDB_RUN_GROUP WANDB__SERVICE_WAIT=300 WANDB_RESUME=must WANDB_RUN_ID=$RESUME_ID NUMEXPR_MAX_THREADS=64 python -m train config=configs/flava/wit_resume_model.yaml"

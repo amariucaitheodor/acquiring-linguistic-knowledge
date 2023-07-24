@@ -46,7 +46,7 @@ bash run_sweep_on_cluster.sh NR_AGENTS SWEEP_ID
 ```bash
 # An already-running job
 srun --interactive --jobid JOBID --pty bash
-# Interactive node with 2 GPUs (20GBs VRAM each)
+# Interactive node with 2 GPUs (20GBs VRAM each) and a lot of RAM for the (initial) WiT collapsing
 srun --gpus=2 \
   --gres=gpumem:40g \
   --ntasks-per-node=2 \

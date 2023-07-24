@@ -20,7 +20,7 @@ for ((i = 1; i <= $1; i++)); do
     --ntasks-per-node="$NUM_GPUS" \
     --gpus="$NUM_GPUS" \
     --cpus-per-task=4 \
-    --mem-per-cpu=15000 \
+    --mem-per-cpu=10000 \
     --gres=gpumem:"$VRAM_PER_GPU" \
     --output "sweep_($2)_#${NR}_($(date "+%F-%T")).log" \
     --wrap="WANDB_RUN_GROUP=DDP-$(date "+%F-%T") WANDB__SERVICE_WAIT=300 NUMEXPR_MAX_THREADS=64 wandb agent --count 1 $2"

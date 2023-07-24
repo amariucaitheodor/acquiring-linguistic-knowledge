@@ -13,7 +13,7 @@ sbatch --job-name="multinode-mm" \
   --ntasks-per-node=1 \
   --gpus-per-node=1 \
   --cpus-per-task=4 \
-  --mem-per-cpu=15000 \
+  --mem-per-cpu=10000 \
   --gres=gpumem:"$VRAM_PER_GPU" \
   --output "multinode_$(date "+%F-%T").log" \
   --wrap="WANDB_RUN_GROUP=DDP-$(date "+%F-%T") WANDB__SERVICE_WAIT=300 NUMEXPR_MAX_THREADS=64 srun python -m train config=$1"

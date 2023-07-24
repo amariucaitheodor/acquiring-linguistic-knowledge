@@ -76,8 +76,8 @@ def main():
         config.training.batch_size *= 2
         print(f"Detected 80 GB of RAM, doubling batch size to {config.training.batch_size}.")
 
-        config.training.lightning.__setattr__("accumulate_grad_batches",
-                                              config.training.lightning.get('accumulate_grad_batches') // 2)
+        new_accumulation = max(1, config.training.lightning.get('accumulate_grad_batches') // 2)
+        config.training.lightning.__setattr__("accumulate_grad_batches", new_accumulation)
         print(f"Detected 80 GB of RAM, halving gradient accumulation to "
               f"{config.training.lightning.get('accumulate_grad_batches')}")
 
