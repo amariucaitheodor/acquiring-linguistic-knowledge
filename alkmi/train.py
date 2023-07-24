@@ -51,6 +51,16 @@ def main():
                                                          "warmup_steps", "seed"])
         overwrite_config(struct=config.datasets, params=["sampling_temperature"])
 
+        if using_single_large_gpu(vram_threshold_gb=79):
+            # 40 GB is the expected VRAM amount, but if we have more, we can double the batch size
+            config.training.batch_size *= 2
+            print(f"Detected 80 GB of RAM, doubling batch size to {config.training.batch_size}.")
+
+            new_accumulation = max(1, config.training.lightning.get('accumulate_grad_batches') // 2)
+            config.training.lightning.__setattr__("accumulate_grad_batches", new_accumulation)
+            print(f"Detected 80 GB of RAM, halving gradient accumulation to "
+                  f"{config.training.lightning.get('accumulate_grad_batches')}")
+
         batch_size = config.training.batch_size * \
                      config.training.lightning.get('accumulate_grad_batches') * \
                      torch.cuda.device_count()
@@ -70,16 +80,6 @@ def main():
 
     if config.training.seed != -1:
         seed_everything(config.training.seed, workers=True)
-
-    if using_single_large_gpu(vram_threshold_gb=79):
-        # 40 GB is the expected VRAM amount, but if we have more, we can double the batch size
-        config.training.batch_size *= 2
-        print(f"Detected 80 GB of RAM, doubling batch size to {config.training.batch_size}.")
-
-        new_accumulation = max(1, config.training.lightning.get('accumulate_grad_batches') // 2)
-        config.training.lightning.__setattr__("accumulate_grad_batches", new_accumulation)
-        print(f"Detected 80 GB of RAM, halving gradient accumulation to "
-              f"{config.training.lightning.get('accumulate_grad_batches')}")
 
     # IMPORTANT KNOB!
     if config.text_perc >= config.vision_perc:
@@ -130,26 +130,27 @@ def main():
         print("Initializing datamodule")
         datamodule = initialize_multidatamodule(config)
 
-        def add_monitor(name: str, patience: int = 3):
+        def add_monitor(name: str, original_weight: float, patience: int = 3):
             nonlocal callbacks
             callbacks.append(
                 MultimodalOverfittingMonitor(monitor=f'validation/losses/{name}',
-                                             datamodule=datamodule, patience=patience, verbose=True)
+                                             original_weight=original_weight,
+                                             datamodule=datamodule, patience=patience)
             )
 
-        print("Registering multimodal callbacks (overfitting monitors)")
+        print("Registering multimodal overfitting monitors")
         if config.text_perc > 0:
-            add_monitor(name="mlm_loss")
+            mlm_weight = datamodule.sampling_weights[2 if len(datamodule.sampling_weights) > 1 else 0]
+            add_monitor(name="mlm_loss", original_weight=mlm_weight)
         if config.vision_perc > 0:
-            add_monitor(name="mim_loss")
-        if config.text_perc > 0 and config.vision_perc > 0:
-            for val_loss in ["itm_loss", "global_contrastive_loss", "mmm_image_loss", "mmm_text_loss"]:
-                add_monitor(name=val_loss, patience=5)  # shakier than the others - need higher patience
-
-            print("Adding ImageNet zeroshot callback")
-            callbacks.append(
-                ImageNetZeroshotCallback(enable_progress_bar=config.training.lightning['enable_progress_bar'])
-            )
+            mim_weight = datamodule.sampling_weights[1 if len(datamodule.sampling_weights) > 1 else 0]
+            add_monitor(name="mim_loss", original_weight=mim_weight)
+        if config.text_perc > 0 and config.vision_perc > 0:  # shakier than the others - need higher patience
+            add_monitor(name="itm_loss", patience=5, original_weight=model.model.itm_weight)
+            add_monitor(name="global_contrastive_loss", patience=5,
+                        original_weight=model.model.global_contrastive_weight)
+            add_monitor(name="mmm_image_loss", patience=5, original_weight=model.model.mmm_image_weight)
+            add_monitor(name="mmm_text_loss", patience=5, original_weight=model.model.mmm_text_weight)
 
     print(f"Callbacks registered: {[type(c).__name__ for c in callbacks]}")
 

@@ -33,7 +33,7 @@ from torch import Tensor
 
 from data.multidata import MultiDataModule
 
-MMM_TEXT_THRESHOLD = 0.1  # insignificant enough
+MMM_TEXT_THRESHOLD = 0.06  # insignificant enough that we'd like to stop training
 
 
 class MultimodalOverfittingMonitor(Callback):
@@ -92,9 +92,11 @@ class MultimodalOverfittingMonitor(Callback):
             self,
             monitor: str,
             datamodule: MultiDataModule,
+            original_weight: float,
+            retry_patience: int = 10,
             min_delta: float = 0.0,
             patience: int = 3,
-            verbose: bool = False,
+            verbose: bool = True,
             mode: str = "min",
             strict: bool = True,
             check_finite: bool = True,
@@ -102,6 +104,9 @@ class MultimodalOverfittingMonitor(Callback):
     ):
         super().__init__()
         self.monitor = monitor
+        self.name = self.monitor.split('validation/losses/')[-1].split('_loss')[0]
+        assert self.name in ["mlm", "mim", "itm", "global_contrastive", "mmm_image", "mmm_text"], \
+            f"Monitor {self.monitor} not currently supported. Please consider adding support for it."
         self.datamodule: MultiDataModule = datamodule
         self.min_delta = min_delta
         self.patience = patience
@@ -113,12 +118,52 @@ class MultimodalOverfittingMonitor(Callback):
         self.stopped_epoch = 0
         self.log_rank_zero_only = log_rank_zero_only
 
+        self.original_weight = original_weight
+        self.retry_patience = retry_patience
+
         if self.mode not in self.mode_dict:
             raise MisconfigurationException(f"`mode` can be {', '.join(self.mode_dict.keys())}, got {self.mode}")
 
         self.min_delta *= 1 if self.monitor_op == torch.gt else -1
         torch_inf = torch.tensor(np.Inf)
         self.best_score = torch_inf if self.monitor_op == torch.lt else -torch_inf
+
+    def _get_weight(self, pl_module):
+        weights = self.datamodule.sampling_weights  # [mmm, mim, mlm]
+        if self.name == "mlm":
+            return weights[2 if len(weights) > 1 else 0]
+        elif self.name == "mim":
+            return weights[1 if len(weights) > 1 else 0]
+        else:
+            return pl_module.model.__getattribute__(f"{self.name}_weight")
+
+    def _set_weight(self, trainer, pl_module, new_weight: float):
+        # For debugging purposes:
+        # print(f"Setting {self.name}_weight to {new_weight} (was {self._get_weight(pl_module)})")
+
+        is_flava_model = hasattr(pl_module.model, 'mmm_text_weight')
+        weights = self.datamodule.sampling_weights
+
+        if len(weights) == 1. and new_weight == 0.:
+            self._stop_training(trainer)
+        elif self.name == "mlm":
+            self.datamodule.update_sampling_function_and_weights([weights[0], weights[1], new_weight])
+            if new_weight == 0. and is_flava_model and pl_module.model.mmm_text_weight < MMM_TEXT_THRESHOLD:
+                self._stop_training(trainer)  # With no MLM and MMM_text, stop training
+        elif self.name == "mim":
+            self.datamodule.update_sampling_function_and_weights([weights[0], new_weight, weights[2]])
+        else:
+            pl_module.model.__setattr__(f"{self.name}_weight", new_weight)
+            if new_weight == 0. and self.name == "mmm_text" and weights[2] == 0.:
+                self._stop_training(trainer)  # With no MLM and MMM_text, stop training
+
+        if is_flava_model:
+            multimodal_tasks_weights = ["itm", "global_contrastive", "mmm_image", "mmm_text"]
+            if all([pl_module.model.__getattribute__(f"{w}_weight") == 0. for w in multimodal_tasks_weights]):
+                self.datamodule.update_sampling_function_and_weights([0., weights[1], weights[2]])
+
+        if all([x == 0. for x in weights]):
+            self._stop_training(trainer)
 
     @property
     def state_key(self) -> str:
@@ -178,24 +223,7 @@ class MultimodalOverfittingMonitor(Callback):
         self._run_early_stopping_check(trainer, pl_module)
 
         if wandb.run is not None:  # https://github.com/wandb/wandb/issues/3551
-            prefix = "validation/monitor"
-            match self.monitor:
-                case "validation/losses/itm_loss":
-                    trainer.logger.experiment.log({f"{prefix}/itm": pl_module.model.itm_weight})
-                case "validation/losses/global_contrastive_loss":
-                    trainer.logger.experiment.log(
-                        {f"{prefix}/global_contrastive": pl_module.model.global_contrastive_weight}
-                    )
-                case "validation/losses/mmm_image_loss":
-                    trainer.logger.experiment.log({f"{prefix}/mmm_image": pl_module.model.mmm_image_weight})
-                case "validation/losses/mmm_text_loss":
-                    trainer.logger.experiment.log({f"{prefix}/mmm_text": pl_module.model.mmm_text_weight})
-                case "validation/losses/mlm_loss":
-                    weight = self.datamodule.sampling_weights[2 if len(self.datamodule.sampling_weights) > 1 else 0]
-                    trainer.logger.experiment.log({f"{prefix}/mlm": weight})
-                case "validation/losses/mim_loss":
-                    weight = self.datamodule.sampling_weights[1 if len(self.datamodule.sampling_weights) > 1 else 0]
-                    trainer.logger.experiment.log({f"{prefix}/mim": weight})
+            trainer.logger.experiment.log({f"validation/monitor/{self.name}": self._get_weight(pl_module)})
 
     def _run_early_stopping_check(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
         """Checks whether the cancel task condition is met and if so tells the model loss to ignore the task."""
@@ -206,53 +234,32 @@ class MultimodalOverfittingMonitor(Callback):
         ):  # short circuit if metric not present
             return
 
-        current = logs[self.monitor].squeeze()
-        patience_exhausted, reason, wait_count_increased = self._evaluate_stopping_criteria(current)
+        reason = None
+        if self.wait_count >= self.retry_patience:
+            reason = (
+                f"Monitored metric {self.monitor} did not improve in {self.wait_count} records."
+                f" This exceeds the restart patience {self.retry_patience}, so we will restart the task with"
+                f" renewed patience."
+            )
+            self._set_weight(trainer, pl_module, 0.1 * self.original_weight)
+            self.wait_count = 0
+        else:
+            current = logs[self.monitor].squeeze()
+            patience_exhausted, reason, wait_count_increased = self._evaluate_stopping_criteria(current)
 
-        # slow down if any world process detects over-fitting
-        wait_count_increased = trainer.strategy.reduce_boolean_decision(wait_count_increased, all=False)
-        if wait_count_increased:
-            match self.monitor:
-                case "validation/losses/itm_loss":
-                    pl_module.model.itm_weight /= 2.
-                case "validation/losses/global_contrastive_loss":
-                    pl_module.model.global_contrastive_weight /= 2.
-                case "validation/losses/mmm_image_loss":
-                    pl_module.model.mmm_image_weight /= 2.
-                case "validation/losses/mmm_text_loss":
-                    pl_module.model.mmm_text_weight /= 2.
-                case "validation/losses/mlm_loss":
-                    self._set_sampling_weight_for_modality("text", type="half")
-                case "validation/losses/mim_loss":
-                    self._set_sampling_weight_for_modality("vision", type="half")
-
-        # stop every ddp process if any world process decides to stop
-        patience_exhausted = trainer.strategy.reduce_boolean_decision(patience_exhausted, all=False)
-        if patience_exhausted:
-            match self.monitor:
-                case "validation/losses/itm_loss":
-                    pl_module.model.itm_weight = 0.
-                case "validation/losses/global_contrastive_loss":
-                    pl_module.model.global_contrastive_weight = 0.
-                case "validation/losses/mmm_image_loss":
-                    pl_module.model.mmm_image_weight = 0.
-                case "validation/losses/mmm_text_loss":
-                    pl_module.model.mmm_text_weight = 0.
-                    if self.datamodule.sampling_weights[2] == 0.:
-                        self._stop_training(trainer)  # With no MLM and MMM_text, stop training
-                case "validation/losses/mlm_loss":
-                    self._set_sampling_weight_for_modality("text", trainer=trainer, type="zero")
-                    if hasattr(pl_module.model, 'mmm_text_weight') and \
-                            pl_module.model.mmm_text_weight < MMM_TEXT_THRESHOLD:
-                        self._stop_training(trainer)  # With no MLM and MMM_text, stop training
-                case "validation/losses/mim_loss":
-                    self._set_sampling_weight_for_modality("vision", trainer=trainer, type="zero")
-
-            if hasattr(pl_module.model, 'mmm_text_weight'):
-                multimodal_tasks_weights = [pl_module.model.itm_weight, pl_module.model.global_contrastive_weight,
-                                            pl_module.model.mmm_image_weight, pl_module.model.mmm_text_weight]
-                if all([w == 0. for w in multimodal_tasks_weights]):
-                    self._set_sampling_weight_for_modality("multimodal", trainer=trainer, type="zero")
+            # slow down if any world process detects over-fitting
+            wait_count_increased = trainer.strategy.reduce_boolean_decision(wait_count_increased, all=False)
+            if wait_count_increased:
+                # stop every ddp process if any world process decides to stop
+                patience_exhausted = trainer.strategy.reduce_boolean_decision(patience_exhausted, all=False)
+                if patience_exhausted:
+                    self._set_weight(trainer, pl_module, 0.)  # stop task
+                else:
+                    halved_weight = self._get_weight(pl_module) / 2.
+                    self._set_weight(trainer, pl_module, halved_weight)
+            else:
+                increased_weight = min(self.original_weight, self._get_weight(pl_module) * 1.1)
+                self._set_weight(trainer, pl_module, increased_weight)
 
         if reason and self.verbose:
             self._log_info(trainer, reason, self.log_rank_zero_only)
@@ -260,27 +267,6 @@ class MultimodalOverfittingMonitor(Callback):
     def _stop_training(self, trainer):
         trainer.should_stop = True
         self.stopped_epoch = trainer.current_epoch
-
-    def _set_sampling_weight_for_modality(self, modality: str, trainer: "pl.Trainer" = None, type: str = "zero"):
-        weights = self.datamodule.sampling_weights
-        if len(weights) == 1.:
-            if type == "zero":
-                self._stop_training(trainer)
-        else:
-            if modality == "multimodal":
-                new_value = weights[0] / 2. if type == "half" else 0.
-                self.datamodule.update_sampling_function_and_weights([new_value, weights[1], weights[2]])
-            elif modality == "text":
-                new_value = weights[2] / 2. if type == "half" else 0.
-                self.datamodule.update_sampling_function_and_weights([weights[0], weights[1], new_value])
-            elif modality == "vision":
-                new_value = weights[1] / 2. if type == "half" else 0.
-                self.datamodule.update_sampling_function_and_weights([weights[0], new_value, weights[2]])
-            else:
-                raise ValueError(f"Modality {modality} not recognized.")
-
-            if all([x == 0. for x in self.datamodule.sampling_weights]):
-                self._stop_training(trainer)
 
     def _evaluate_stopping_criteria(self, current: Tensor) -> Tuple[bool, Optional[str], bool]:
         should_stop = False
