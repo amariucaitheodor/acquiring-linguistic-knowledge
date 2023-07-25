@@ -93,7 +93,7 @@ class MultimodalOverfittingMonitor(Callback):
             monitor: str,
             datamodule: MultiDataModule,
             original_weight: float,
-            retry_patience: int = 10,
+            retry_patience: int = 8,
             min_delta: float = 0.0,
             patience: int = 3,
             verbose: bool = True,
@@ -120,6 +120,7 @@ class MultimodalOverfittingMonitor(Callback):
 
         self.original_weight = original_weight
         self.retry_patience = retry_patience
+        assert retry_patience > patience, "Retry patience must be greater than the patience (must wait for a bit)."
 
         if self.mode not in self.mode_dict:
             raise MisconfigurationException(f"`mode` can be {', '.join(self.mode_dict.keys())}, got {self.mode}")

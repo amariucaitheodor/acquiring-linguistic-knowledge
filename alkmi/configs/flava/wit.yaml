@@ -18,7 +18,7 @@ training:
   lightning_load_from_checkpoint: null
   seed: 5501650
   precision: bf16-mixed
-  strategy: ddp_find_unused_parameters_true
+  strategy: auto
   batch_size: 32
   use_wandb: true
   # https://arxiv.org/pdf/2112.04482.pdf, A. Hyperparameters and details of FLAVA
