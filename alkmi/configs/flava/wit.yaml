@@ -19,7 +19,7 @@ training:
   seed: 5501650
   precision: bf16-mixed
   strategy: auto
-  batch_size: 32
+  batch_size: 64
   use_wandb: true
   # https://arxiv.org/pdf/2112.04482.pdf, A. Hyperparameters and details of FLAVA
   learning_rate: 1e-3

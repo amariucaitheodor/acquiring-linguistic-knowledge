@@ -212,7 +212,7 @@ class MultimodalOverfittingMonitor(Callback):
             self.wait_count = state_dict["wait_count"]
         self.stopped_epoch = state_dict["stopped_epoch"]
         self.best_score = state_dict["best_score"]
-        # Sensible patience values keep changing across runs
+        # Patience values might change across runs
         # self.patience = state_dict["patience"]
 
     def _should_skip_check(self, trainer: "pl.Trainer") -> bool:
