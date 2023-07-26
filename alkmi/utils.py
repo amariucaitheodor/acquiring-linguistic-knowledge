@@ -166,7 +166,8 @@ def update_ckeckpoint_dir(config: AblationArguments, batch_size: int):
         if config.model.half_size:
             print("[update_ckeckpoint_dir] Detected half-size run!")
             model_name = ckt_dir.split("HuggingfaceCheckpoints/")[1].split("-")[0]
-            ckt_dir.replace(f"{model_name}-", f"{model_name}_half-")
+            print(f"[update_ckeckpoint_dir] Found and updated model name {model_name} in the checkpoint dirpath.")
+            ckt_dir = ckt_dir.replace(model_name, f"{model_name}_half")
 
         print(f"[update_ckeckpoint_dir] Setting checkpoint dirpath to {ckt_dir}")
         config.training.lightning_checkpoint.__setattr__("dirpath", ckt_dir)
