@@ -205,10 +205,15 @@ class MultimodalOverfittingMonitor(Callback):
         }
 
     def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
-        self.wait_count = state_dict["wait_count"]
+        if self.name in ['mlm', 'mmm_text']:
+            print(f"Resetting wait count for `{self.name}` since training is resuming and they are special tasks.")
+            self.wait_count = 0
+        else:
+            self.wait_count = state_dict["wait_count"]
         self.stopped_epoch = state_dict["stopped_epoch"]
         self.best_score = state_dict["best_score"]
-        self.patience = state_dict["patience"]
+        # Sensible patience values keep changing across runs
+        # self.patience = state_dict["patience"]
 
     def _should_skip_check(self, trainer: "pl.Trainer") -> bool:
         from pytorch_lightning.trainer.states import TrainerFn
