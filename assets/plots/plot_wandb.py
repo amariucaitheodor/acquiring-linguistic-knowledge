@@ -1,7 +1,10 @@
+import math
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
+from scipy.ndimage import gaussian_filter1d
 
 TEXT_AMOUNT = '100M'
 STEPS_LIMIT = 7500 if TEXT_AMOUNT == '10M' else 12600
@@ -30,8 +33,31 @@ def plot_for_variation(words: str, vision_perc: int):
         10: ("Full" if words == "100M" else "Extra (400K)") + ' Vision',
         100: 'Extra (4M) Vision'
     }
-    ax.plot(steps, blimp, "-o", color=color_map[vision_perc], markersize=0, label=label_map[vision_perc])
-    ax2.plot(steps, ppl, "--o", color=color_map[vision_perc], markersize=0, label=label_map[vision_perc])
+
+    print(f"Max BLiMP score for {words} words and {label_map[vision_perc]}: {round(max(blimp), 2)}")
+    print(f"Min PPPL for {words} words and {label_map[vision_perc]}: {round(min(ppl), 2)}")
+
+    def helper(x, y):
+        f = lambda z: z.nonzero()[0]
+
+        for i in range(len(y) - 1, -1, -1):
+            if math.isnan(y[i]):
+                x.pop()
+                y.pop()
+            else:
+                break
+        y = np.array(y)
+        nans = np.isnan(y)
+        y[nans] = np.interp(f(nans), f(~nans), y[~nans])
+        return x, y
+
+    steps2, blimp = helper(steps.copy(), blimp)
+    smooth_blimp = gaussian_filter1d(blimp, sigma=0.5)
+    ax.plot(steps2, smooth_blimp, "-o", color=color_map[vision_perc], markersize=0, label=label_map[vision_perc])
+
+    steps3, ppl = helper(steps.copy(), ppl)
+    smooth_ppl = gaussian_filter1d(ppl, sigma=0.5)
+    ax2.plot(steps3, smooth_ppl, "--o", color=color_map[vision_perc], markersize=0, label=label_map[vision_perc])
 
 
 fig, ax = plt.subplots(figsize=(5, 5))
@@ -41,7 +67,7 @@ fig.suptitle(f'Pretraining Performance ({TEXT_AMOUNT} words)')
 ax2 = ax.twinx()
 ax.grid(True)  # , axis='x')
 ax.set_xticks(np.arange(0, STEPS_LIMIT / 1000 + 0.5, 1))
-ax.set_xlabel("Training Steps (000s)", fontsize=12)
+ax.set_xlabel("Training Steps (thousands)", fontsize=12)
 ax.set_ylabel("BLiMP Score (%)", fontsize=12)
 
 # Extra info
@@ -57,6 +83,8 @@ if TEXT_AMOUNT == '100M':
     color_map = {
         0: '#7D54B2',  # purple
         1: '#EDB732',  # yellow
+        10: '#E57439',  # orange
+        100: '#5387DD',  # blue
     }
 else:
     ax.annotate("86.01% on PMD corpus (Singh et al., 2021)", xy=(0, 86.01), xytext=(0.5, 86.01 + 0.5),
@@ -74,9 +102,8 @@ else:
 
 plot_for_variation(TEXT_AMOUNT, vision_perc=0)
 plot_for_variation(TEXT_AMOUNT, vision_perc=1)
-if TEXT_AMOUNT == '10M':  # TODO: remove this
-    plot_for_variation(TEXT_AMOUNT, vision_perc=10)
-    plot_for_variation(TEXT_AMOUNT, vision_perc=100)
+plot_for_variation(TEXT_AMOUNT, vision_perc=10)
+plot_for_variation(TEXT_AMOUNT, vision_perc=100)
 ax2.set_ylabel("Pseudo-Perplexity", fontsize=14)
 ax2.set_yscale('log', base=10)
 
@@ -87,7 +114,7 @@ if TEXT_AMOUNT == '100M':
     handles.append(Line2D([0], [0], color='black', linewidth=2, linestyle='dotted'))
     labels.append('BLiMP Score')
     handles.append(Line2D([0], [0], color='black', linewidth=2))
-plt.legend(handles=handles, labels=labels, bbox_to_anchor=[.97, .95], loc='upper right')
+plt.legend(handles=handles, labels=labels, bbox_to_anchor=[.6, .95], loc='upper right')
 
 plt.show()
 fig.savefig(f'{TEXT_AMOUNT}/{TEXT_AMOUNT}.pdf', format='pdf', dpi=500, bbox_inches='tight')

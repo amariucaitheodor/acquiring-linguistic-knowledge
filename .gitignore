@@ -1,5 +1,6 @@
 wandb/
 lightning_logs/
+/assets/plots/old/
 
 # Cached datasets
 cache-*
