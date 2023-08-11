@@ -6,7 +6,7 @@ from transformers import BertForMaskedLM, RobertaForMaskedLM
 
 from alkmi.callbacks.text_lm import TextLM
 from alkmi.callbacks.flava_lm import FlavaLM
-from callbacks.utils import replace_flava_submodel_with_orig_for_eval
+from alkmi.callbacks.utils import replace_flava_submodel_with_orig_for_eval
 from alkmi.models.flava import FlavaForPreTraining
 
 import torch

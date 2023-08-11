@@ -60,6 +60,22 @@ def main():
             config.training.lightning.__setattr__("accumulate_grad_batches", new_accumulation)
             print(f"Detected 80 GB of RAM, halving gradient accumulation to "
                   f"{config.training.lightning.get('accumulate_grad_batches')}")
+        elif torch.cuda.device_count() > 1:
+            new_accumulation = max(1, config.training.lightning.get(
+                'accumulate_grad_batches') // torch.cuda.device_count())
+            config.training.lightning.__setattr__("accumulate_grad_batches", new_accumulation)
+            print(f"Detected more than 1 GPU ({torch.cuda.device_count()}), decreasing gradient accumulation to "
+                  f"{config.training.lightning.get('accumulate_grad_batches')}")
+
+        if config.model.half_size:
+            # we have (almost) twice as fewer parameters, we can (almost) double the batch size
+            config.training.batch_size = int(config.training.batch_size * 1.8)
+            print(f"Detected half-sized run, (almost) doubling batch size to {config.training.batch_size}.")
+
+            new_accumulation = max(1, int(config.training.lightning.get('accumulate_grad_batches') / 1.8))
+            config.training.lightning.__setattr__("accumulate_grad_batches", new_accumulation)
+            print(f"Detected half-sized run, (almost) halving gradient accumulation to "
+                  f"{config.training.lightning.get('accumulate_grad_batches')}")
 
         batch_size = config.training.batch_size * \
                      config.training.lightning.get('accumulate_grad_batches') * \
@@ -151,6 +167,11 @@ def main():
                         original_weight=model.model.global_contrastive_weight)
             add_monitor(name="mmm_image_loss", patience=5, original_weight=model.model.mmm_image_weight)
             add_monitor(name="mmm_text_loss", patience=5, original_weight=model.model.mmm_text_weight)
+
+            print("Adding ImageNet zeroshot callback")
+            callbacks.append(
+                ImageNetZeroshotCallback(enable_progress_bar=config.training.lightning['enable_progress_bar'])
+            )
 
     print(f"Callbacks registered: {[type(c).__name__ for c in callbacks]}")
 
