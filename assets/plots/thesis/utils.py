@@ -16,15 +16,21 @@ BLIMP_CATEGORIES = {
 }
 
 
-def get_label_map(text_perc: int, vision_perc: int):
+def get_vision_types(old: bool = False):
+    if old:
+        return ['No Vision', 'Slight Vision', 'Full Vision', 'Extra (400K) Vision', 'Extra (4M) Vision']
+    return ['No Images', '40K Images', '400K Images', '4M Images']
+
+
+def get_label_map(text_perc: int, vision_perc: int, old: bool = False):
     if vision_perc == 0:
-        return 'No Vision'
+        return 'No Vision' if old else 'No Images'
     elif vision_perc == 1:
-        return f'{"Slight" if text_perc == 10 else "Full"} Vision'
+        return (f'{"Slight" if text_perc == 10 else "Full"} Vision') if old else '40K Images'
     elif vision_perc == 10:
-        return f'{"Full" if text_perc == 10 else "Extra (400K)"} Vision'
+        return (f'{"Full" if text_perc == 10 else "Extra (400K)"} Vision') if old else '400K Images'
     elif vision_perc == 100:
-        return 'Extra (4M) Vision'
+        return 'Extra (4M) Vision' if old else '4M Images'
 
 
 def label_group_bar_table(ax, df):
