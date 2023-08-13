@@ -11,10 +11,11 @@ from assets.plots.thesis.utils import BLIMP_CATEGORIES, get_label_map, label_gro
 
 MODEL_TYPE = 'full_sized'
 PLOT_TYPE = 'heat'  # or bar
+DELTAS = True
 Y_MIN = 40
 
 
-def load_blimp_statistic(text_perc: int, vision_perc: int, category: str, statistic: str, steps_limit=None):
+def load_blimp_statistic(text_perc: int, vision_perc: int, category: str, statistic: str, steps_limit=None) -> float:
     headers = ['Step', f'Group: text{text_perc}-vision{vision_perc} - evaluation/blimp/{category}']
     df = pd.read_csv(f'{MODEL_TYPE}/{category}.csv', usecols=headers)
     if steps_limit:
@@ -22,9 +23,9 @@ def load_blimp_statistic(text_perc: int, vision_perc: int, category: str, statis
     blimp_values = pd.to_numeric(df[headers[1]]).values.tolist()
     blimp_values = [x for x in blimp_values if not math.isnan(x)]
     if statistic == 'max':
-        return int(max(blimp_values))
+        return round(max(blimp_values), 2)
     elif statistic == 'last':
-        return int(blimp_values[-1])
+        return round(blimp_values[-1], 2)
     raise ValueError(f'Unknown type: {statistic}')
 
 
@@ -38,6 +39,8 @@ def construct_table():
                 for vision_type in get_vision_types():
                     if vision_type == get_label_map(text_perc, vision_perc):
                         stat = load_blimp_statistic(text_perc, vision_perc, cat, statistic_type)
+                        if DELTAS and vision_perc > 0:
+                            stat = stat - load_blimp_statistic(text_perc, 0, cat, statistic_type)
                         plotting_dict[vision_type].append(stat)
                     else:
                         plotting_dict[vision_type].append(math.nan)
@@ -59,9 +62,15 @@ def plot():
         ax.grid(axis='y')
     elif PLOT_TYPE == 'heat':
         plot_df = category_filtered_df.droplevel(0).transpose()
-        sns.heatmap(plot_df, ax=ax,
-                    annot=True, vmin=Y_MIN, vmax=100, cbar=index % max_cols == 0,
-                    cmap=sns.color_palette("viridis", as_cmap=True), mask=(plot_df == 0),
+        if DELTAS:
+            cmap = sns.diverging_palette(145, 300, s=60, as_cmap=True)
+            cmap.set_over(cmap(0.5))
+        else:
+            cmap = sns.color_palette("viridis", as_cmap=True)
+        sns.heatmap(plot_df, ax=ax, annot=True,
+                    vmin=Y_MIN if not DELTAS else -8,
+                    vmax=100 if not DELTAS else 8,
+                    cbar=index % max_cols == 0, cmap=cmap,
                     yticklabels=index % max_cols == 1)
         remove_default_x_labels(ax)
         ax.set_xticklabels(['100M', '10M'], rotation=0, rotation_mode='anchor')
@@ -92,5 +101,5 @@ for statistic_type in ['max', 'last']:
         handles, labels = axes[1].get_legend_handles_labels()
         fig.legend(handles, labels)
     fig.tight_layout()
-    fig.savefig(f'{MODEL_TYPE}/figures/plot_{statistic_type}.png')
-    fig.savefig(f'{MODEL_TYPE}/figures/plot_{statistic_type}.pdf')
+    fig.savefig(f'{MODEL_TYPE}/figures/plot_{statistic_type}{"_deltas" if DELTAS else ""}.png')
+    fig.savefig(f'{MODEL_TYPE}/figures/plot_{statistic_type}{"_deltas" if DELTAS else ""}.pdf')
