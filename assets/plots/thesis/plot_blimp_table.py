@@ -6,6 +6,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 
 import seaborn as sns
+from matplotlib.patches import Rectangle
 
 from assets.plots.thesis.utils import BLIMP_CATEGORIES, get_label_map, label_group_bar_table, get_vision_types
 
@@ -72,6 +73,9 @@ def plot():
                     vmax=100 if not DELTAS else 8,
                     cbar=index % max_cols == 0, cmap=cmap,
                     yticklabels=index % max_cols == 1)
+
+        ax.add_patch(Rectangle((0, 0), 2, 1, fill=False, edgecolor='black', lw=1, clip_on=False))
+
         remove_default_x_labels(ax)
         ax.set_xticklabels(['100M', '10M'], rotation=0, rotation_mode='anchor')
         ax.set_title(blimp_category, fontsize=10)
