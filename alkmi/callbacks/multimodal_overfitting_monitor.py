@@ -145,8 +145,11 @@ class MultimodalOverfittingMonitor(Callback):
         is_flava_model = hasattr(pl_module.model, 'mmm_text_weight')
         weights = self.datamodule.sampling_weights
 
-        if len(weights) == 1. and new_weight == 0.:
-            self._stop_training(trainer)
+        if len(weights) == 1:
+            if new_weight == 0.:
+                self._stop_training(trainer)
+            else:
+                self.datamodule.update_sampling_function_and_weights([new_weight])
         elif self.name == "mlm":
             self.datamodule.update_sampling_function_and_weights([weights[0], weights[1], new_weight])
             if new_weight == 0. and is_flava_model and pl_module.model.mmm_text_weight < MMM_TEXT_THRESHOLD:
