@@ -69,10 +69,10 @@ def main():
 
         if config.model.half_size:
             # we have (almost) twice as fewer parameters, we can (almost) double the batch size
-            config.training.batch_size = int(config.training.batch_size * 1.8)
+            config.training.batch_size = int(config.training.batch_size * 1.5)
             print(f"Detected half-sized run, (almost) doubling batch size to {config.training.batch_size}.")
 
-            new_accumulation = max(1, int(config.training.lightning.get('accumulate_grad_batches') / 1.8))
+            new_accumulation = max(1, int(config.training.lightning.get('accumulate_grad_batches') / 1.5))
             config.training.lightning.__setattr__("accumulate_grad_batches", new_accumulation)
             print(f"Detected half-sized run, (almost) halving gradient accumulation to "
                   f"{config.training.lightning.get('accumulate_grad_batches')}")
