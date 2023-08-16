@@ -25,7 +25,6 @@ class FlavaPreTrainingLightningModule(LightningModule):
                 }
                 multimodal_config = {
                     "hidden_size": 516,  # multiple of the number of attention heads (12)
-                    "num_hidden_layers": 6 if kwargs['half_size'] else 12,
                 }
                 image_config = {
                     "hidden_size": 516,  # multiple of the number of attention heads (12)

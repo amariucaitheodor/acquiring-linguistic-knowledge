@@ -18,7 +18,7 @@ command:
 # What we do want is over-fitting detection, but that's done on the average validation loss using callbacks.
 parameters:
   text_perc:
-    values: [ 10, 1, 100 ] # 10 has priority because of the BabyLM deadline...
+    values: [ 1, 10, 100 ]
   vision_perc:
     values: [ 0, 1, 10, 100 ]
   seed: # Repeat each run five times with different seeds (then take average)

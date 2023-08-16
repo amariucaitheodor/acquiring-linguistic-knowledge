@@ -9,17 +9,21 @@ training:
     devices: -1
     val_check_interval: 8000
     limit_val_batches: 2000 # REQUIRED, otherwise the validation loop doesn't terminate
-    accumulate_grad_batches: 64 # designed for 2 GPUs, 32 batch size => 4096 simulated batch size
-    # could speed up training with 32 accumulation, 4 GPUs, 32 batch size => still 4096 simulated batch size
+    accumulate_grad_batches: 128 # EITHER RUN ON 1 GPU (HALF-FLAVAs or 80GB) or MULTIPLE GPUs!
+    # Experiments have been designed for <=64 grad accumulation (automatic, see train.py) and ~4096 batch size:
+    # - 1 GPU 80GB, 64 batch size, 64 accumulation => 4096 batch size
+    # - 1 GPU half-size FLAVA, 57 batch size, 71 accumulation => 4047 batch size
+    # - 1 GPU 80GB and half-size FLAVA, 115 batch size, 36 accumulation => 4140 batch size
+    # - X GPUs with X>=2, 32 batch size => accumulation divided by X to keep batch size ~4096
     enable_progress_bar: false
   lightning_checkpoint:
     dirpath: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/flava-wit/"
     filename: flava-{epoch:02d}-{step}
-  lightning_load_from_checkpoint: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/flava-wit/text10-vision100/bs4096_seed5501650_bf16-mixed/flava-epoch=00-step=7626.ckpt" # CHANGE THIS
+  lightning_load_from_checkpoint: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/flava-wit/text10-vision100/half_bs4096_seed5501650_bf16-mixed/flava-epoch=00-step=3753.ckpt" # CHANGE THIS
   seed: 5501650 # CHANGE THIS
   precision: bf16-mixed
-  strategy: ddp_find_unused_parameters_true
-  batch_size: 32
+  strategy: auto # FOR 2+ GPUs: ddp_find_unused_parameters_true
+  batch_size: 32 # don't change! maximum that fits on a 40GB VRAM GPU
   use_wandb: true
   # https://arxiv.org/pdf/2112.04482.pdf, A. Hyperparameters and details of FLAVA
   learning_rate: 1e-3
