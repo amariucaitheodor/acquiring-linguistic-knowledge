@@ -73,8 +73,7 @@ class ImageNetZeroshotCallback(Callback):
             texts = texts.to(device)
 
             class_embeddings = model.flava.get_text_features(**texts)
-            class_embeddings = model.flava.text_projection(class_embeddings[:, 0, :])
-            class_embeddings = nn.functional.normalize(class_embeddings, dim=-1)
+            class_embeddings = nn.functional.normalize(class_embeddings[:, 0, :], dim=-1)
 
             mean_embedding = class_embeddings.mean(dim=0)
             mean_embedding /= mean_embedding.norm()
@@ -116,8 +115,7 @@ class ImageNetZeroshotCallback(Callback):
             total_samples += labels.size(0)
 
             image_features = pl_module.model.flava.get_image_features(**batch)
-            image_features = pl_module.model.flava.image_projection(image_features[:, 0, :])
-            image_features = nn.functional.normalize(image_features, dim=-1)
+            image_features = nn.functional.normalize(image_features[:, 0, :], dim=-1)
 
             logits_per_image = 100.0 * image_features @ classifier
             pred_indices: Tensor = logits_per_image.topk(k=5, dim=1, largest=True, sorted=True)[1].t()

@@ -12,7 +12,9 @@ def get_corresponding_tokenizer_for_model(model: PreTrainedModel) -> PreTrainedT
 
 
 def replace_flava_submodel_with_orig_for_eval(model: FlavaForPreTraining) -> OptimizedModule:
-    assert type(model.flava.text_model) == OptimizedModule, "FLAVA text model is not an optimized module!"
+    if type(model.flava.text_model) != OptimizedModule:
+        print("FLAVA text model is not an optimized module! Are you using an externally pretrained model?")
+        return model.flava.text_model
     optimized_text_model: OptimizedModule = model.flava.text_model
     model.flava.text_model = model.flava.text_model._orig_mod
     return optimized_text_model
