@@ -147,26 +147,31 @@ class MultimodalOverfittingMonitor(Callback):
 
         if len(weights) == 1:
             if new_weight == 0.:
+                print(f"All sampling weights are zero (one modality): stopping training.")
                 self._stop_training(trainer)
             else:
                 self.datamodule.update_sampling_function_and_weights([new_weight])
         elif self.name == "mlm":
             self.datamodule.update_sampling_function_and_weights([weights[0], weights[1], new_weight])
             if new_weight == 0. and is_flava_model and pl_module.model.mmm_text_weight < MMM_TEXT_THRESHOLD:
-                self._stop_training(trainer)  # With no MLM and MMM_text, stop training
+                print(f"MLM sampling weight is {new_weight} and MMM_text weight is {pl_module.model.mmm_text_weight}: "
+                      f"stopping training.")
+                self._stop_training(trainer)
         elif self.name == "mim":
             self.datamodule.update_sampling_function_and_weights([weights[0], new_weight, weights[2]])
         else:
             pl_module.model.__setattr__(f"{self.name}_weight", new_weight)
             if new_weight == 0. and self.name == "mmm_text" and weights[2] == 0.:
-                self._stop_training(trainer)  # With no MLM and MMM_text, stop training
+                print(f"MMM_text weight is {new_weight} and MLM sampling weight is {weights[2]}: stopping training.")
+                self._stop_training(trainer)
 
         if is_flava_model:
             multimodal_tasks_weights = ["itm", "global_contrastive", "mmm_image", "mmm_text"]
             if all([pl_module.model.__getattribute__(f"{w}_weight") == 0. for w in multimodal_tasks_weights]):
                 self.datamodule.update_sampling_function_and_weights([0., weights[1], weights[2]])
 
-        if all([x == 0. for x in weights]):
+        if all([x == 0. for x in self.datamodule.sampling_weights]):
+            print(f"All sampling weights are zero: stopping training.")
             self._stop_training(trainer)
 
     @property
@@ -214,7 +219,10 @@ class MultimodalOverfittingMonitor(Callback):
         else:
             self.wait_count = state_dict["wait_count"]
         self.stopped_epoch = state_dict["stopped_epoch"]
+
+        # Weights might increase a bit across runs (when resuming). Consider not loading this.
         self.best_score = state_dict["best_score"]
+
         # Patience values might change across runs
         # self.patience = state_dict["patience"]
 
@@ -238,9 +246,8 @@ class MultimodalOverfittingMonitor(Callback):
         """Checks whether the cancel task condition is met and if so tells the model loss to ignore the task."""
         logs = trainer.callback_metrics
 
-        if trainer.fast_dev_run or not self._validate_condition_metric(  # disable early_stopping with fast_dev_run
-                logs
-        ):  # short circuit if metric not present
+        # disable early_stopping with fast_dev_run or short circuit if metric not present
+        if trainer.fast_dev_run or not self._validate_condition_metric(logs):
             return
 
         reason = None
@@ -299,12 +306,12 @@ class MultimodalOverfittingMonitor(Callback):
                 should_stop = True
                 reason = (
                     f"Monitored metric {self.monitor} did not improve in the last {self.wait_count} records."
-                    f" Best score: {self.best_score:.3f}. Signaling model to ignore task."
+                    f" Best score: {self.best_score:.3f} (now {current}). Signaling model to ignore task."
                 )
             else:
                 reason = (
                     f"Monitored metric {self.monitor} did not improve since the last {self.wait_count} records."
-                    f" Best score: {self.best_score:.3f}. Wait count has been increased from {self.wait_count - 1}."
+                    f" Best score: {self.best_score:.3f} (now {current}). Wait count has been increased from {self.wait_count - 1}."
                 )
 
         return should_stop, reason, wait_count_increased
