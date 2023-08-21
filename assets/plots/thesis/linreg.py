@@ -40,7 +40,7 @@ print(df.dtypes)
 
 print("============== SCALED ==============")
 scaler = RobustScaler()
-for col in ['Words', 'Images', 'Words']:
+for col in ['Words', 'Images']:  # , 'Score'
     df[[col]] = scaler.fit_transform(df[[col]])
 print(df)
 
