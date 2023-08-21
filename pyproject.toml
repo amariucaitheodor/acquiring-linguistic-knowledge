@@ -29,7 +29,8 @@ pycocotools = "^2.0.6"
 Pillow = "^9.5.0"
 protobuf = "^4.23.2"
 evaluate = "^0.4.0"
-seaborn = "^0.12.2"
+seaborn = "^0.12.2" # for plotting (analysis)
+statsmodels = "^0.14.0" # linear mixed effects model (analysis)
 
 [tool.poetry.dev-dependencies]
 

@@ -1,4 +1,8 @@
+import math
+from collections import defaultdict
 from itertools import groupby
+
+import pandas as pd
 
 BLIMP_CATEGORIES = {
     'anaphor_agreement': 'Anaphor Agreement',
@@ -16,10 +20,67 @@ BLIMP_CATEGORIES = {
 }
 
 
+def construct_table(model_type: str, statistic_type: str, deltas: bool):
+    def load_blimp_statistic(text_perc: int, vision_perc: int, category: str, statistic: str,
+                             steps_limit=None) -> float:
+        headers = ['Step', f'Group: text{text_perc}-vision{vision_perc} - evaluation/blimp/{category}']
+        df = pd.read_csv(f'{model_type}/{category}.csv', usecols=headers)
+        if steps_limit:
+            df = df[df[headers[0]] <= steps_limit]
+        blimp_values = pd.to_numeric(df[headers[1]]).values.tolist()
+        blimp_values = [x for x in blimp_values if not math.isnan(x)]
+        if statistic == 'max':
+            return round(max(blimp_values), 2)
+        elif statistic == 'last':
+            return round(blimp_values[-1], 2)
+        raise ValueError(f'Unknown type: {statistic}')
+
+    plotting_dict = defaultdict(list)
+    for text_perc in [1, 10]:
+        for vision_perc in [0, 1, 10, 100]:
+            for cat, formatted_cat in BLIMP_CATEGORIES.items():
+                plotting_dict['Blimp Category'].append(formatted_cat)
+                plotting_dict['Text'].append(f"{'10M' if text_perc == 1 else '100M'} words")
+                for vision_type in get_vision_types():
+                    if vision_type == get_label_map(text_perc, vision_perc):
+                        stat = load_blimp_statistic(text_perc, vision_perc, cat, statistic_type)
+                        if deltas and vision_perc > 0:
+                            stat = stat - load_blimp_statistic(text_perc, 0, cat, statistic_type)
+                        plotting_dict[vision_type].append(stat)
+                    else:
+                        plotting_dict[vision_type].append(math.nan)
+    return pd.DataFrame.from_dict(data=plotting_dict)
+
+
 def get_vision_types(old: bool = False):
     if old:
         return ['No Vision', 'Slight Vision', 'Full Vision', 'Extra (400K) Vision', 'Extra (4M) Vision']
     return ['No Images', '40K Images', '400K Images', '4M Images']
+
+
+def vision_type_to_float(vision_type: str) -> float:
+    number = vision_type.split(' ')[0]
+    if number == 'No':
+        return 0.
+    elif number == '40K':
+        return 40_000.
+    elif number == '400K':
+        return 400_000.
+    elif number == '4M':
+        return 4_000_000.
+    else:
+        raise ValueError(f'Unknown vision type: {vision_type}')
+
+
+def text_type_to_float(text_type: str) -> float:
+    if text_type == '10M words':
+        return 10_000_000.
+    elif text_type == '100M words':
+        return 100_000_000.
+    elif text_type == '1B words':
+        return 1_000_000_000.
+    else:
+        return math.nan
 
 
 def get_label_map(text_perc: int, vision_perc: int, old: bool = False):
