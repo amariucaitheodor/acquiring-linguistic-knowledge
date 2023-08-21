@@ -79,6 +79,7 @@ class TrainingArguments:
 class ModelArguments:
     pretrained: Optional[str] = None
     half_size: bool = False
+    load_prev_best_score: bool = True
     mlm_perc: float = 0.15
     name: str = 'flava'
 

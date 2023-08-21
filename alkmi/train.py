@@ -146,27 +146,27 @@ def main():
         print("Initializing datamodule")
         datamodule = initialize_multidatamodule(config)
 
-        def add_monitor(name: str, original_weight: float, patience: int = 3):
+        def add_monitor(name: str, original_weight: float, patience: int, load_prev_best_score: bool):
             nonlocal callbacks
             callbacks.append(
                 MultimodalOverfittingMonitor(monitor=f'validation/losses/{name}',
+                                             datamodule=datamodule,
                                              original_weight=original_weight,
-                                             datamodule=datamodule, patience=patience)
+                                             load_prev_best_score=load_prev_best_score,
+                                             patience=patience)
             )
 
         print("Registering multimodal overfitting monitors")
         if config.text_perc > 0:
             mlm_weight = datamodule.sampling_weights[2 if len(datamodule.sampling_weights) > 1 else 0]
-            add_monitor(name="mlm_loss", original_weight=mlm_weight)
+            add_monitor("mlm_loss", mlm_weight, patience=3, load_prev_best_score=config.model.load_prev_best_score)
         if config.vision_perc > 0:
             mim_weight = datamodule.sampling_weights[1 if len(datamodule.sampling_weights) > 1 else 0]
-            add_monitor(name="mim_loss", original_weight=mim_weight)
+            add_monitor("mim_loss", mim_weight, patience=3, load_prev_best_score=config.model.load_prev_best_score)
         if config.text_perc > 0 and config.vision_perc > 0:  # shakier than the others - need higher patience
-            add_monitor(name="itm_loss", patience=5, original_weight=model.model.itm_weight)
-            add_monitor(name="global_contrastive_loss", patience=5,
-                        original_weight=model.model.global_contrastive_weight)
-            add_monitor(name="mmm_image_loss", patience=5, original_weight=model.model.mmm_image_weight)
-            add_monitor(name="mmm_text_loss", patience=5, original_weight=model.model.mmm_text_weight)
+            for objective in ['itm', 'global_contrastive', 'mmm_image', 'mmm_text']:
+                add_monitor(f"{objective}_loss", model.model.__getattribute__(f"{objective}_weight"), patience=5,
+                            load_prev_best_score=config.model.load_prev_best_score)
 
             print("Adding ImageNet zeroshot callback")
             callbacks.append(

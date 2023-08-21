@@ -93,9 +93,10 @@ class MultimodalOverfittingMonitor(Callback):
             monitor: str,
             datamodule: MultiDataModule,
             original_weight: float,
+            load_prev_best_score: bool,
+            patience: int = 3,
             retry_patience: int = 8,
             min_delta: float = 0.0,
-            patience: int = 3,
             verbose: bool = True,
             mode: str = "min",
             strict: bool = True,
@@ -117,6 +118,7 @@ class MultimodalOverfittingMonitor(Callback):
         self.wait_count = 0
         self.stopped_epoch = 0
         self.log_rank_zero_only = log_rank_zero_only
+        self.load_prev_best_score = load_prev_best_score
 
         self.original_weight = original_weight
         self.retry_patience = retry_patience
@@ -220,8 +222,12 @@ class MultimodalOverfittingMonitor(Callback):
             self.wait_count = state_dict["wait_count"]
         self.stopped_epoch = state_dict["stopped_epoch"]
 
-        # Weights might increase a bit across runs (when resuming). Consider not loading this.
-        self.best_score = state_dict["best_score"]
+        # Losses might increase a bit across runs (when resuming).
+        if self.load_prev_best_score:
+            print(f"Loading previous best score for `{self.name}`: {state_dict['best_score']}.")
+            self.best_score = state_dict["best_score"]
+        else:
+            print(f"Not loading previous best score for `{self.name}`.")
 
         # Patience values might change across runs
         # self.patience = state_dict["patience"]

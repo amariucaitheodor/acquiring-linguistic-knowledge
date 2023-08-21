@@ -55,5 +55,6 @@ model:
   _target_: alkmi.definitions.ModelArguments
   pretrained: null
   half_size: true
+  load_prev_best_score: true # CHANGE THIS (depending on how stubborn the run is)
   mlm_perc: 0.4
   name: flava
