@@ -169,8 +169,8 @@ def main():
                 add_monitor(f"{objective}_loss", model.model.__getattribute__(f"{objective}_weight"), patience=4)
             for objective in ['itm', 'global_contrastive']:
                 add_monitor(f"{objective}_loss", model.model.__getattribute__(f"{objective}_weight"), patience=4,
-                            patience_degr_perc=0.7,  # should boost ImageNet zeroshot performance
-                            revive_reset_perc=0.25)  # should boost ImageNet zeroshot performance
+                            patience_degr_perc=0.65,  # should boost ImageNet zeroshot performance
+                            revive_reset_perc=0.8)  # should boost ImageNet zeroshot performance
 
             print("Adding ImageNet zeroshot callback")
             callbacks.append(ImageNetZeroshotCallback(config.training.lightning['enable_progress_bar']))

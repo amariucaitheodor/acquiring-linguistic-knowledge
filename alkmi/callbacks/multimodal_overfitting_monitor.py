@@ -124,7 +124,7 @@ class MultimodalOverfittingMonitor(Callback):
 
         # This is the factor by which we reduce the weight of the task when the wait count increases
         self.patience_degr_perc = patience_degr_perc
-        assert 0. < patience_degr_perc < 1., f"Patience degradation percentage {patience_degr_perc} must be in the interval (0,1)."
+        assert 0. < patience_degr_perc <= 1., f"Patience degradation percentage {patience_degr_perc} must be in the interval (0,1]."
 
         # This is the percentage (of the original task weight) to which we reset the weight
         self.revive_reset_perc = revive_reset_perc
