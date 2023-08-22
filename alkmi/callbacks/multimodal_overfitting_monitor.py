@@ -94,8 +94,10 @@ class MultimodalOverfittingMonitor(Callback):
             datamodule: MultiDataModule,
             original_weight: float,
             load_prev_best_score: bool,
+            patience_degr_perc: float,
+            revive_reset_perc: float,
             patience: int = 3,
-            retry_patience: int = 8,
+            revive_patience: int = 7,
             min_delta: float = 0.0,
             verbose: bool = True,
             mode: str = "min",
@@ -120,9 +122,17 @@ class MultimodalOverfittingMonitor(Callback):
         self.log_rank_zero_only = log_rank_zero_only
         self.load_prev_best_score = load_prev_best_score
 
+        # This is the factor by which we reduce the weight of the task when the wait count increases
+        self.patience_degr_perc = patience_degr_perc
+        assert 0. < patience_degr_perc < 1., f"Patience degradation percentage {patience_degr_perc} must be in the interval (0,1)."
+
+        # This is the percentage (of the original task weight) to which we reset the weight
+        self.revive_reset_perc = revive_reset_perc
+        assert 0. < revive_reset_perc < 1., f"Patience revival percentage {revive_reset_perc} must be in the interval (0,1)."
+
         self.original_weight = original_weight
-        self.retry_patience = retry_patience
-        assert retry_patience > patience, "Retry patience must be greater than the patience (must wait for a bit)."
+        self.revive_patience = revive_patience
+        assert revive_patience > patience, f"Retry patience {revive_patience} must be greater than the patience {patience} (must wait for a bit)."
 
         if self.mode not in self.mode_dict:
             raise MisconfigurationException(f"`mode` can be {', '.join(self.mode_dict.keys())}, got {self.mode}")
@@ -257,13 +267,13 @@ class MultimodalOverfittingMonitor(Callback):
             return
 
         reason = None
-        if self.wait_count >= self.retry_patience:
+        if self.wait_count >= self.revive_patience:
             reason = (
                 f"Monitored metric {self.monitor} did not improve in {self.wait_count} records."
-                f" This exceeds the restart patience {self.retry_patience}, so we will restart the task with"
-                f" renewed patience."
+                f" This exceeds the revival patience {self.revive_patience}, so we will restart the task with"
+                f" renewed wait count."
             )
-            self._set_weight(trainer, pl_module, 0.1 * self.original_weight)
+            self._set_weight(trainer, pl_module, self.revive_reset_perc * self.original_weight)
             self.wait_count = 0
         else:
             current = logs[self.monitor].squeeze()
@@ -277,8 +287,8 @@ class MultimodalOverfittingMonitor(Callback):
                 if patience_exhausted:
                     self._set_weight(trainer, pl_module, 0.)  # stop task
                 else:
-                    halved_weight = self._get_weight(pl_module) / 2.
-                    self._set_weight(trainer, pl_module, halved_weight)
+                    reduced_weight = self._get_weight(pl_module) * self.patience_degr_perc
+                    self._set_weight(trainer, pl_module, reduced_weight)
             else:
                 increased_weight = min(self.original_weight, self._get_weight(pl_module) * 1.1)
                 self._set_weight(trainer, pl_module, increased_weight)

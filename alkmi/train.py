@@ -143,35 +143,37 @@ def main():
         )
 
     if config.text_perc + config.vision_perc > 0:
-        print("Initializing datamodule")
+        print("Initializing multi-datamodule")
         datamodule = initialize_multidatamodule(config)
 
-        def add_monitor(name: str, original_weight: float, patience: int, load_prev_best_score: bool):
+        def add_monitor(name: str, original_weight: float, patience: int,
+                        patience_degr_perc: float = 0.5, revive_reset_perc: float = 0.1):
             nonlocal callbacks
-            callbacks.append(
-                MultimodalOverfittingMonitor(monitor=f'validation/losses/{name}',
-                                             datamodule=datamodule,
-                                             original_weight=original_weight,
-                                             load_prev_best_score=load_prev_best_score,
-                                             patience=patience)
-            )
+            callbacks.append(MultimodalOverfittingMonitor(monitor=f'validation/losses/{name}',
+                                                          datamodule=datamodule,
+                                                          original_weight=original_weight,
+                                                          load_prev_best_score=config.model.load_prev_best_score,
+                                                          patience=patience,
+                                                          patience_degr_perc=patience_degr_perc,
+                                                          revive_reset_perc=revive_reset_perc))
 
         print("Registering multimodal overfitting monitors")
         if config.text_perc > 0:
             mlm_weight = datamodule.sampling_weights[2 if len(datamodule.sampling_weights) > 1 else 0]
-            add_monitor("mlm_loss", mlm_weight, patience=3, load_prev_best_score=config.model.load_prev_best_score)
+            add_monitor("mlm_loss", mlm_weight, patience=3)
         if config.vision_perc > 0:
             mim_weight = datamodule.sampling_weights[1 if len(datamodule.sampling_weights) > 1 else 0]
-            add_monitor("mim_loss", mim_weight, patience=3, load_prev_best_score=config.model.load_prev_best_score)
+            add_monitor("mim_loss", mim_weight, patience=3)
         if config.text_perc > 0 and config.vision_perc > 0:  # shakier than the others - need higher patience
-            for objective in ['itm', 'global_contrastive', 'mmm_image', 'mmm_text']:
-                add_monitor(f"{objective}_loss", model.model.__getattribute__(f"{objective}_weight"), patience=5,
-                            load_prev_best_score=config.model.load_prev_best_score)
+            for objective in ['mmm_image', 'mmm_text']:
+                add_monitor(f"{objective}_loss", model.model.__getattribute__(f"{objective}_weight"), patience=4)
+            for objective in ['itm', 'global_contrastive']:
+                add_monitor(f"{objective}_loss", model.model.__getattribute__(f"{objective}_weight"), patience=4,
+                            patience_degr_perc=0.7,  # should boost ImageNet zeroshot performance
+                            revive_reset_perc=0.25)  # should boost ImageNet zeroshot performance
 
             print("Adding ImageNet zeroshot callback")
-            callbacks.append(
-                ImageNetZeroshotCallback(enable_progress_bar=config.training.lightning['enable_progress_bar'])
-            )
+            callbacks.append(ImageNetZeroshotCallback(config.training.lightning['enable_progress_bar']))
 
     print(f"Callbacks registered: {[type(c).__name__ for c in callbacks]}")
 
