@@ -13,7 +13,7 @@ from pytorch_lightning.loggers import WandbLogger
 
 from callbacks.blimp_eval import LMEvalHarnessCallback
 from callbacks.imagenet_zeroshot import ImageNetZeroshotCallback
-from callbacks.multimodal_overfitting_monitor import MultimodalOverfittingMonitor
+from callbacks.multimodal_scheduler import MultimodalScheduler
 from callbacks.pseudo_perplexity_eval import PseudoPerplexityCallback
 from definitions import AblationArguments
 from models.lightning_bert import BERTPreTrainingLightningModule
@@ -146,31 +146,25 @@ def main():
         print("Initializing multi-datamodule")
         datamodule = initialize_multidatamodule(config)
 
-        def add_monitor(name: str, original_weight: float, patience: int,
-                        patience_degr_perc: float = 0.5, revive_reset_perc: float = 0.1):
+        def add_monitor(name: str, original_weight: float, patience: int):
             nonlocal callbacks
-            callbacks.append(MultimodalOverfittingMonitor(monitor=f'validation/losses/{name}',
-                                                          datamodule=datamodule,
-                                                          original_weight=original_weight,
-                                                          load_prev_best_score=config.model.load_prev_best_score,
-                                                          patience=patience,
-                                                          patience_degr_perc=patience_degr_perc,
-                                                          revive_reset_perc=revive_reset_perc))
+            callbacks.append(MultimodalScheduler(monitor=f'validation/losses/{name}',
+                                                 datamodule=datamodule,
+                                                 original_weight=original_weight,
+                                                 load_prev_best_score=config.model.load_prev_best_score,
+                                                 patience=patience))
 
         print("Registering multimodal overfitting monitors")
+        # For MLM and MIM we directly reduce modality sampling weights (instead of task weights) to avoid burning cycles
         if config.text_perc > 0:
             mlm_weight = datamodule.sampling_weights[2 if len(datamodule.sampling_weights) > 1 else 0]
             add_monitor("mlm_loss", mlm_weight, patience=3)
         if config.vision_perc > 0:
             mim_weight = datamodule.sampling_weights[1 if len(datamodule.sampling_weights) > 1 else 0]
             add_monitor("mim_loss", mim_weight, patience=3)
-        if config.text_perc > 0 and config.vision_perc > 0:  # shakier than the others - need higher patience
-            for objective in ['mmm_image', 'mmm_text']:
+        if config.text_perc > 0 and config.vision_perc > 0:  # shakier than the unimodal ones - need higher patience
+            for objective in ['mmm_image', 'mmm_text', 'itm', 'global_contrastive']:
                 add_monitor(f"{objective}_loss", model.model.__getattribute__(f"{objective}_weight"), patience=4)
-            for objective in ['itm', 'global_contrastive']:
-                add_monitor(f"{objective}_loss", model.model.__getattribute__(f"{objective}_weight"), patience=4,
-                            patience_degr_perc=0.65,  # should boost ImageNet zeroshot performance
-                            revive_reset_perc=0.8)  # should boost ImageNet zeroshot performance
 
             print("Adding ImageNet zeroshot callback")
             callbacks.append(ImageNetZeroshotCallback(config.training.lightning['enable_progress_bar']))

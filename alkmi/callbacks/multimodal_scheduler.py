@@ -33,10 +33,10 @@ from torch import Tensor
 
 from data.multidata import MultiDataModule
 
-MMM_TEXT_THRESHOLD = 0.06  # insignificant enough that we'd like to stop training
+LOW_MULTIMODAL_TASK_WEIGHT_THRESHOLD = 0.1  # insignificant enough that we'd like to stop training if all were below
 
 
-class MultimodalOverfittingMonitor(Callback):
+class MultimodalScheduler(Callback):
     r"""
     Monitor a multimodal validation loss and set the task weight to 0 when it stops improving.
 
@@ -73,8 +73,8 @@ class MultimodalOverfittingMonitor(Callback):
     Example::
 
         >>> from pytorch_lightning import Trainer
-        >>> from alkmi.callbacks.multimodal_overfitting_monitor import MultimodalOverfittingMonitor
-        >>> multimodal_overfitting_monitor = MultimodalOverfittingMonitor('validation/losses/itm_loss')
+        >>> from alkmi.callbacks.multimodal_scheduler import MultimodalScheduler
+        >>> multimodal_overfitting_monitor = MultimodalScheduler('validation/losses/itm_loss')
         >>> trainer = Trainer(callbacks=[multimodal_overfitting_monitor])
 
     .. tip:: Saving and restoring multiple early stopping callbacks at the same time is supported under variation in the
@@ -94,10 +94,10 @@ class MultimodalOverfittingMonitor(Callback):
             datamodule: MultiDataModule,
             original_weight: float,
             load_prev_best_score: bool,
-            patience_degr_perc: float,
-            revive_reset_perc: float,
+            patience_degr_perc: float = 0.7,
+            revive_reset_perc: float = 0.7,
             patience: int = 3,
-            revive_patience: int = 7,
+            revive_patience: int = 6,
             min_delta: float = 0.0,
             verbose: bool = True,
             mode: str = "min",
@@ -165,22 +165,18 @@ class MultimodalOverfittingMonitor(Callback):
                 self.datamodule.update_sampling_function_and_weights([new_weight])
         elif self.name == "mlm":
             self.datamodule.update_sampling_function_and_weights([weights[0], weights[1], new_weight])
-            if new_weight == 0. and is_flava_model and pl_module.model.mmm_text_weight < MMM_TEXT_THRESHOLD:
-                print(f"MLM sampling weight is {new_weight} and MMM_text weight is {pl_module.model.mmm_text_weight}: "
-                      f"stopping training.")
-                self._stop_training(trainer)
         elif self.name == "mim":
             self.datamodule.update_sampling_function_and_weights([weights[0], new_weight, weights[2]])
         else:
             pl_module.model.__setattr__(f"{self.name}_weight", new_weight)
-            if new_weight == 0. and self.name == "mmm_text" and weights[2] == 0.:
-                print(f"MMM_text weight is {new_weight} and MLM sampling weight is {weights[2]}: stopping training.")
-                self._stop_training(trainer)
 
         if is_flava_model:
             multimodal_tasks_weights = ["itm", "global_contrastive", "mmm_image", "mmm_text"]
-            if all([pl_module.model.__getattribute__(f"{w}_weight") == 0. for w in multimodal_tasks_weights]):
+            if all([pl_module.model.__getattribute__(f"{w}_weight") <= LOW_MULTIMODAL_TASK_WEIGHT_THRESHOLD
+                    for w in multimodal_tasks_weights]):
                 self.datamodule.update_sampling_function_and_weights([0., weights[1], weights[2]])
+            else:
+                self.datamodule.update_sampling_function_and_weights([1., weights[1], weights[2]])
 
         if all([x == 0. for x in self.datamodule.sampling_weights]):
             print(f"All sampling weights are zero: stopping training.")
@@ -198,7 +194,7 @@ class MultimodalOverfittingMonitor(Callback):
 
         error_msg = (
             f"Task canceling conditioned on metric `{self.monitor}` which is not available."
-            " Pass in or modify your `MultimodalOverfittingMonitor` callback to use any of the following:"
+            " Pass in or modify your `MultimodalScheduler` callback to use any of the following:"
             f' `{"`, `".join(list(logs.keys()))}`'
         )
 
