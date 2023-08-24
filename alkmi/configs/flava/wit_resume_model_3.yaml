@@ -1,7 +1,7 @@
 _target_: alkmi.definitions.AblationArguments
 
 text_perc: 10 # CHANGE THIS
-vision_perc: 1 # CHANGE THIS
+vision_perc: 100 # CHANGE THIS
 
 training:
   _target_: alkmi.definitions.TrainingArguments
@@ -19,7 +19,7 @@ training:
   lightning_checkpoint:
     dirpath: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/flava-wit/"
     filename: flava-{epoch:02d}-{step}
-  lightning_load_from_checkpoint: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/flava-wit/text10-vision1/half_bs4080_seed5501650_bf16-mixed/flava-epoch=00-step=12518.ckpt" # CHANGE THIS
+  lightning_load_from_checkpoint: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/flava-wit/text10-vision100/half_bs4080_seed5501650_bf16-mixed/flava-epoch=00-step=7067.ckpt" # CHANGE THIS
   seed: 5501650 # CHANGE THIS
   precision: bf16-mixed
   strategy: auto # FOR 2+ GPUs: ddp_find_unused_parameters_true
