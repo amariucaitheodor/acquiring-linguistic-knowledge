@@ -1,0 +1,60 @@
+_target_: alkmi.definitions.AblationArguments
+
+text_perc: 10 # CHANGE THIS
+vision_perc: 100 # CHANGE THIS
+
+training:
+  _target_: alkmi.definitions.TrainingArguments
+  lightning:
+    devices: -1
+    val_check_interval: 8000
+    limit_val_batches: 2000 # REQUIRED, otherwise the validation loop doesn't terminate
+    accumulate_grad_batches: 128 # EITHER RUN ON 1 GPU (HALF-FLAVAs or 80GB) or MULTIPLE GPUs!
+    # Experiments have been designed for <=64 grad accumulation (automatic, see train.py) and ~4096 batch size:
+    # - 1 GPU 80GB, 64 batch size, 64 accumulation => 4096 batch size
+    # - 1 GPU half-size FLAVA, 57 batch size, 71 accumulation => 4047 batch size
+    # - 1 GPU 80GB and half-size FLAVA, 115 batch size, 36 accumulation => 4140 batch size
+    # - X GPUs with X>=2, 32 batch size => accumulation divided by X to keep batch size ~4096
+    enable_progress_bar: false
+  lightning_checkpoint:
+    dirpath: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/flava-wit/"
+    filename: flava-{epoch:02d}-{step}
+  lightning_load_from_checkpoint: "/cluster/work/cotterell/tamariucai/HuggingfaceCheckpoints/flava-wit/text10-vision100/half_bs4080_seed5501650_bf16-mixed/flava-epoch=00-step=7067.ckpt" # CHANGE THIS
+  seed: 5501650 # CHANGE THIS
+  precision: bf16-mixed
+  strategy: auto # FOR 2+ GPUs: ddp_find_unused_parameters_true
+  batch_size: 32 # don't change! maximum that fits on a 40GB VRAM GPU
+  use_wandb: true
+  # https://arxiv.org/pdf/2112.04482.pdf, A. Hyperparameters and details of FLAVA
+  learning_rate: 1e-3
+  learning_rate_text_submodel: 7.5e-4  # N.B. FLAVA pretrains unimodally on text with 5e-4, but we choose a midpoint here
+  adam_eps: 1e-8
+  adam_weight_decay: 1e-1
+  adam_betas: [ 0.9, 0.999 ]
+  warmup_steps: 10000
+
+datasets:
+  _target_: alkmi.definitions.TrainingDatasetsInfo
+  ablation:
+    # For VLDataModule, column "image" either needs to have an image (not the case for "facebook/pmd", "wit"), or be missing
+    _target_: alkmi.definitions.TrainingSingleDatasetInfo
+    train:
+      - _target_: alkmi.definitions.HFDatasetInfo
+        key: theodor1289/wit
+        split_key_mapping:
+          validation: test # 'validation' split does not exist for wit
+    val:
+      - _target_: alkmi.definitions.HFDatasetInfo
+        key: theodor1289/wit
+        split_key_mapping:
+          validation: test # 'validation' split does not exist for wit
+    datamodule_extra_kwargs: # This key is used in the MLMDataModule
+      text_columns: [ "text" ]
+
+model:
+  _target_: alkmi.definitions.ModelArguments
+  pretrained: null
+  half_size: true
+  load_prev_best_score: false # CHANGE THIS (depending on how stubborn the run is)
+  mlm_perc: 0.4
+  name: flava
