@@ -162,7 +162,8 @@ class MultimodalScheduler(Callback):
                 print(f"All sampling weights are zero (one modality): stopping training.")
                 self._stop_training(trainer)
             else:
-                self.datamodule.update_sampling_function_and_weights([new_weight])
+                print("Not changing (reducing or increasing) the task sampling weight as this is a unimodal run "
+                      "(what difference would it make after normalization to sum 1, anyway?)")
         elif self.name == "mlm":
             self.datamodule.update_sampling_function_and_weights([weights[0], weights[1], new_weight])
         elif self.name == "mim":
