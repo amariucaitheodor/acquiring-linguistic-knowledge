@@ -4,8 +4,10 @@ authors:
 - family-names: "Amariucai"
   given-names: "Theodor"
   orcid: "https://orcid.org/0009-0001-2506-2510"
+- family-names: "PyTorch"
+  given-names: "Multimodal Team"
 title: "Acquiring Linguistic Knowledge from Multimodal Input"
-version: 1.0.0
+version: 0.1.0
 # doi: 10.5281/zenodo.1234
 date-released: 2023-09-13
 url: "https://github.com/amariucaitheodor/acquiring-linguistic-knowledge"
