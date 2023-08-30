@@ -48,7 +48,7 @@ def construct_finetune_results_table():
     return pd.DataFrame.from_dict(data=plotting_dict)
 
 
-fig = plt.figure(figsize=(5, 5))
+fig = plt.figure(figsize=(6, 6))
 fig.suptitle(f"Influence of Vision on Linguistic Knowledge - (Super)GLUE scores")
 
 df = construct_finetune_results_table()

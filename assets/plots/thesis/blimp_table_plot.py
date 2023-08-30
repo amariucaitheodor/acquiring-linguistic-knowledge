@@ -1,12 +1,49 @@
+import math
+from collections import defaultdict
+
+import pandas as pd
 from matplotlib import pyplot as plt
 
 import seaborn as sns
 
-from assets.plots.thesis.utils import BLIMP_CATEGORIES, construct_blimp_results_table, plot
+from assets.plots.thesis.utils import BLIMP_CATEGORIES, plot, get_vision_types, get_label_map
 
 MODEL_TYPE = 'full_sized'
 PLOT_TYPE = 'heat'  # or bar
 DELTAS = True
+
+
+def construct_blimp_results_table(model_type: str, statistic_type: str, deltas: bool):
+    def load_blimp_statistic(text_perc: int, vision_perc: int, category: str, statistic: str,
+                             steps_limit=None) -> float:
+        headers = ['Step', f'Group: text{text_perc}-vision{vision_perc} - evaluation/blimp/{category}']
+        df = pd.read_csv(f'{model_type}/{category}.csv', usecols=headers)
+        if steps_limit:
+            df = df[df[headers[0]] <= steps_limit]
+        blimp_values = pd.to_numeric(df[headers[1]]).values.tolist()
+        blimp_values = [x for x in blimp_values if not math.isnan(x)]
+        if statistic == 'max':
+            return round(max(blimp_values), 2)
+        elif statistic == 'last':
+            return round(blimp_values[-1], 2)
+        raise ValueError(f'Unknown type: {statistic}')
+
+    plotting_dict = defaultdict(list)
+    for text_perc in [1, 10]:
+        for vision_perc in [0, 1, 10, 100]:
+            for cat, formatted_cat in BLIMP_CATEGORIES.items():
+                plotting_dict['Blimp Category'].append(formatted_cat)
+                plotting_dict['Text'].append(f"{'10M' if text_perc == 1 else '100M'} words")
+                for vision_type in get_vision_types():
+                    if vision_type == get_label_map(text_perc, vision_perc):
+                        stat = load_blimp_statistic(text_perc, vision_perc, cat, statistic_type)
+                        if deltas and vision_perc > 0:
+                            stat = stat - load_blimp_statistic(text_perc, 0, cat, statistic_type)
+                        plotting_dict[vision_type].append(stat)
+                    else:
+                        plotting_dict[vision_type].append(math.nan)
+    return pd.DataFrame.from_dict(data=plotting_dict)
+
 
 for statistic_type in ['max', 'last']:
     fig = plt.figure(figsize=(8, 8))
