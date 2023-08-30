@@ -28,13 +28,17 @@ def construct_finetune_results_table():
                     acc = round(json_data['eval_accuracy'] * 100, 2)
             except:
                 print("using placeholder")  # TODO: remove placeholder once runs finish
-                acc = 0
+                acc = 75.0
             plotting_dict['Task'].append(task)
             plotting_dict['TVolume'].append(f"{'10M' if text_perc == 1 else '100M'} words")
             if vision_perc == 0:
                 plotting_dict['Text'].append(acc)
                 plotting_dict['VL'].append(math.nan)
             else:
+                no_vision_model = f'thesis_{t}text{text_perc}_vision0'
+                with open(f"{LOCATION}/{no_vision_model}/finetune/{task}/eval_results.json", "rb") as f:
+                    json_data = json.load(f)
+                    acc -= round(json_data['eval_accuracy'] * 100, 2)
                 plotting_dict['VL'].append(acc)
                 plotting_dict['Text'].append(math.nan)
 
@@ -44,7 +48,7 @@ def construct_finetune_results_table():
     return pd.DataFrame.from_dict(data=plotting_dict)
 
 
-fig = plt.figure(figsize=(8, 8))
+fig = plt.figure(figsize=(5, 5))
 fig.suptitle(f"Influence of Vision on Linguistic Knowledge - (Super)GLUE scores")
 
 df = construct_finetune_results_table()
@@ -66,5 +70,5 @@ for k, glue_task in enumerate(TASKS):
         i, j = i + 1, 0
 
 fig.tight_layout()
-fig.savefig(f'{MODEL_TYPE}/heatmaps/finetune/plot.png')
-fig.savefig(f'{MODEL_TYPE}/heatmaps/finetune/plot.pdf')
+fig.savefig(f'{MODEL_TYPE}/heatmaps/finetune/finetune_heatmap.png')
+fig.savefig(f'{MODEL_TYPE}/heatmaps/finetune/finetune_heatmap.pdf')

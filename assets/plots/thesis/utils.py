@@ -112,7 +112,8 @@ def label_group_bar_table(ax, df):
         ypos -= .1
 
 
-def plot(df, fig, max_cols, index, use_deltas: bool, title: str, num: int, plot_type: str = 'heat', diverging_palette_cmap=None):
+def plot(df, fig, max_cols, index, use_deltas: bool, title: str, num: int, plot_type: str = 'heat',
+         diverging_palette_cmap=None):
     y_min = 40
 
     def remove_default_x_labels(ax):
@@ -134,7 +135,7 @@ def plot(df, fig, max_cols, index, use_deltas: bool, title: str, num: int, plot_
             cmap.set_over(cmap(0.5))
         else:
             cmap = sns.color_palette("viridis", as_cmap=True)
-        sns.heatmap(plot_df, ax=ax, annot=True,
+        sns.heatmap(plot_df, ax=ax, annot=True, fmt='.2f',
                     vmin=y_min if not use_deltas else -8,
                     vmax=100 if not use_deltas else 8,
                     cbar=index % max_cols == 0, cmap=cmap,
