@@ -3,13 +3,13 @@ import math
 from sklearn.preprocessing import RobustScaler
 
 from assets.plots.thesis.diagnostics_linreg import LMERegDiagnostic
-from assets.plots.thesis.utils import construct_table, get_vision_types, vision_type_to_float, text_type_to_float, \
+from assets.plots.thesis.utils import construct_blimp_results_table, get_vision_types, vision_type_to_float, text_type_to_float, \
     BLIMP_CATEGORIES
 import statsmodels.formula.api as smf
 
 MODEL_TYPE = 'full_sized'
 statistic_type = 'max'
-df = construct_table(MODEL_TYPE, statistic_type, False)
+df = construct_blimp_results_table(MODEL_TYPE, statistic_type, False)
 
 images_count = []
 for index, row in df.iterrows():

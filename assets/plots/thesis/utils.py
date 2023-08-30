@@ -3,6 +3,8 @@ from collections import defaultdict
 from itertools import groupby
 
 import pandas as pd
+from matplotlib.patches import Rectangle
+import seaborn as sns
 
 BLIMP_CATEGORIES = {
     'anaphor_agreement': 'Anaphor Agreement',
@@ -20,7 +22,7 @@ BLIMP_CATEGORIES = {
 }
 
 
-def construct_table(model_type: str, statistic_type: str, deltas: bool):
+def construct_blimp_results_table(model_type: str, statistic_type: str, deltas: bool):
     def load_blimp_statistic(text_perc: int, vision_perc: int, category: str, statistic: str,
                              steps_limit=None) -> float:
         headers = ['Step', f'Group: text{text_perc}-vision{vision_perc} - evaluation/blimp/{category}']
@@ -108,3 +110,43 @@ def label_group_bar_table(ax, df):
             ax.text(lxpos, ypos, label, ha='center', transform=ax.transAxes)
             pos += rpos
         ypos -= .1
+
+
+def plot(df, fig, max_cols, index, use_deltas: bool, title: str, num: int, plot_type: str = 'heat', diverging_palette_cmap=None):
+    y_min = 40
+
+    def remove_default_x_labels(ax):
+        ax.set_xticklabels([''] * len(ax.get_xticklabels()))
+        ax.set_xlabel('')
+
+    ax = fig.add_subplot(math.ceil(num / max_cols), max_cols, index)
+    if plot_type == 'bar':
+        df.plot(kind='bar', stacked=False, ax=ax, legend=False, ylim=(y_min, 100))
+        for container in ax.containers:
+            ax.bar_label(container, fontsize=7)
+        remove_default_x_labels(ax)
+        label_group_bar_table(ax, df)
+        ax.grid(axis='y')
+    elif plot_type == 'heat':
+        plot_df = df.droplevel(0).transpose()
+        if use_deltas:
+            cmap = diverging_palette_cmap
+            cmap.set_over(cmap(0.5))
+        else:
+            cmap = sns.color_palette("viridis", as_cmap=True)
+        sns.heatmap(plot_df, ax=ax, annot=True,
+                    vmin=y_min if not use_deltas else -8,
+                    vmax=100 if not use_deltas else 8,
+                    cbar=index % max_cols == 0, cmap=cmap,
+                    yticklabels=index % max_cols == 1)
+
+        ax.add_patch(Rectangle((0, 0), 2, 1, fill=False, edgecolor='black', lw=1, clip_on=False))
+
+        remove_default_x_labels(ax)
+        ax.set_xticklabels(['100M', '10M'], rotation=0, rotation_mode='anchor')
+        ax.set_title(title, fontsize=10)
+        ax.invert_yaxis()
+        ax.invert_xaxis()
+    else:
+        raise ValueError(f'Unknown plot type: {plot_type}')
+    return ax
