@@ -1,9 +1,11 @@
 import math
 
+import numpy as np
 from sklearn.preprocessing import RobustScaler
 
+from assets.plots.thesis.blimp_table_plot import construct_blimp_results_table
 from assets.plots.thesis.diagnostics_linreg import LMERegDiagnostic
-from assets.plots.thesis.utils import construct_blimp_results_table, get_vision_types, vision_type_to_float, text_type_to_float, \
+from assets.plots.thesis.utils import get_vision_types, vision_type_to_float, text_type_to_float, \
     BLIMP_CATEGORIES
 import statsmodels.formula.api as smf
 
@@ -37,6 +39,18 @@ df = df.drop(get_vision_types(), axis=1)
 print("============== ORIGINAL ==============")
 print(df)
 print(df.dtypes)
+
+# Not very helpful
+# print("============== INTERACTION TERM ==============")
+# print(np.multiply(df["Words"], df["Images"]))
+# df['Words_Images'] = np.multiply(df["Words"], df["Images"])
+# print(df)
+
+print("============== LOG TRANSFORMED ==============")
+EPS = 10e-10
+for col in ['Words', 'Images']:
+    df[[col]] = np.log10(df[[col]] + EPS)
+print(df)
 
 print("============== SCALED ==============")
 scaler = RobustScaler()

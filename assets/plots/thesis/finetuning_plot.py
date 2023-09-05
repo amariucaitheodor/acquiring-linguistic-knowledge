@@ -11,7 +11,7 @@ from assets.plots.thesis.utils import plot
 
 MODEL_TYPE = 'half_sized'
 LOCATION = '/cluster/work/cotterell/tamariucai/acquiring-linguistic-knowledge/alkmi/callbacks/evaluation-pipeline/results/theodor1289'
-TASKS = ['qqp', 'mnli', 'mnli-mm', 'qnli', 'sst2', 'cola', 'multirc', 'mrpc', 'rte', 'boolq', 'wsc']
+TASKS = ['cola', 'sst2', 'mrpc', 'mnli', 'mnli-mm', 'qnli', 'qqp', 'rte', 'multirc', 'boolq', 'wsc']
 
 
 def construct_finetune_results_table():
