@@ -1,6 +1,7 @@
 import math
 from itertools import groupby
 
+import numpy as np
 from matplotlib.patches import Rectangle
 import seaborn as sns
 
@@ -78,6 +79,16 @@ def label_group_bar_table(ax, df):
         ypos -= .1
 
 
+def underline(d: float, times: int) -> str:
+    d = round(d, 2)
+    if times == 0:
+        return str(d)
+    elif times == 1:
+        return r'\underline{' + str(d) + '}'
+    else:
+        return r'\underline{' + underline(d, times - 1) + '}'
+
+
 def plot(df, fig, max_cols, index, use_deltas: bool, title: str, num: int, plot_type: str = 'heat',
          palette_cmap=None, change_text_vol_labels: bool = False, range: tuple = (40, 100)):
     def remove_default_x_labels(ax):
@@ -86,7 +97,7 @@ def plot(df, fig, max_cols, index, use_deltas: bool, title: str, num: int, plot_
 
     ax = fig.add_subplot(math.ceil(num / max_cols), max_cols, index)
     if plot_type == 'bar':
-        df.plot(kind='bar', stacked=False, ax=ax, legend=False, ylim=(y_min, 100))
+        df.plot(kind='bar', stacked=False, ax=ax, legend=False, ylim=(range[0], range[1]))
         for container in ax.containers:
             ax.bar_label(container, fontsize=7)
         remove_default_x_labels(ax)
@@ -99,11 +110,22 @@ def plot(df, fig, max_cols, index, use_deltas: bool, title: str, num: int, plot_
             cmap.set_over(cmap(0.5))
         else:
             cmap = sns.color_palette("viridis", as_cmap=True) if not palette_cmap else palette_cmap
-        sns.heatmap(plot_df, ax=ax, annot=True, fmt='.2f',
-                    vmin=range[0] if not use_deltas else -8,
-                    vmax=range[1] if not use_deltas else 8,
-                    cbar=index % max_cols == 0, cmap=cmap,
-                    yticklabels=index % max_cols == 1)
+        one_line_limit = 0.6
+        if title == 'top-1':
+            two_lines_limit = 2
+        else:
+            two_lines_limit = 6
+        is_multimodal_retrieval_plot = 'Multimodal' in fig._suptitle.get_text()
+        heatmap = sns.heatmap(plot_df, ax=ax, fmt='' if is_multimodal_retrieval_plot else '.2f',
+                              vmin=range[0] if not use_deltas else -8,
+                              vmax=range[1] if not use_deltas else 8,
+                              cbar=index % max_cols == 0, cmap=cmap,
+                              yticklabels=index % max_cols == 1,
+                              annot=np.array(
+                                  [underline(data, 2 if data > two_lines_limit else (1 if data > one_line_limit else 0))
+                                   for data in plot_df.values.ravel()]).reshape(
+                                  np.shape(plot_df)) if is_multimodal_retrieval_plot else True,
+                              )
 
         if use_deltas:
             ax.add_patch(Rectangle((0, 0), 2, 1, fill=False, edgecolor='black', lw=1, clip_on=False))
@@ -111,9 +133,15 @@ def plot(df, fig, max_cols, index, use_deltas: bool, title: str, num: int, plot_
         if change_text_vol_labels:
             remove_default_x_labels(ax)
             ax.set_xticklabels(['100M', '10M'], rotation=0, rotation_mode='anchor')
-        ax.set_title(title, fontsize=10)
+        ax.set_title(title, fontsize=14 if is_multimodal_retrieval_plot else 10)
         ax.invert_yaxis()
-        ax.invert_xaxis()
+        if not is_multimodal_retrieval_plot:
+            ax.invert_xaxis()
+        else:
+            heatmap.set_yticklabels(f"{x._text}\%" for x in heatmap.get_yticklabels())
+            heatmap.set_xticklabels(f"{x._text}\%" for x in heatmap.get_xticklabels())
+            if index % max_cols != 1:
+                ax.set_ylabel('')
     else:
         raise ValueError(f'Unknown plot type: {plot_type}')
     return ax

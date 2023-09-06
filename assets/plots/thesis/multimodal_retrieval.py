@@ -10,6 +10,12 @@ from assets.plots.thesis.utils import plot
 
 MODEL_TYPE = 'half_sized'
 
+# Activating tex in all labels globally
+plt.rc('text', usetex=True)
+
+# Adjust font specs as desired (here: closest similarity to seaborn standard)
+plt.rc('font', **{'size': 14.0})
+plt.rc('text.latex', preamble=r'\usepackage{lmodern}')
 
 def construct_retrieval_results_table():
     def load_retrieval_max(text_perc: int, vision_perc: int, topk: int, statistic: str, steps_limit=None) -> float:
@@ -32,11 +38,11 @@ def construct_retrieval_results_table():
     for text_perc in [1, 10]:
         for vision_perc in [0, 1, 10, 100]:
             for topk in [1, 5]:
-                plotting_dict['Text'].append(f"{text_perc}%")
-                plotting_dict['Vision'].append(f"{vision_perc}%")
-                plotting_dict[f'Top'].append(topk)
+                plotting_dict['Text'].append(text_perc)
+                plotting_dict['Vision'].append(vision_perc)
+                plotting_dict['Top'].append(topk)
                 stat = load_retrieval_max(text_perc, vision_perc, topk, 'max')
-                plotting_dict[f'max'].append(stat)
+                plotting_dict['max'].append(stat)
     return pd.DataFrame.from_dict(data=plotting_dict)
 
 
@@ -44,7 +50,7 @@ df = construct_retrieval_results_table()
 print(df)
 
 fig = plt.figure(figsize=(5, 5))
-fig.suptitle(f"Multimodal Text Retrieval on ImageNet-1k")
+fig.suptitle(f"Multimodal Text Retrieval on ImageNet-1K")
 
 df = df.pivot(index=['Text', 'Top'], columns='Vision', values='max')
 df = df.groupby(['Top', 'Text']).sum()
