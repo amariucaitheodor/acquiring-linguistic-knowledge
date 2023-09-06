@@ -58,6 +58,13 @@ for col in ['Words', 'Images']:  # , 'Score'
     df[[col]] = scaler.fit_transform(df[[col]])
 print(df)
 
+for words in [-0.5, 0.5]:
+    new_df = df[df["Words"] == words]
+    me_model = smf.mixedlm("Score ~ Images", new_df, groups=new_df["Category"])
+    res_me = me_model.fit()
+    print(f"For a {'low' if words < 0 else 'high'}-text environment:")
+    print(res_me.summary())
+
 me_model = smf.mixedlm("Score ~ Words + Images", df, groups=df["Category"])
 res_me = me_model.fit()
 print(res_me.summary())
