@@ -117,8 +117,7 @@ def plot(df, fig, max_cols, index, use_deltas: bool, title: str, num: int, plot_
             two_lines_limit = 6
         is_multimodal_retrieval_plot = 'Multimodal' in fig._suptitle.get_text()
         heatmap = sns.heatmap(plot_df, ax=ax, fmt='' if is_multimodal_retrieval_plot else '.2f',
-                              vmin=range[0] if not use_deltas else -8,
-                              vmax=range[1] if not use_deltas else 8,
+                              vmin=range[0], vmax=range[1],
                               cbar=index % max_cols == 0, cmap=cmap,
                               yticklabels=index % max_cols == 1,
                               annot=np.array(

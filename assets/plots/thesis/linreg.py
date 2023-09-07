@@ -9,9 +9,9 @@ from assets.plots.thesis.utils import get_vision_types, vision_type_to_float, te
     BLIMP_CATEGORIES
 import statsmodels.formula.api as smf
 
-MODEL_TYPE = 'full_sized'
+MODEL_TYPE = 'half_sized'
 statistic_type = 'max'
-df = construct_blimp_results_table(MODEL_TYPE, statistic_type, False)
+df = construct_blimp_results_table(MODEL_TYPE, statistic_type, False, steps_limit=[3000, float('inf')])
 
 images_count = []
 for index, row in df.iterrows():
