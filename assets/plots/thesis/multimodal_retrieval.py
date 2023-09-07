@@ -17,6 +17,7 @@ plt.rc('text', usetex=True)
 plt.rc('font', **{'size': 14.0})
 plt.rc('text.latex', preamble=r'\usepackage{lmodern}')
 
+
 def construct_retrieval_results_table():
     def load_retrieval_max(text_perc: int, vision_perc: int, topk: int, statistic: str, steps_limit=None) -> float:
         if vision_perc == 0:
@@ -61,7 +62,7 @@ for topk in [1, 5]:
     top_filtered_df = df[df.index.get_level_values('Top') == topk]
     index = i * max_cols + j + 1
     axes[index] = plot(top_filtered_df, fig, max_cols, index, False, f'top-{topk}', 2, 'heat',
-                       sns.color_palette("Greens", as_cmap=True), change_text_vol_labels=False, range=(0, 7.5))
+                       sns.color_palette("Greens", as_cmap=True), change_text_vol_labels=False, range=(0, 9))
     j += 1
     if j == max_cols:
         i, j = i + 1, 0
