@@ -1,7 +1,9 @@
 import math
+from functools import cache
 from itertools import groupby
 
 import numpy as np
+import pandas as pd
 from matplotlib.patches import Rectangle
 import seaborn as sns
 
@@ -144,3 +146,29 @@ def plot(df, fig, max_cols, index, use_deltas: bool, title: str, num: int, plot_
     else:
         raise ValueError(f'Unknown plot type: {plot_type}')
     return ax
+
+
+@cache
+def find_best_checkpoint(text_perc: int, vision_perc: int, model_type: str = 'half_sized'):
+    """
+    Found best checkpoint for (text 1%, vision 0%): 4613
+    Found best checkpoint for (text 1%, vision 1%): 12495
+    Found best checkpoint for (text 1%, vision 10%): 5136
+    Found best checkpoint for (text 1%, vision 100%): 5136
+    Found best checkpoint for (text 10%, vision 0%): 25161
+    Found best checkpoint for (text 10%, vision 1%): 50133
+    Found best checkpoint for (text 10%, vision 10%): 16912
+    Found best checkpoint for (text 10%, vision 100%): 20099
+    """
+    headers_mlm = ['Step', f'Group: text{text_perc}-vision{vision_perc} - validation/losses/mlm_loss']
+    df = pd.read_csv(f'{model_type}/data/validation_losses/mlm_loss.csv', usecols=headers_mlm)
+    if vision_perc > 0:
+        headers_mmm_text = ['Step', f'Group: text{text_perc}-vision{vision_perc} - validation/losses/mmm_text_loss']
+        df2 = pd.read_csv(f'{model_type}/data/validation_losses/mmm_text_loss.csv', usecols=headers_mmm_text)
+        df = pd.merge(df, df2, on='Step')
+        df['sum_losses'] = df[headers_mlm[1]] + df[headers_mmm_text[1]]
+    else:
+        df['sum_losses'] = df[headers_mlm[1]]
+    res = int(df.loc[df['sum_losses'].idxmin()]['Step'])
+    print(f"Found best checkpoint for (text {text_perc}%, vision {vision_perc}%): {res}")
+    return res
