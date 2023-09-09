@@ -137,7 +137,7 @@ class LMERegDiagnostic():
         # annotations
         residual_abs = np.abs(self.residual)
         abs_resid = np.flip(np.argsort(residual_abs), 0)
-        abs_resid_top_5 = abs_resid[:5]
+        abs_resid_top_5 = abs_resid[:3]
         for i in abs_resid_top_5:
             ax.annotate(
                 i,
@@ -184,7 +184,7 @@ class LMERegDiagnostic():
 
         # annotations
         abs_norm_resid = np.flip(np.argsort(np.abs(self.residual_norm)), 0)
-        abs_norm_resid_top_5 = abs_norm_resid[:5]
+        abs_norm_resid_top_5 = abs_norm_resid[:3]
         for i, x, y in __qq_top_resid(QQ.theoretical_quantiles, abs_norm_resid_top_5):
             ax.annotate(
                 i,
@@ -220,7 +220,7 @@ class LMERegDiagnostic():
 
         # annotations
         abs_sq_norm_resid = np.flip(np.argsort(residual_norm_abs_sqrt), 0)
-        abs_sq_norm_resid_top_5 = abs_sq_norm_resid[:5]
+        abs_sq_norm_resid_top_5 = abs_sq_norm_resid[:3]
         for i in abs_sq_norm_resid_top_5:
             ax.annotate(
                 i,
