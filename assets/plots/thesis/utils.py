@@ -153,7 +153,8 @@ def plot(df, fig, max_cols, index, use_deltas: bool, title: str, num: int, plot_
     return ax
 
 
-def get_statistic(lst: List, df=None, headers=None, text_perc=None, vision_perc=None, stat: str = 'best_ckpt'):
+def get_statistic(lst: List, df=None, headers=None, text_perc=None, vision_perc=None, stat: str = 'best_ckpt',
+                  model_type: str = 'half_sized'):
     if stat == 'max':
         warnings.warn(f'Max is not a recommended statistic (scores come from different checkpoints)')
         return round(max(lst), 2)
@@ -164,7 +165,7 @@ def get_statistic(lst: List, df=None, headers=None, text_perc=None, vision_perc=
         warnings.warn(f'`Average` is not a recommended statistic (scores come from different checkpoints)')
         return round(mean(lst), 2)
     elif stat == 'best_ckpt':
-        best_ckpt = find_best_checkpoint(text_perc, vision_perc)
+        best_ckpt = find_best_checkpoint(text_perc, vision_perc, model_type)
         score_of_best_ckpt = df[df[headers[0]] == best_ckpt][headers[1]].values[0]
         return round(score_of_best_ckpt * 100, 2)
     else:

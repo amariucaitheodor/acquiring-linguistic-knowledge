@@ -22,7 +22,7 @@ def construct_blimp_results_table(model_type: str, statistic_type: str, deltas: 
             blimp_values = [v for v in list(df[headers[1]]) if not math.isnan(v)]
         else:
             blimp_values = None
-        return get_statistic(blimp_values, df, headers, text_perc, vision_perc, statistic) / (
+        return get_statistic(blimp_values, df, headers, text_perc, vision_perc, statistic, model_type) / (
             100 if statistic == 'best_ckpt' else 1)
 
     plotting_dict = defaultdict(list)

@@ -26,7 +26,7 @@ def construct_retrieval_results_table():
         headers = ['Step', f'Group: text{text_perc}-vision{vision_perc} - evaluation/imagenet_zeroshot/top{topk}']
         df = pd.read_csv(f'{MODEL_TYPE}/data/multimodal_retrieval/top_{topk}.csv', usecols=headers)
         retrieval_acc_values = [x * 100 for x in list(df[headers[1]]) if not math.isnan(x)]
-        return get_statistic(retrieval_acc_values, df, headers, text_perc, vision_perc, statistic)
+        return get_statistic(retrieval_acc_values, df, headers, text_perc, vision_perc, statistic, MODEL_TYPE)
 
     plotting_dict = defaultdict(list)
     for text_perc in [1, 10]:
