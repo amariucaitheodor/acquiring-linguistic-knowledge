@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
-from assets.plots.thesis.utils import plot
+from assets.plots.thesis.utils import plot, get_statistic
 
 MODEL_TYPE = 'half_sized'
 
@@ -19,21 +19,14 @@ plt.rc('text.latex', preamble=r'\usepackage{lmodern}')
 
 
 def construct_retrieval_results_table():
-    def load_retrieval_max(text_perc: int, vision_perc: int, topk: int, statistic: str, steps_limit=None) -> float:
+    def load_retrieval(text_perc: int, vision_perc: int, topk: int, statistic: str = 'best_ckpt') -> float:
         if vision_perc == 0:
             # based on previous runs avg. (and random guessing probability, too)
             return np.random.normal(0.1 * topk, 0.01 * topk)
         headers = ['Step', f'Group: text{text_perc}-vision{vision_perc} - evaluation/imagenet_zeroshot/top{topk}']
-        df = pd.read_csv(f'{MODEL_TYPE}/multimodal_retrieval/top_{topk}.csv', usecols=headers)
-        if steps_limit:
-            df = df[df[headers[0]] <= steps_limit]
-        retrieval_acc_values = pd.to_numeric(df[headers[1]]).values.tolist()
-        retrieval_acc_values = [x for x in retrieval_acc_values if not math.isnan(x)]
-        if statistic == 'max':
-            return round(max(retrieval_acc_values) * 100, 2)
-        elif statistic == 'last':
-            return round(retrieval_acc_values[-1] * 100, 2)
-        raise ValueError(f'Unknown type: {statistic}')
+        df = pd.read_csv(f'{MODEL_TYPE}/data/multimodal_retrieval/top_{topk}.csv', usecols=headers)
+        retrieval_acc_values = [x * 100 for x in list(df[headers[1]]) if not math.isnan(x)]
+        return get_statistic(retrieval_acc_values, df, headers, text_perc, vision_perc, statistic)
 
     plotting_dict = defaultdict(list)
     for text_perc in [1, 10]:
@@ -42,8 +35,7 @@ def construct_retrieval_results_table():
                 plotting_dict['Text'].append(text_perc)
                 plotting_dict['Vision'].append(vision_perc)
                 plotting_dict['Top'].append(topk)
-                stat = load_retrieval_max(text_perc, vision_perc, topk, 'max')
-                plotting_dict['max'].append(stat)
+                plotting_dict['mtr_score'].append(load_retrieval(text_perc, vision_perc, topk))
     return pd.DataFrame.from_dict(data=plotting_dict)
 
 
@@ -53,7 +45,7 @@ print(df)
 fig = plt.figure(figsize=(5, 5))
 fig.suptitle(f"Multimodal Text Retrieval on ImageNet-1K")
 
-df = df.pivot(index=['Text', 'Top'], columns='Vision', values='max')
+df = df.pivot(index=['Text', 'Top'], columns='Vision', values='mtr_score')
 df = df.groupby(['Top', 'Text']).sum()
 
 i, j, max_cols = 0, 0, 2

@@ -1,6 +1,10 @@
 import math
+import warnings
+from collections import defaultdict
 from functools import cache
 from itertools import groupby
+from statistics import mean
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -112,10 +116,11 @@ def plot(df, fig, max_cols, index, use_deltas: bool, title: str, num: int, plot_
             cmap.set_over(cmap(0.5))
         else:
             cmap = sns.color_palette("viridis", as_cmap=True) if not palette_cmap else palette_cmap
-        one_line_limit = 0.6
         if title == 'top-1':
+            one_line_limit = 0.2
             two_lines_limit = 2
         else:
+            one_line_limit = 1
             two_lines_limit = 6
         is_multimodal_retrieval_plot = 'Multimodal' in fig._suptitle.get_text()
         heatmap = sns.heatmap(plot_df, ax=ax, fmt='' if is_multimodal_retrieval_plot else '.2f',
@@ -148,27 +153,35 @@ def plot(df, fig, max_cols, index, use_deltas: bool, title: str, num: int, plot_
     return ax
 
 
+def get_statistic(lst: List, df=None, headers=None, text_perc=None, vision_perc=None, stat: str = 'best_ckpt'):
+    if stat == 'max':
+        warnings.warn(f'Max is not a recommended statistic (scores come from different checkpoints)')
+        return round(max(lst), 2)
+    elif stat == 'last':
+        warnings.warn(f'`Last` is not a recommended statistic (model might have overfit)')
+        return round(lst[-1], 2)
+    elif stat == 'avg':
+        warnings.warn(f'`Average` is not a recommended statistic (scores come from different checkpoints)')
+        return round(mean(lst), 2)
+    elif stat == 'best_ckpt':
+        best_ckpt = find_best_checkpoint(text_perc, vision_perc)
+        score_of_best_ckpt = df[df[headers[0]] == best_ckpt][headers[1]].values[0]
+        return round(score_of_best_ckpt * 100, 2)
+    else:
+        raise ValueError(f'Unknown statistic type: {stat}')
+
+
 @cache
 def find_best_checkpoint(text_perc: int, vision_perc: int, model_type: str = 'half_sized'):
-    """
-    Found best checkpoint for (text 1%, vision 0%): 4613
-    Found best checkpoint for (text 1%, vision 1%): 12495
-    Found best checkpoint for (text 1%, vision 10%): 5136
-    Found best checkpoint for (text 1%, vision 100%): 5136
-    Found best checkpoint for (text 10%, vision 0%): 25161
-    Found best checkpoint for (text 10%, vision 1%): 50133
-    Found best checkpoint for (text 10%, vision 10%): 16912
-    Found best checkpoint for (text 10%, vision 100%): 20099
-    """
-    headers_mlm = ['Step', f'Group: text{text_perc}-vision{vision_perc} - validation/losses/mlm_loss']
-    df = pd.read_csv(f'{model_type}/data/validation_losses/mlm_loss.csv', usecols=headers_mlm)
+    headers = defaultdict(list)
+    headers['pppl'] = ['Step', f'Group: text{text_perc}-vision{vision_perc} - evaluation/pseudo_perplexity']
+    df = pd.read_csv(f'{model_type}/data/validation_losses/pppl.csv', usecols=headers['pppl'])
     if vision_perc > 0:
-        headers_mmm_text = ['Step', f'Group: text{text_perc}-vision{vision_perc} - validation/losses/mmm_text_loss']
-        df2 = pd.read_csv(f'{model_type}/data/validation_losses/mmm_text_loss.csv', usecols=headers_mmm_text)
-        df = pd.merge(df, df2, on='Step')
-        df['sum_losses'] = df[headers_mlm[1]] + df[headers_mmm_text[1]]
-    else:
-        df['sum_losses'] = df[headers_mlm[1]]
-    res = int(df.loc[df['sum_losses'].idxmin()]['Step'])
-    print(f"Found best checkpoint for (text {text_perc}%, vision {vision_perc}%): {res}")
+        for loss in ['global_contrastive_loss', 'mlm_loss', 'mmm_text_loss']:
+            headers[loss] = ['Step', f'Group: text{text_perc}-vision{vision_perc} - validation/losses/{loss}']
+            df2 = pd.read_csv(f'{model_type}/data/validation_losses/{loss}.csv', usecols=headers[loss])
+            df = pd.merge(df, df2, how='inner', on='Step')  # just makes sure that all steps have all losses
+    res = int(df.loc[df[headers['pppl'][1]].idxmin()]['Step'])
+    print(f"Found best PPPL {'+ MULTIMODAL' if vision_perc > 0 else ''} "
+          f"checkpoint for (text {text_perc}%, vision {vision_perc}%): {res}")
     return res

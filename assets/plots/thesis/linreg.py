@@ -10,8 +10,8 @@ from assets.plots.thesis.utils import get_vision_types, vision_type_to_float, te
 import statsmodels.formula.api as smf
 
 MODEL_TYPE = 'half_sized'
-statistic_type = 'max'
-df = construct_blimp_results_table(MODEL_TYPE, statistic_type, False, steps_limit=[3000, float('inf')])
+statistic_type = 'best_ckpt'
+df = construct_blimp_results_table(MODEL_TYPE, statistic_type, False)
 
 images_count = []
 for index, row in df.iterrows():
@@ -48,13 +48,13 @@ print(df.dtypes)
 
 print("============== LOG TRANSFORMED ==============")
 EPS = 10e-10
-for col in ['Words', 'Images']:
+for col in ['Words', 'Images']:  # , 'Words_Images'
     df[[col]] = np.log10(df[[col]] + EPS)
 print(df)
 
 print("============== SCALED ==============")
 scaler = RobustScaler()
-for col in ['Words', 'Images']:  # , 'Score'
+for col in ['Words', 'Images']:  # , 'Score', 'Words_Images'
     df[[col]] = scaler.fit_transform(df[[col]])
 print(df)
 

@@ -1,13 +1,12 @@
 import math
 from collections import defaultdict
-from statistics import mean
 
 import pandas as pd
 from matplotlib import pyplot as plt
 
 import seaborn as sns
 
-from assets.plots.thesis.utils import BLIMP_CATEGORIES, plot, get_vision_types, get_label_map
+from assets.plots.thesis.utils import BLIMP_CATEGORIES, plot, get_vision_types, get_label_map, get_statistic
 
 MODEL_TYPE = 'half_sized'
 DATA_SMOOTHING = 'raw'
@@ -15,21 +14,16 @@ PLOT_TYPE = 'heat'  # or bar
 DELTAS = True
 
 
-def construct_blimp_results_table(model_type: str, statistic_type: str, deltas: bool, steps_limit=None):
+def construct_blimp_results_table(model_type: str, statistic_type: str, deltas: bool):
     def load_blimp_statistic(text_perc: int, vision_perc: int, category: str, statistic: str) -> float:
         headers = ['Step', f'Group: text{text_perc}-vision{vision_perc} - evaluation/blimp/{category}']
-        df = pd.read_csv(f'{model_type}/{DATA_SMOOTHING}/{category}.csv', usecols=headers)
-        if steps_limit:
-            df = df[(steps_limit[0] <= df[headers[0]]) & (df[headers[0]] <= steps_limit[1])]
-        blimp_values = pd.to_numeric(df[headers[1]]).values.tolist()
-        blimp_values = [x for x in blimp_values if not math.isnan(x)]
-        if statistic == 'max':
-            return round(max(blimp_values), 2)
-        elif statistic == 'last':
-            return round(blimp_values[-1], 2)
-        elif statistic == 'avg':
-            return round(mean(blimp_values), 2)
-        raise ValueError(f'Unknown type: {statistic}')
+        df = pd.read_csv(f'{model_type}/data/BLiMP/{DATA_SMOOTHING}/{category}.csv', usecols=headers)
+        if statistic == 'best_ckpt':
+            blimp_values = [v for v in list(df[headers[1]]) if not math.isnan(v)]
+        else:
+            blimp_values = None
+        return get_statistic(blimp_values, df, headers, text_perc, vision_perc, statistic) / (
+            100 if statistic == 'best_ckpt' else 1)
 
     plotting_dict = defaultdict(list)
     for text_perc in [1, 10]:
@@ -49,28 +43,27 @@ def construct_blimp_results_table(model_type: str, statistic_type: str, deltas: 
 
 
 if __name__ == '__main__':
-    for statistic_type in ['max', 'last']:
-        fig = plt.figure(figsize=(8, 8))
-        fig.suptitle(f"Influence of Vision on Linguistic Knowledge ({statistic_type} BLiMP score)")
+    fig = plt.figure(figsize=(8, 8))
+    fig.suptitle(f"Influence of Vision on Linguistic Knowledge (BLiMP score)")
 
-        df = construct_blimp_results_table(MODEL_TYPE, statistic_type, DELTAS, steps_limit=[3000, float('inf')])
-        df = df.groupby(['Blimp Category', 'Text']).sum()
-        i, j, max_cols = 0, 0, 3
-        axes = {}
-        for blimp_category in BLIMP_CATEGORIES.values():
-            category_filtered_df = df[df.index.get_level_values('Blimp Category') == blimp_category]
-            index = i * max_cols + j + 1
-            axes[index] = plot(category_filtered_df, fig, max_cols, index, DELTAS, blimp_category,
-                               len(BLIMP_CATEGORIES.values()), PLOT_TYPE,
-                               sns.diverging_palette(145, 300, s=60, as_cmap=True), True, range=(-9, 9))
-            j += 1
-            if j == max_cols:
-                i, j = i + 1, 0
+    df = construct_blimp_results_table(MODEL_TYPE, 'best_ckpt', DELTAS)
+    df = df.groupby(['Blimp Category', 'Text']).sum()
+    i, j, max_cols = 0, 0, 3
+    axes = {}
+    for blimp_category in BLIMP_CATEGORIES.values():
+        category_filtered_df = df[df.index.get_level_values('Blimp Category') == blimp_category]
+        index = i * max_cols + j + 1
+        axes[index] = plot(category_filtered_df, fig, max_cols, index, DELTAS, blimp_category,
+                           len(BLIMP_CATEGORIES.values()), PLOT_TYPE,
+                           sns.diverging_palette(145, 300, s=60, as_cmap=True), True, range=(-10, 10))
+        j += 1
+        if j == max_cols:
+            i, j = i + 1, 0
 
-        if PLOT_TYPE == 'bar':
-            handles, labels = axes[1].get_legend_handles_labels()
-            fig.legend(handles, labels)
+    if PLOT_TYPE == 'bar':
+        handles, labels = axes[1].get_legend_handles_labels()
+        fig.legend(handles, labels)
 
-        fig.tight_layout()
-        fig.savefig(f'{MODEL_TYPE}/heatmaps/plot_{statistic_type}{"_deltas" if DELTAS else ""}.png')
-        fig.savefig(f'{MODEL_TYPE}/heatmaps/plot_{statistic_type}{"_deltas" if DELTAS else ""}.pdf')
+    fig.tight_layout()
+    fig.savefig(f'{MODEL_TYPE}/heatmaps/plot_best_ckpt{"_deltas" if DELTAS else ""}.png')
+    fig.savefig(f'{MODEL_TYPE}/heatmaps/plot_best_ckpt{"_deltas" if DELTAS else ""}.pdf')
