@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 
 import seaborn as sns
 
+from assets.plots.thesis.multimodal_retrieval import load_retrieval
 from assets.plots.thesis.utils import BLIMP_CATEGORIES, plot, get_vision_types, get_label_map, get_statistic
 
 MODEL_TYPE = 'half_sized'
@@ -30,6 +31,7 @@ def construct_blimp_results_table(model_type: str, statistic_type: str, deltas: 
         for vision_perc in [0, 1, 10, 100]:
             for cat, formatted_cat in BLIMP_CATEGORIES.items():
                 plotting_dict['Blimp Category'].append(formatted_cat)
+                plotting_dict['MTR'].append(load_retrieval(text_perc, vision_perc, 5, statistic_type))
                 plotting_dict['Text'].append(f"{'10M' if text_perc == 1 else '100M'} words")
                 for vision_type in get_vision_types():
                     if vision_type == get_label_map(text_perc, vision_perc):

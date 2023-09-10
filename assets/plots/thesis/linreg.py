@@ -54,13 +54,13 @@ print(df)
 
 print("============== SCALED ==============")
 scaler = RobustScaler()
-for col in ['Words', 'Images']:  # , 'Score', 'Words_Images'
+for col in ['Words', 'Images', 'MTR']:  # , 'Score', 'Words_Images'
     df[[col]] = scaler.fit_transform(df[[col]])
 print(df)
 
 for words in [-0.5, 0.5]:
     new_df = df[df["Words"] == words]
-    me_model = smf.mixedlm("Score ~ Images", new_df, groups=new_df["Category"])
+    me_model = smf.mixedlm("Score ~ MTR", new_df, groups=new_df["Category"])
     res_me = me_model.fit()
     text_env = 'low' if words < 0 else 'high'
     print(f"For a {text_env}-text environment:")
@@ -71,7 +71,7 @@ for words in [-0.5, 0.5]:
     fig.savefig(f'{MODEL_TYPE}/regression/lme_diagnostics_{statistic_type}_{text_env}_text.png')
     fig.savefig(f'{MODEL_TYPE}/regression/lme_diagnostics_{statistic_type}_{text_env}_text.pdf')
 
-me_model = smf.mixedlm("Score ~ Words + Images", df, groups=df["Category"])
+me_model = smf.mixedlm("Score ~ Words + MTR", df, groups=df["Category"])
 res_me = me_model.fit()
 print(res_me.summary())
 with open(f'{MODEL_TYPE}/regression/summary.txt', 'w') as fh:
