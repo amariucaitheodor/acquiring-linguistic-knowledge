@@ -16,11 +16,10 @@ TASKS = ['cola', 'sst2', 'mrpc', 'mnli', 'mnli-mm', 'qnli', 'qqp', 'rte', 'multi
 
 def construct_finetune_results_table():
     plotting_dict = defaultdict(list)
-    t = 'halfsize_' if MODEL_TYPE == 'half_sized' else ""
 
     def add_to_dict(text_perc: int, vision_perc: int):
-        model = f'thesis_{t}text{text_perc}_vision{vision_perc}'
-        print(f"Adding results for {model.split(f'thesis_{t}')[1]} to the dictionary.")
+        model = f'bestckpt_{MODEL_TYPE}_text{text_perc}_vision{vision_perc}'
+        print(f"Adding results for {model.split(f'bestckpt_{MODEL_TYPE}_')[1]} to the dictionary.")
         for task in TASKS:
             with open(f"{LOCATION}/{model}/finetune/{task}/eval_results.json", "rb") as f:
                 json_data = json.load(f)
@@ -31,7 +30,7 @@ def construct_finetune_results_table():
                 plotting_dict['Text'].append(acc)
                 plotting_dict['VL'].append(math.nan)
             else:
-                no_vision_model = f'thesis_{t}text{text_perc}_vision0'
+                no_vision_model = f'bestckpt_{MODEL_TYPE}_text{text_perc}_vision0'
                 with open(f"{LOCATION}/{no_vision_model}/finetune/{task}/eval_results.json", "rb") as f:
                     json_data = json.load(f)
                     acc -= round(json_data['eval_accuracy'] * 100, 2)
