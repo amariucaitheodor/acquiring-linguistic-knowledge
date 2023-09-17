@@ -9,7 +9,7 @@ import seaborn as sns
 from assets.plots.thesis.multimodal_retrieval import load_retrieval
 from assets.plots.thesis.utils import BLIMP_CATEGORIES, plot, get_vision_types, get_label_map, get_statistic
 
-MODEL_TYPE = 'half_sized'
+MODEL_TYPE = 'full_sized'
 DATA_SMOOTHING = 'raw'
 PLOT_TYPE = 'heat'  # or bar
 DELTAS = True
@@ -20,9 +20,9 @@ def construct_blimp_results_table(model_type: str, statistic_type: str, deltas: 
         headers = ['Step', f'Group: text{text_perc}-vision{vision_perc} - evaluation/blimp/{category}']
         df = pd.read_csv(f'{model_type}/data/BLiMP/{DATA_SMOOTHING}/{category}.csv', usecols=headers)
         if statistic == 'best_ckpt':
-            blimp_values = [v for v in list(df[headers[1]]) if not math.isnan(v)]
-        else:
             blimp_values = None
+        else:
+            blimp_values = [v for v in list(df[headers[1]]) if not math.isnan(v)]
         return get_statistic(blimp_values, df, headers, text_perc, vision_perc, statistic, model_type) / (
             100 if statistic == 'best_ckpt' else 1)
 
@@ -31,7 +31,9 @@ def construct_blimp_results_table(model_type: str, statistic_type: str, deltas: 
         for vision_perc in [0, 1, 10, 100]:
             for cat, formatted_cat in BLIMP_CATEGORIES.items():
                 plotting_dict['Blimp Category'].append(formatted_cat)
-                plotting_dict['MTR'].append(load_retrieval(text_perc, vision_perc, 5, statistic_type))
+                if model_type == 'half_sized':
+                    plotting_dict['MTR'].append(
+                        load_retrieval(text_perc, vision_perc, 5, statistic_type))  # d.p. to top-1
                 plotting_dict['Text'].append(f"{'10M' if text_perc == 1 else '100M'} words")
                 for vision_type in get_vision_types():
                     if vision_type == get_label_map(text_perc, vision_perc):
@@ -47,8 +49,9 @@ def construct_blimp_results_table(model_type: str, statistic_type: str, deltas: 
 if __name__ == '__main__':
     fig = plt.figure(figsize=(8, 8))
     fig.suptitle(f"Influence of Vision on Linguistic Knowledge (BLiMP score)")
+    stat_type = 'best_ckpt'
 
-    df = construct_blimp_results_table(MODEL_TYPE, 'best_ckpt', DELTAS)
+    df = construct_blimp_results_table(MODEL_TYPE, stat_type, DELTAS)
     df = df.groupby(['Blimp Category', 'Text']).sum()
     i, j, max_cols = 0, 0, 3
     axes = {}
@@ -67,5 +70,5 @@ if __name__ == '__main__':
         fig.legend(handles, labels)
 
     fig.tight_layout()
-    fig.savefig(f'{MODEL_TYPE}/heatmaps/plot_best_ckpt{"_deltas" if DELTAS else ""}.png')
-    fig.savefig(f'{MODEL_TYPE}/heatmaps/plot_best_ckpt{"_deltas" if DELTAS else ""}.pdf')
+    fig.savefig(f'{MODEL_TYPE}/heatmaps/plot_{stat_type}{"_deltas" if DELTAS else ""}.png')
+    fig.savefig(f'{MODEL_TYPE}/heatmaps/plot_{stat_type}{"_deltas" if DELTAS else ""}.pdf')

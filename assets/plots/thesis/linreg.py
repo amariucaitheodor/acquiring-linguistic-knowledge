@@ -1,6 +1,7 @@
 import math
 
 import numpy as np
+import pandas as pd
 from sklearn.preprocessing import RobustScaler
 
 from assets.plots.thesis.blimp_table_plot import construct_blimp_results_table
@@ -37,7 +38,8 @@ df['Score'] = df[get_vision_types()].apply(lambda x: float(','.join(x.dropna().a
 df = df.drop(get_vision_types(), axis=1)
 
 print("============== ORIGINAL ==============")
-print(df)
+with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
+    print(df)
 print(df.dtypes)
 
 # Not very helpful

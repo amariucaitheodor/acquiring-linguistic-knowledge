@@ -2,15 +2,15 @@
 =======================================================
 Model:            MixedLM Dependent Variable: Score    
 No. Observations: 96      Method:             REML     
-No. Groups:       12      Scale:              9.8812   
-Min. group size:  8       Log-Likelihood:     -271.1872
+No. Groups:       12      Scale:              9.0559   
+Min. group size:  8       Log-Likelihood:     -267.2520
 Max. group size:  8       Converged:          Yes      
 Mean group size:  8.0                                  
 -------------------------------------------------------
              Coef.  Std.Err.   z    P>|z| [0.025 0.975]
 -------------------------------------------------------
-Intercept    65.866    3.491 18.870 0.000 59.025 72.708
-Words         5.502    0.642  8.575 0.000  4.245  6.760
-Images       -0.436    0.235 -1.857 0.063 -0.895  0.024
-Group Var   144.665   21.071                           
+Intercept    66.526    3.489 19.067 0.000 59.688 73.364
+Words         6.797    0.726  9.367 0.000  5.375  8.220
+MTR          -1.079    0.322 -3.352 0.001 -1.710 -0.448
+Group Var   144.807   22.022                           
 =======================================================

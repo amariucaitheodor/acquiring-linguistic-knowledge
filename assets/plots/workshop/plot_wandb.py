@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from scipy.ndimage import gaussian_filter1d
 
-TEXT_AMOUNT = '100M'
+TEXT_AMOUNT = '10M'
 STEPS_LIMIT = 7500 if TEXT_AMOUNT == '10M' else 12600
 
 
@@ -73,6 +73,12 @@ ax.set_ylabel("BLiMP Score (%)", fontsize=12)
 # Extra info
 EXTRA_INFO_COLOR = 'black'  # '#326e43'  # dark green
 ax.axhline(y=86.01, color=EXTRA_INFO_COLOR, linestyle='-')
+color_map = {  # viridis gradient
+    0: '#440154',
+    1: '#31688e',
+    10: '#35b779',
+    100: '#fde725',
+}
 if TEXT_AMOUNT == '100M':
     ax.annotate("86.01% on PMD corpus (Singh et al., 2021)", xy=(0, 86.01), xytext=(2., 86.01 + 0.5),
                 color=EXTRA_INFO_COLOR)
@@ -80,12 +86,6 @@ if TEXT_AMOUNT == '100M':
     ax.axhline(y=top_score, color=EXTRA_INFO_COLOR, linestyle='-')
     ax.annotate(f"{top_score}% on 10M words (Section 5.2)", xy=(0, top_score), xytext=(4.5, top_score + 0.5),
                 color=EXTRA_INFO_COLOR)
-    color_map = {
-        0: '#7D54B2',  # purple
-        1: '#EDB732',  # yellow
-        10: '#E57439',  # orange
-        100: '#5387DD',  # blue
-    }
 else:
     ax.annotate("86.01% on PMD corpus (Singh et al., 2021)", xy=(0, 86.01), xytext=(0.5, 86.01 + 0.5),
                 color=EXTRA_INFO_COLOR)
@@ -93,12 +93,6 @@ else:
     ax.axhline(y=top_score, color=EXTRA_INFO_COLOR, linestyle='-')
     ax.annotate(f"{top_score}% on 100M words (Section 5.1)", xy=(0, top_score), xytext=(1.5, top_score + 0.5),
                 color=EXTRA_INFO_COLOR)
-    color_map = {
-        0: '#A12864',  # maroon
-        1: '#229487',  # forest
-        10: '#E87B9F',  # pink
-        100: '#A46750',  # brown
-    }
 
 plot_for_variation(TEXT_AMOUNT, vision_perc=0)
 plot_for_variation(TEXT_AMOUNT, vision_perc=1)
@@ -106,6 +100,7 @@ plot_for_variation(TEXT_AMOUNT, vision_perc=10)
 plot_for_variation(TEXT_AMOUNT, vision_perc=100)
 ax2.set_ylabel("Pseudo-Perplexity", fontsize=14)
 ax2.set_yscale('log', base=10)
+ax2.set_yticks([1, 10, 100, 1000, 10000])
 
 # Legend
 handles, labels = ax.get_legend_handles_labels()
@@ -114,7 +109,7 @@ if TEXT_AMOUNT == '100M':
     handles.append(Line2D([0], [0], color='black', linewidth=2, linestyle='dotted'))
     labels.append('BLiMP Score')
     handles.append(Line2D([0], [0], color='black', linewidth=2))
-plt.legend(handles=handles, labels=labels, bbox_to_anchor=[.6, .95], loc='upper right')
+plt.legend(handles=handles, labels=labels, bbox_to_anchor=[.7, .95], loc='upper right')
 
 plt.show()
 fig.savefig(f'{TEXT_AMOUNT}/{TEXT_AMOUNT}.pdf', format='pdf', dpi=500, bbox_inches='tight')
