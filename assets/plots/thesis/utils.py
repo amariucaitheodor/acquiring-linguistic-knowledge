@@ -165,7 +165,7 @@ def get_statistic(lst: List, df=None, headers=None, text_perc=None, vision_perc=
         warnings.warn(f'`Average` is not a recommended statistic (scores come from different checkpoints)')
         return round(mean(lst), 2)
     elif stat == 'best_ckpt':
-        best_ckpt = find_best_checkpoint(text_perc, vision_perc, model_type)
+        best_ckpt = find_best_checkpoint(text_perc, vision_perc, model_type)  # , 10500 if text_perc == 1 else 17500
         score_of_best_ckpt = df[df[headers[0]] == best_ckpt][headers[1]].values[0]
         return round(score_of_best_ckpt * 100, 2)
     else:
@@ -173,7 +173,8 @@ def get_statistic(lst: List, df=None, headers=None, text_perc=None, vision_perc=
 
 
 @cache
-def find_best_checkpoint(text_perc: int, vision_perc: int, model_type: str = 'half_sized'):
+def find_best_checkpoint(text_perc: int, vision_perc: int, model_type: str = 'half_sized',
+                         steps_limit: int = float('inf')):
     headers = defaultdict(list)
     headers['pppl'] = ['Step', f'Group: text{text_perc}-vision{vision_perc} - evaluation/pseudo_perplexity']
     df = pd.read_csv(f'{model_type}/data/validation_losses/pppl.csv', usecols=headers['pppl'])
@@ -182,6 +183,7 @@ def find_best_checkpoint(text_perc: int, vision_perc: int, model_type: str = 'ha
             headers[loss] = ['Step', f'Group: text{text_perc}-vision{vision_perc} - validation/losses/{loss}']
             df2 = pd.read_csv(f'{model_type}/data/validation_losses/{loss}.csv', usecols=headers[loss])
             df = pd.merge(df, df2, how='inner', on='Step')  # just makes sure that all steps have all losses
+    df = df[df[headers['pppl'][0]] <= steps_limit]
     res = int(df.loc[df[headers['pppl'][1]].idxmin()]['Step'])
     print(f"Found best PPPL {'+ MULTIMODAL' if vision_perc > 0 else ''} "
           f"checkpoint for (text {text_perc}%, vision {vision_perc}%): {res}")
